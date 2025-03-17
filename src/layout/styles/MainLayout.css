@@ -8,5 +8,10 @@
     flex: 1;
     padding: 2rem;
     margin-left: 250px;
+    margin-top: 4rem; /* Añadir margen superior para la barra */
     transition: all 0.3s ease-in-out;
-} 
+}
+
+.sidebar.collapsed + .layout-main {
+    margin-left: 4rem;
+}

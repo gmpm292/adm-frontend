@@ -6,7 +6,7 @@
     height: 100vh;
     position: fixed;
     left: 0;
-    top: 0;
+    top: 4rem; /* Ajustar la posición para que no se solape con la barra superior */
     box-shadow: var(--card-shadow);
     z-index: 1000;
 }
