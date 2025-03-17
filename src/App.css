@@ -1,4 +1,4 @@
-/* Eliminar los estilos por defecto de Vite y mantener solo los necesarios */
+/* Estilos globales */
 body {
   margin: 0;
   padding: 0;
@@ -8,59 +8,4 @@ body {
 #root {
   width: 100%;
   min-height: 100vh;
-}
-
-
-.login-card {
-  background: var(--surface-card);
-  padding: 2rem;
-  border-radius: 1rem;
-  width: 100%;
-}
-
-.field {
-  margin-bottom: 1.5rem;
-}
-
-/* Estilos del login */
-.login-page {
-  background: var(--surface-ground);
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-}
-
-/* Ajustes para el contenedor principal del login */
-.login-container {
-  background: var(--surface-section);
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: 0 2px 1px -1px rgba(0,0,0,0.2), 
-              0 1px 1px 0 rgba(0,0,0,0.14), 
-              0 1px 3px 0 rgba(0,0,0,0.12);
-}
-
-/* Estilos para los textos del login */
-.login-title {
-  color: #1D4ED8 !important;
-  font-size: 3rem !important;
-  text-align: center !important;
-  font-weight: 700 !important;
-  margin-bottom: 1rem !important;
-}
-
-.login-subtitle {
-  color: #4B5563 !important;
-  font-size: 1.5rem !important;
-  text-align: center !important;
-  display: block !important;
-  font-weight: 500 !important;
-}
-
-.login-header {
-  text-align: center;
-  margin-bottom: 2rem;
-  width: 100%;
 }

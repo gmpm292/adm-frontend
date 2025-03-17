@@ -1,0 +1,106 @@
+.sidebar {
+    width: 250px;
+    background: var(--surface-overlay);
+    border-right: 1px solid var(--surface-border);
+    transition: all 0.3s ease-in-out;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    box-shadow: var(--card-shadow);
+    z-index: 1000;
+}
+
+.sidebar.collapsed {
+    width: 4rem;
+}
+
+.sidebar-header {
+    padding: 1rem;
+    display: flex;
+    justify-content: flex-end;
+    border-bottom: 1px solid var(--surface-border);
+    background: var(--surface-card);
+}
+
+/* Estilos específicos para PanelMenu */
+.sidebar .p-panelmenu {
+    background: transparent;
+    border: none;
+}
+
+.sidebar .p-panelmenu .p-panelmenu-header-link {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    padding: 1rem;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.sidebar .p-panelmenu .p-panelmenu-header-link:hover {
+    background: var(--surface-hover);
+}
+
+.sidebar .p-panelmenu .p-panelmenu-header-link:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+.sidebar .p-panelmenu .p-panelmenu-content {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+.sidebar .p-panelmenu .p-menuitem-link {
+    padding: 0.75rem 1rem 0.75rem 2rem;
+    color: var(--text-color-secondary);
+    font-weight: normal;
+    transition: background-color 0.2s;
+}
+
+.sidebar .p-panelmenu .p-menuitem-link:hover {
+    background: var(--surface-hover);
+}
+
+.sidebar .p-panelmenu .p-menuitem-link:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+.sidebar .p-panelmenu .p-menuitem-icon {
+    color: var(--text-color-secondary);
+    margin-right: 0.5rem;
+}
+
+/* Estilos para el menú colapsado */
+.sidebar.collapsed .p-panelmenu .p-panelmenu-header-link {
+    padding: 1rem;
+    justify-content: center;
+}
+
+.sidebar.collapsed .p-panelmenu .p-menuitem-text,
+.sidebar.collapsed .p-panelmenu .p-submenu-icon {
+    display: none;
+}
+
+.sidebar.collapsed .p-panelmenu .p-menuitem-icon {
+    margin-right: 0;
+    font-size: 1.25rem;
+}
+
+/* Ajuste del contenido cuando el sidebar está colapsado */
+.sidebar.collapsed + .layout-main {
+    margin-left: 4rem;
+}
+
+/* Estilos para los íconos */
+.sidebar .p-button.p-button-text {
+    color: var(--text-color-secondary);
+}
+
+.sidebar .p-button.p-button-text:hover {
+    background: var(--surface-hover);
+    color: var(--text-color);
+} 

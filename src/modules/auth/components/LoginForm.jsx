@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { useState } from 'react';
 import { useLazyQuery } from '@apollo/client';
 import { CLASSIC_LOGIN } from '../graphql/queries';
@@ -8,7 +7,7 @@ import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
 import { Message } from 'primereact/message';
 
-export function LoginForm() {
+export function LoginForm({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [login, { loading, error, data }] = useLazyQuery(CLASSIC_LOGIN, {
@@ -42,19 +41,15 @@ export function LoginForm() {
       
       if (result.data?.classicLogin?.profile) {
         console.log('Login exitoso:', result.data.classicLogin.profile);
+        onLogin();
       }
     } catch (err) {
-      console.error('Error en login:', {
-        message: err.message,
-        stack: err.stack,
-        networkError: err.networkError,
-        graphQLErrors: err.graphQLErrors,
-      });
+      console.error('Error en login:', err);
     }
   };
 
   return (
-    <Card className="login-card">
+    <Card className="login-card" style={{ border: 'none', boxShadow: 'none' }}>
       <form onSubmit={handleSubmit} className="p-fluid">
         <div className="field">
           <span className="p-float-label">
@@ -63,6 +58,7 @@ export function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="p-inputtext-lg"
+              style={{ width: '100%' }}
             />
             <label htmlFor="email">Email</label>
           </span>
@@ -77,6 +73,7 @@ export function LoginForm() {
               toggleMask
               className="p-inputtext-lg"
               feedback={false}
+              style={{ width: '100%' }}
             />
             <label htmlFor="password">Password</label>
           </span>
@@ -96,8 +93,9 @@ export function LoginForm() {
           icon="pi pi-sign-in" 
           loading={loading}
           className="p-button-lg"
+          style={{ width: '100%', marginTop: '20px' }}
         />
       </form>
     </Card>
   );
-} 
+}

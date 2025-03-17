@@ -1,0 +1,92 @@
+/* LoginPage.css */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #ffffff, #2575fc); /* Fondo degradado */
+}
+
+.login-container {
+  background: var(--surface-card);
+  border-radius: 12px; /* Bordes redondeados */
+  padding: 2.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra suave */
+  width: 100%;
+  max-width: 450px;
+  background-color: #ffffff; /* Fondo blanco */
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-title {
+  color: var(--primary-color);
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #2c3e50; /* Color oscuro para el título */
+}
+
+.login-subtitle {
+  color: var(--text-color-secondary);
+  font-size: 1.2rem;
+  color: #7f8c8d; /* Color gris para el subtítulo */
+}
+
+/* Campos de entrada */
+.p-inputtext {
+  width: 100%;
+  border-radius: 8px; /* Bordes redondeados */
+  border: 1px solid #ced4da; /* Borde suave */
+  padding: 0.75rem;
+  font-size: 1rem;
+}
+
+.p-password {
+  width: 100%;
+  border-radius: 8px; /* Bordes redondeados */
+  border: 1px solid #ced4da; /* Borde suave */
+}
+
+/* Espaciado entre campos */
+.field {
+  margin-bottom: 1.5rem;
+}
+
+/* Mensaje de error */
+.p-message {
+  margin: 1rem 0;
+  border-radius: 8px; /* Bordes redondeados */
+}
+
+/* Etiquetas flotantes */
+.p-float-label {
+  margin: 1rem 0;
+}
+
+/* Media queries básicos */
+@media screen and (max-width: 576px) {
+  .login-container {
+    padding: 1.5rem;
+  }
+
+  .field {
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media screen and (min-width: 577px) {
+  .login-container {
+    min-width: 400px;
+  }
+}
+
+@media screen and (min-width: 992px) {
+  .login-container {
+    min-width: 450px;
+  }
+}

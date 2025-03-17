@@ -1,0 +1,116 @@
+/* Estilo base para botones */
+.p-button {
+    border-radius: 8px; /* Bordes redondeados */
+    padding: 0.75rem 1.5rem; /* Espaciado interno */
+    font-size: 1rem; /* Tamaño de fuente */
+    font-weight: 600; /* Grosor de la fuente */
+    border: none; /* Sin borde */
+    cursor: pointer; /* Cursor tipo pointer */
+    transition: all 0.3s ease; /* Transición suave para todos los efectos */
+    display: inline-flex; /* Para alinear iconos y texto */
+    align-items: center; /* Alinear verticalmente */
+    justify-content: center; /* Alinear horizontalmente */
+    gap: 0.5rem; /* Espacio entre icono y texto */
+}
+
+/* Botón primario */
+.p-button-primary {
+    background-color: #2575fc; /* Color de fondo */
+    color: #ffffff; /* Color del texto */
+}
+
+.p-button-primary:hover {
+    background-color: #1a5bbf; /* Color de fondo al pasar el mouse */
+    transform: translateY(-2px); /* Efecto de elevación */
+    box-shadow: 0 4px 12px rgba(37, 117, 252, 0.3); /* Sombra suave */
+}
+
+.p-button-primary:active {
+    background-color: #144699; /* Color de fondo al hacer clic */
+    transform: translateY(0); /* Restablecer elevación */
+}
+
+/* Botón secundario */
+.p-button-secondary {
+    background-color: #6c757d; /* Color de fondo */
+    color: #ffffff; /* Color del texto */
+}
+
+.p-button-secondary:hover {
+    background-color: #5a6268; /* Color de fondo al pasar el mouse */
+    transform: translateY(-2px); /* Efecto de elevación */
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3); /* Sombra suave */
+}
+
+.p-button-secondary:active {
+    background-color: #484e53; /* Color de fondo al hacer clic */
+    transform: translateY(0); /* Restablecer elevación */
+}
+
+/* Botón de éxito (para acciones positivas como guardar, confirmar, etc.) */
+.p-button-success {
+    background-color: #28a745; /* Color de fondo */
+    color: #ffffff; /* Color del texto */
+}
+
+.p-button-success:hover {
+    background-color: #218838; /* Color de fondo al pasar el mouse */
+    transform: translateY(-2px); /* Efecto de elevación */
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3); /* Sombra suave */
+}
+
+.p-button-success:active {
+    background-color: #1e7e34; /* Color de fondo al hacer clic */
+    transform: translateY(0); /* Restablecer elevación */
+}
+
+/* Botón de peligro (para acciones como eliminar, cancelar, etc.) */
+.p-button-danger {
+    background-color: #dc3545; /* Color de fondo */
+    color: #ffffff; /* Color del texto */
+}
+
+.p-button-danger:hover {
+    background-color: #c82333; /* Color de fondo al pasar el mouse */
+    transform: translateY(-2px); /* Efecto de elevación */
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3); /* Sombra suave */
+}
+
+.p-button-danger:active {
+    background-color: #bd2130; /* Color de fondo al hacer clic */
+    transform: translateY(0); /* Restablecer elevación */
+}
+
+/* Botón de advertencia (para acciones que requieren atención) */
+.p-button-warning {
+    background-color: #ffc107; /* Color de fondo */
+    color: #000000; /* Color del texto */
+}
+
+.p-button-warning:hover {
+    background-color: #e0a800; /* Color de fondo al pasar el mouse */
+    transform: translateY(-2px); /* Efecto de elevación */
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3); /* Sombra suave */
+}
+
+.p-button-warning:active {
+    background-color: #d39e00; /* Color de fondo al hacer clic */
+    transform: translateY(0); /* Restablecer elevación */
+}
+
+/* Botón de información (para acciones informativas) */
+.p-button-info {
+    background-color: #17a2b8; /* Color de fondo */
+    color: #ffffff; /* Color del texto */
+}
+
+.p-button-info:hover {
+    background-color: #138496; /* Color de fondo al pasar el mouse */
+    transform: translateY(-2px); /* Efecto de elevación */
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3); /* Sombra suave */
+}
+
+.p-button-info:active {
+    background-color: #117a8b; /* Color de fondo al hacer clic */
+    transform: translateY(0); /* Restablecer elevación */
+}
