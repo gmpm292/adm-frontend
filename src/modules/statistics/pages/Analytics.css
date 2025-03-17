@@ -1,0 +1,41 @@
+.analytics-page {
+    padding: 1rem;
+}
+
+.analytics-page h1 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: #2c3e50;
+}
+
+.card {
+    background: #ffffff;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem; /* Espacio entre los gráficos */
+}
+
+.small-chart {
+    height: 250px; /* Altura fija para los gráficos pequeños */
+}
+
+.large-chart {
+    height: 400px; /* Altura fija para el gráfico grande */
+}
+
+/* Asegurar que las columnas no se superpongan */
+.grid {
+    display: flex;
+    flex-wrap: wrap;
+    margin: -0.5rem; /* Compensar el padding de las columnas */
+}
+
+.col-12 {
+    padding: 0.5rem; /* Espacio entre columnas */
+}
+
+.md\:col-6 {
+    flex: 0 0 50%; /* Dos columnas de igual tamaño */
+    max-width: 50%;
+}

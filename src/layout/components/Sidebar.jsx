@@ -1,23 +1,27 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from 'primereact/button';
 import { PanelMenu } from 'primereact/panelmenu';
 import '../styles/Sidebar.css';
 
 export function Sidebar() {
-    const [collapsed, setCollapsed] = useState(false);  // Inicialmente contraído
+    const [collapsed, setCollapsed] = useState(false);
+    const navigate = useNavigate();
 
     const menuItems = [
         {
-            label: 'Dashboard',
+            label: 'Panel Principal',
             icon: 'pi pi-home',
             items: [
                 {
-                    label: 'Analytics',
+                    label: 'Análisis',
                     icon: 'pi pi-chart-line',
+                    command: () => navigate('/statistics/analytics')
                 },
                 {
-                    label: 'Sales',
-                    icon: 'pi pi-dollar'
+                    label: 'Ventas',
+                    icon: 'pi pi-dollar',
+                    command: () => navigate('/statistics/sales')
                 }
             ]
         },
