@@ -1,55 +1,72 @@
-import { useState } from 'react';
-import { useLazyQuery } from '@apollo/client';
-import { CLASSIC_LOGIN } from '../graphql/queries';
-import { InputText } from 'primereact/inputtext';
-import { Password } from 'primereact/password';
-import { Button } from 'primereact/button';
-import { Card } from 'primereact/card';
-import { Message } from 'primereact/message';
+import { useState } from "react";
+import { useLazyQuery } from "@apollo/client";
+import { CLASSIC_LOGIN } from "../graphql/queries";
+import { InputText } from "primereact/inputtext";
+import { Password } from "primereact/password";
+import { Button } from "primereact/button";
+import { Card } from "primereact/card";
+import { Message } from "primereact/message";
+import { useNavigate } from "react-router-dom";
 
 export function LoginForm({ onLogin }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [login, { loading, error, data }] = useLazyQuery(CLASSIC_LOGIN, {
-    fetchPolicy: 'network-only',
+    fetchPolicy: "network-only",
     onError: (error) => {
-      console.error('Error detallado:', {
+      console.error("Error detallado:", {
         message: error.message,
         networkError: error.networkError,
         graphQLErrors: error.graphQLErrors,
         extraInfo: error.extraInfo,
       });
-    }
+    },
   });
+  const navigate = useNavigate();
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   console.log("Iniciando login con:", { email, password });
+
+  //   try {
+  //     console.log("Enviando request...");
+  //     const result = await login({
+  //       variables: {
+  //         input: {
+  //           email,
+  //           password,
+  //         },
+  //       },
+  //     });
+
+  //     console.log("Respuesta completa:", result);
+
+  //     if (result.data?.classicLogin?.profile) {
+  //       console.log("Login exitoso:", result.data.classicLogin.profile);
+  //       onLogin();
+  //     }
+  //   } catch (err) {
+  //     console.error("Error en login:", err);
+  //   }
+  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Iniciando login con:', { email, password });
-    
     try {
-      console.log('Enviando request...');
-      const result = await login({
-        variables: {
-          input: {
-            email,
-            password,
-          },
-        },
+      const { data } = await login({
+        variables: { input: { email, password } },
       });
-      
-      console.log('Respuesta completa:', result);
-      
-      if (result.data?.classicLogin?.profile) {
-        console.log('Login exitoso:', result.data.classicLogin.profile);
+      if (data?.classicLogin?.profile) {
         onLogin();
+        navigate("/statistics/analytics");
       }
     } catch (err) {
-      console.error('Error en login:', err);
+      console.error("Error en login:", err);
     }
   };
 
   return (
-    <Card className="login-card" style={{ border: 'none', boxShadow: 'none' }}>
+    <Card className="login-card" style={{ border: "none", boxShadow: "none" }}>
       <form onSubmit={handleSubmit} className="p-fluid">
         <div className="field">
           <span className="p-float-label">
@@ -58,12 +75,12 @@ export function LoginForm({ onLogin }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="p-inputtext-lg"
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
             />
             <label htmlFor="email">Email</label>
           </span>
         </div>
-        
+
         <div className="field">
           <span className="p-float-label">
             <Password
@@ -73,27 +90,27 @@ export function LoginForm({ onLogin }) {
               toggleMask
               className="p-inputtext-lg"
               feedback={false}
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
             />
             <label htmlFor="password">Password</label>
           </span>
         </div>
 
         {error && (
-          <Message 
-            severity="error" 
-            text={error.message || 'Error al iniciar sesión'}
+          <Message
+            severity="error"
+            text={error.message || "Error al iniciar sesión"}
             className="w-full mb-3"
           />
         )}
 
-        <Button 
-          type="submit" 
-          label={loading ? 'Iniciando sesión...' : 'Iniciar sesión'} 
-          icon="pi pi-sign-in" 
+        <Button
+          type="submit"
+          label={loading ? "Iniciando sesión..." : "Iniciar sesión"}
+          icon="pi pi-sign-in"
           loading={loading}
           className="p-button-lg"
-          style={{ width: '100%', marginTop: '20px' }}
+          style={{ width: "100%", marginTop: "20px" }}
         />
       </form>
     </Card>

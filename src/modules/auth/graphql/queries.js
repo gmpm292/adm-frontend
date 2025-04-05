@@ -21,22 +21,7 @@ const GET_PROFILE = gql`
       name
       lastName
       mobile
-      zoomExt
       role
-      office {
-        id
-        officeType
-        name
-      }
-      department {
-        id
-        departmentType
-        name
-      }
-      team {
-        id
-        teamType
-      }
       isTwoFactorEnabled
       isTwoFactorConfigured
     }
@@ -93,22 +78,7 @@ const VERIFY_2FA = gql`
         name
         lastName
         mobile
-        zoomExt
         role
-        office {
-          id
-          officeType
-          name
-        }
-        department {
-          id
-          departmentType
-          name
-        }
-        team {
-          id
-          teamType
-        }
         isTwoFactorEnabled
         isTwoFactorConfigured
       }
