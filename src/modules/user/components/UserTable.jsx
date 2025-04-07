@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useState } from "react";
 import { useLazyQuery } from "@apollo/client";
 import { GET_USERS } from "../graphql/queries";
 import GenericDataTable from "../../../components/BaseTable/index";
@@ -37,18 +37,36 @@ export function UserTable() {
   const [getUsers, { loading, data, error }] = useLazyQuery(GET_USERS, {
     fetchPolicy: "network-only",
   });
+  const [initialLoad, setInitialLoad] = useState(true);
 
-  // Ejecutar la query cuando el componente se monta
-  useEffect(() => {
-    getUsers({
-      variables: {
-        options: {
-          skip: 0,
-          take: 10,
-        }
+  const handleFetchData = useCallback(
+    async (params) => {
+      try {
+        const { data: responseData } = await getUsers({
+          variables: {
+            options: {
+              skip: params.skip,
+              take: params.take,
+              filters: params.filters,
+              sorts: params.sorts,
+            },
+          },
+        });
+
+        return {
+          data: responseData?.users?.data,
+          totalCount: responseData?.users?.totalCount,
+        };
+      } catch (err) {
+        console.error("Error fetching users:", err);
+        return {
+          data: [],
+          totalCount: 0,
+        };
       }
-    });
-  }, [getUsers]);
+    },
+    [getUsers]
+  );
 
   const columns = [
     {
@@ -61,7 +79,7 @@ export function UserTable() {
       field: "lastName",
       header: "Apellido",
       sortable: true,
-      filter: false,
+      filter: true,
     },
     {
       field: "email",
@@ -80,6 +98,7 @@ export function UserTable() {
       header: "Estado",
       body: statusBodyTemplate,
       sortable: true,
+      filter: true,
     },
   ];
 
@@ -90,18 +109,14 @@ export function UserTable() {
       totalRecords={data?.users?.totalCount}
       loading={loading}
       error={error}
-      // Eliminar headerTooltips de las props
       globalFilterFields={["name", "lastName", "email", "role"]}
       emptyMessage="No se encontraron usuarios"
       currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
-      onRefresh={() => getUsers({
-        variables: {
-          options: {
-            skip: 0,
-            take: 10,
-          }
-        }
-      })}
+      onRefresh={() =>
+        handleFetchData({ skip: 0, take: 10, filters: [], sorts: [] })
+      }
+      onFetchData={handleFetchData}
+      initialPageSize={10}
     >
       <Column
         body={actionBodyTemplate}

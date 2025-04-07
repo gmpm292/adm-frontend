@@ -1,6 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const useDataTable = () => {
+const mapPrimeReactOperatorToBackend = (primeOperator) => {
+  switch (primeOperator) {
+    case 'startsWith': return 'START_WITH';
+    case 'contains': return 'CONTAINS';
+    case 'endsWith': return 'END_WITH';
+    case 'equals': return 'EQUAL';
+    case 'notEquals': return 'DISTINCT';
+    case 'lt': return 'LESS_THAN';
+    case 'lte': return 'LESS_EQUAL_THAN';
+    case 'gt': return 'GREATER_THAN';
+    case 'gte': return 'GREATER_EQUAL_THAN';
+    default: return 'CONTAINS';
+  }
+};
+
+const useDataTable = (onFetchData) => {
   const [globalFilterValue, setGlobalFilterValue] = useState("");
   const [multiSortMeta, setMultiSortMeta] = useState([]);
   const [columnFilters, setColumnFilters] = useState({});
@@ -10,6 +25,42 @@ const useDataTable = () => {
     page: 0,
   });
   const isMounted = useRef(false);
+  const prevParams = useRef(null);
+
+  const buildFilters = useCallback((filters) => {
+    return Object.entries(filters).map(([field, value]) => ({
+      property: field,
+      operator: 'CONTAINS',
+      value: value,
+      logicalOperator: 'OR'
+    }));
+  }, []);
+
+  const buildSorts = useCallback((sortMeta) => {
+    return sortMeta.map(sort => ({
+      property: sort.field,
+      direction: sort.order === 1 ? 'ASC' : 'DESC'
+    }));
+  }, []);
+
+  const loadData = useCallback(() => {
+    if (!isMounted.current || !onFetchData) return;
+
+    const filters = buildFilters(columnFilters);
+    const sorts = buildSorts(multiSortMeta);
+    const params = {
+      skip: lazyState.first,
+      take: lazyState.rows,
+      filters: filters,
+      sorts: sorts
+    };
+
+    // Evitar llamadas duplicadas con los mismos parámetros
+    if (JSON.stringify(params) !== JSON.stringify(prevParams.current)) {
+      prevParams.current = params;
+      onFetchData(params);
+    }
+  }, [lazyState, columnFilters, multiSortMeta, onFetchData, buildFilters, buildSorts]);
 
   const onPage = (event) => {
     setLazyState(prev => ({
@@ -29,6 +80,7 @@ const useDataTable = () => {
 
   const onGlobalFilterChange = (e) => {
     setGlobalFilterValue(e.target.value);
+    setColumnFilters({});
     setLazyState(prev => ({ ...prev, first: 0 }));
   };
 
@@ -45,21 +97,20 @@ const useDataTable = () => {
     setLazyState(prev => ({ ...prev, first: 0 }));
   };
 
-  const loadData = useCallback(() => {
-    if (!isMounted.current) return;
-    // Esta función ahora debe ser implementada por el componente padre
-  }, []);
-
   useEffect(() => {
     isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  // Usamos un efecto separado para manejar las llamadas a la API
+  useEffect(() => {
     const timer = setTimeout(() => {
       loadData();
     }, 300);
 
-    return () => {
-      isMounted.current = false;
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, [loadData]);
 
   return {

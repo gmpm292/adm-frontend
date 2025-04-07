@@ -58,6 +58,7 @@ const GenericDataTable = ({
   globalFilterFields = [],
   refreshable = true,
   onRefresh,
+  onFetchData,
   onRowClick,
   rowClassName,
   scrollable,
@@ -74,7 +75,14 @@ const GenericDataTable = ({
     onGlobalFilterChange,
     handleColumnFilterChange,
     loadData,
-  } = useDataTable();
+  } = useDataTable(onFetchData);
+
+  // Efecto para manejar el refresh manual
+  React.useEffect(() => {
+    if (onRefresh) {
+      loadData();
+    }
+  }, [onRefresh, loadData]);
 
   return (
     <div className="generic-data-table">
@@ -121,12 +129,14 @@ const GenericDataTable = ({
             </span>
           </div>
         }
+        globalFilter={globalFilterValue}
+        globalFilterFields={globalFilterFields}
       >
         {columns.map((column) => (
           <Column
             key={column.field}
             field={column.field}
-            header={renderColumnHeader(column.field, column.header)} // Eliminar headerTooltips
+            header={renderColumnHeader(column.field, column.header)}
             body={column.body}
             sortable={column.sortable !== false}
             sortField={column.sortField || column.field}
@@ -186,6 +196,7 @@ GenericDataTable.propTypes = {
   globalFilterFields: PropTypes.arrayOf(PropTypes.string),
   refreshable: PropTypes.bool,
   onRefresh: PropTypes.func,
+  onFetchData: PropTypes.func,
   onRowClick: PropTypes.func,
   rowClassName: PropTypes.func,
   scrollable: PropTypes.bool,
