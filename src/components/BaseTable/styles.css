@@ -1,0 +1,63 @@
+/* Estilos base para la tabla */
+.generic-data-table .p-datatable {
+    margin-top: 1rem;
+  }
+  
+  /* Estilos para los filtros */
+  .generic-data-table .p-column-filter {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+  
+  .generic-data-table .p-inputgroup {
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Mensajes de error */
+  .generic-data-table .p-message-error {
+    margin-top: 1rem;
+    background-color: #FFCDD2;
+    border-color: #EF9A9A;
+    color: #B71C1C;
+  }
+  
+  /* Estilos para la paginación */
+  .generic-data-table .p-paginator {
+    margin-top: 1rem;
+    justify-content: flex-end;
+  }
+  
+  /* Estilos para filas */
+  .generic-data-table .p-datatable .p-datatable-tbody > tr {
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .generic-data-table .p-datatable .p-datatable-tbody > tr:hover {
+    background-color: #f5f5f5;
+  }
+  
+  /* Estilos para celdas de acciones */
+  .generic-data-table .actions-column {
+    text-align: center;
+    width: 120px;
+  }
+  
+  .generic-data-table .actions-column .p-button {
+    margin: 0 0.25rem;
+  }
+
+  /* Estilos para los botones de ordenamiento */
+.generic-data-table .p-datatable .p-sortable-column .p-sortable-column-icon {
+  margin-left: 0.5rem;
+  color: var(--text-color-secondary);
+  transition: color 0.2s;
+}
+
+.generic-data-table .p-datatable .p-sortable-column:hover .p-sortable-column-icon {
+  color: var(--primary-color);
+}
+
+.generic-data-table .p-datatable .p-sortable-column.p-highlight .p-sortable-column-icon {
+  color: var(--primary-color);
+}

@@ -25,37 +25,53 @@ export function Sidebar() {
                 }
             ]
         },
+        // {
+        //     label: 'Usuarios',
+        //     icon: 'pi pi-users',
+        //     items: [
+        //         {
+        //             label: 'Gestión',
+        //             icon: 'pi pi-cog',
+        //             items: [
+        //                 {
+        //                     label: 'Crear Usuario',
+        //                     icon: 'pi pi-user-plus'
+        //                 },
+        //                 {
+        //                     label: 'Listar Usuarios',
+        //                     icon: 'pi pi-list'
+        //                 }
+        //             ]
+        //         },
+        //         {
+        //             label: 'Roles',
+        //             icon: 'pi pi-shield',
+        //             items: [
+        //                 {
+        //                     label: 'Administrador',
+        //                     icon: 'pi pi-star'
+        //                 },
+        //                 {
+        //                     label: 'Usuario',
+        //                     icon: 'pi pi-user'
+        //                 }
+        //             ]
+        //         }
+        //     ]
+        // },
         {
             label: 'Usuarios',
             icon: 'pi pi-users',
             items: [
                 {
-                    label: 'Gestión',
-                    icon: 'pi pi-cog',
-                    items: [
-                        {
-                            label: 'Crear Usuario',
-                            icon: 'pi pi-user-plus'
-                        },
-                        {
-                            label: 'Listar Usuarios',
-                            icon: 'pi pi-list'
-                        }
-                    ]
+                    label: 'Lista de Usuarios',
+                    icon: 'pi pi-list',
+                    command: () => navigate('/users')
                 },
                 {
-                    label: 'Roles',
-                    icon: 'pi pi-shield',
-                    items: [
-                        {
-                            label: 'Administrador',
-                            icon: 'pi pi-star'
-                        },
-                        {
-                            label: 'Usuario',
-                            icon: 'pi pi-user'
-                        }
-                    ]
+                    label: 'Crear Usuario',
+                    icon: 'pi pi-user-plus',
+                    command: () => navigate('/users/create')
                 }
             ]
         },
