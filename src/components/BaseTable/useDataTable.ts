@@ -11,6 +11,8 @@ const mapPrimeReactOperatorToBackend = (primeOperator) => {
     case 'lte': return 'LESS_EQUAL_THAN';
     case 'gt': return 'GREATER_THAN';
     case 'gte': return 'GREATER_EQUAL_THAN';
+    case 'is': return 'EQUAL';
+    case 'isNot': return 'DISTINCT';
     default: return 'CONTAINS';
   }
 };
@@ -28,12 +30,26 @@ const useDataTable = (onFetchData) => {
   const prevParams = useRef(null);
 
   const buildFilters = useCallback((filters) => {
-    return Object.entries(filters).map(([field, value]) => ({
-      property: field,
-      operator: 'CONTAINS',
-      value: value,
-      logicalOperator: 'OR'
-    }));
+    const result = [];
+    
+    Object.entries(filters).forEach(([field, filterData]) => {
+      if (!filterData?.constraints) return;
+      
+      const filtersForField = filterData.constraints
+        .filter(constraint => constraint.value !== null && constraint.value !== '')
+        .map(constraint => ({
+          property: field,
+          operator: mapPrimeReactOperatorToBackend(constraint.matchMode),
+          value: String(constraint.value),
+          logicalOperator: filterData.operator === 'and' ? 'AND' : 'OR'
+        }));
+      
+      if (filtersForField.length > 0) {
+        result.push(...filtersForField);
+      }
+    });
+
+    return result;
   }, []);
 
   const buildSorts = useCallback((sortMeta) => {
@@ -55,7 +71,6 @@ const useDataTable = (onFetchData) => {
       sorts: sorts
     };
 
-    // Evitar llamadas duplicadas con los mismos parámetros
     if (JSON.stringify(params) !== JSON.stringify(prevParams.current)) {
       prevParams.current = params;
       onFetchData(params);
@@ -80,31 +95,22 @@ const useDataTable = (onFetchData) => {
 
   const onGlobalFilterChange = (e) => {
     setGlobalFilterValue(e.target.value);
-    setColumnFilters({});
     setLazyState(prev => ({ ...prev, first: 0 }));
   };
 
-  const handleColumnFilterChange = (field, value) => {
-    setColumnFilters(prev => {
-      const newFilters = { ...prev };
-      if (value && value.trim() !== '') {
-        newFilters[field] = value;
-      } else {
-        delete newFilters[field];
-      }
-      return newFilters;
-    });
+  const onFilter = (e) => {
+    setColumnFilters(e.filters);
     setLazyState(prev => ({ ...prev, first: 0 }));
   };
 
   useEffect(() => {
     isMounted.current = true;
+    loadData(); // Carga inicial
     return () => {
       isMounted.current = false;
     };
   }, []);
 
-  // Usamos un efecto separado para manejar las llamadas a la API
   useEffect(() => {
     const timer = setTimeout(() => {
       loadData();
@@ -121,7 +127,7 @@ const useDataTable = (onFetchData) => {
     onPage,
     onSort,
     onGlobalFilterChange,
-    handleColumnFilterChange,
+    onFilter,
     loadData
   };
 };

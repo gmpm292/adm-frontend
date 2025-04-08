@@ -1,43 +1,12 @@
-import React from "react";
-import { useRef } from "react";
+import React, { useState } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import PropTypes from "prop-types";
+import { FilterMatchMode, FilterOperator } from "primereact/api";
 import "./styles.css";
 import useDataTable from "./useDataTable";
-
-const ColumnFilter = React.memo(
-  ({ field, header, columnFilters, handleColumnFilterChange }) => {
-    const inputRef = useRef(null);
-
-    return (
-      <div className="p-fluid">
-        <div className="p-inputgroup">
-          <InputText
-            ref={inputRef}
-            value={columnFilters[field] || ""}
-            onChange={(e) => handleColumnFilterChange(field, e.target.value)}
-            placeholder={`Filtrar ${header.toLowerCase()}...`}
-          />
-          <Button
-            icon="pi pi-times"
-            className="p-button-text"
-            onClick={() => {
-              handleColumnFilterChange(field, "");
-              if (inputRef.current) {
-                inputRef.current.value = "";
-              }
-            }}
-            tooltip="Limpiar filtro"
-            tooltipOptions={{ position: "top" }}
-          />
-        </div>
-      </div>
-    );
-  }
-);
 
 const renderColumnHeader = (field, displayName) => (
   <div className="flex align-items-center">
@@ -73,11 +42,26 @@ const GenericDataTable = ({
     onPage,
     onSort,
     onGlobalFilterChange,
-    handleColumnFilterChange,
+    onFilter,
     loadData,
   } = useDataTable(onFetchData);
 
-  // Efecto para manejar el refresh manual
+  // Initialize filters
+  const initFilters = () => {
+    const filters = {};
+    columns.forEach((col) => {
+      if (col.filter) {
+        filters[col.field] = {
+          operator: FilterOperator.AND,
+          constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
+        };
+      }
+    });
+    return filters;
+  };
+
+  const [filters, setFilters] = useState(initFilters());
+
   React.useEffect(() => {
     if (onRefresh) {
       loadData();
@@ -108,6 +92,11 @@ const GenericDataTable = ({
         scrollHeight={scrollHeight}
         onRowClick={onRowClick}
         rowClassName={rowClassName}
+        filters={filters}
+        onFilter={onFilter}
+        filterDisplay="menu"
+        globalFilter={globalFilterValue}
+        globalFilterFields={globalFilterFields}
         header={
           <div className="flex justify-content-between align-items-center">
             {refreshable && (
@@ -129,8 +118,6 @@ const GenericDataTable = ({
             </span>
           </div>
         }
-        globalFilter={globalFilterValue}
-        globalFilterFields={globalFilterFields}
       >
         {columns.map((column) => (
           <Column
@@ -141,16 +128,17 @@ const GenericDataTable = ({
             sortable={column.sortable !== false}
             sortField={column.sortField || column.field}
             filter={column.filter}
-            filterElement={
-              column.filter && (
-                <ColumnFilter
-                  field={column.field}
-                  header={column.header}
-                  columnFilters={columnFilters}
-                  handleColumnFilterChange={handleColumnFilterChange}
-                />
-              )
-            }
+            filterField={column.field}
+            filterMatchModeOptions={[
+              { label: "Empieza con", value: FilterMatchMode.STARTS_WITH },
+              { label: "Contiene", value: FilterMatchMode.CONTAINS },
+              { label: "Termina con", value: FilterMatchMode.ENDS_WITH },
+              { label: "Igual a", value: FilterMatchMode.EQUALS },
+              { label: "Diferente a", value: FilterMatchMode.NOT_EQUALS },
+            ]}
+            showFilterMatchModes={column.filter}
+            showFilterMenuOptions={column.filter}
+            showFilterMenu={column.filter}
             style={column.style}
             headerStyle={column.headerStyle}
             bodyStyle={column.bodyStyle}
