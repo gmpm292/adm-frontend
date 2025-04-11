@@ -27,34 +27,9 @@ export const GET_USER_BY_ID = gql`
       lastName
       mobile
       role
-      
     }
   }
 `;
-
-// office {
-//     id
-//     officeType 
-//     name
-//   }
-//   department {
-//     id
-//     departmentType
-//     name
-//     office {
-//       id
-//       name
-//     }
-//   }
-//   team {   
-//     id
-//     teamType
-//     department {
-//       id
-//       departmentType
-//       name
-//     }
-//   } 
 
 export const CREATE_USER = gql`
   mutation CreateUser($user: CreateUserInput!) {
@@ -68,6 +43,12 @@ export const UPDATE_USER = gql`
   mutation UpdateUser($user: UpdateUserInput!) {
     updateUser(updateUserInput: $user) {
       id
+      email
+      enabled
+      name
+      lastName
+      mobile
+      role
     }
   }
 `;

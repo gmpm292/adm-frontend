@@ -14,6 +14,7 @@ import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import "primeflex/primeflex.css";
 import "./App.css";
+import './styles/dialogs.css';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false); // Estado de autenticación
