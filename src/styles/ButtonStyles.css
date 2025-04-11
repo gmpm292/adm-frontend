@@ -11,6 +11,24 @@
     align-items: center; /* Alinear verticalmente */
     justify-content: center; /* Alinear horizontalmente */
     gap: 0.5rem; /* Espacio entre icono y texto */
+    margin-right: 0.2rem;
+    margin-left: 0.2rem;
+}
+
+/* Estilo específico para botones solo con icono */
+.p-button.p-button-icon-only {
+    width: 2.5rem; /* Ancho fijo para botones icono */
+    height: 2.5rem; /* Alto fijo */
+    padding: 0.75rem !important; /* Padding igual en todos lados */
+}
+
+/* Centrado perfecto de iconos para botones solo con icono*/
+.p-button.p-button-icon-only .p-button-icon {
+    position: absolute; /* Posicionamiento absoluto */
+    left: 50%; /* Centrado horizontal */
+    top: 50%; /* Centrado vertical */
+    transform: translate(-50%, -50%); /* Ajuste fino del centrado */
+    margin: 0 !important; /* Elimina cualquier margen */
 }
 
 /* Botón primario */

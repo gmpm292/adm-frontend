@@ -1,63 +1,62 @@
-/* Estilos base para la tabla */
+/* Estilos para el título de la tarjeta */
+.p-card-title {
+  padding-left: 1rem !important; /* Separa el título del borde izquierdo */
+}
+
+/* Estilos base para la tabla - Versión mejorada */
 .generic-data-table .p-datatable {
-    margin-top: 1rem;
-  }
-  
-  /* Estilos para los filtros */
-  .generic-data-table .p-column-filter {
-    width: 100%;
-    margin-top: 0.5rem;
-  }
-  
-  .generic-data-table .p-inputgroup {
-    margin-bottom: 0.5rem;
-  }
-  
-  /* Mensajes de error */
-  .generic-data-table .p-message-error {
-    margin-top: 1rem;
-    background-color: #FFCDD2;
-    border-color: #EF9A9A;
-    color: #B71C1C;
-  }
-  
-  /* Estilos para la paginación */
-  .generic-data-table .p-paginator {
-    margin-top: 1rem;
-    justify-content: flex-end;
-  }
-  
-  /* Estilos para filas */
-  .generic-data-table .p-datatable .p-datatable-tbody > tr {
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .generic-data-table .p-datatable .p-datatable-tbody > tr:hover {
-    background-color: #f5f5f5;
-  }
-  
-  /* Estilos para celdas de acciones */
-  .generic-data-table .actions-column {
-    text-align: center;
-    width: 120px;
-  }
-  
-  .generic-data-table .actions-column .p-button {
-    margin: 0 0.25rem;
-  }
-
-  /* Estilos para los botones de ordenamiento */
-.generic-data-table .p-datatable .p-sortable-column .p-sortable-column-icon {
-  margin-left: 0.5rem;
-  color: var(--text-color-secondary);
-  transition: color 0.2s;
+  margin-top: 0.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
-.generic-data-table .p-datatable .p-sortable-column:hover .p-sortable-column-icon {
-  color: var(--primary-color);
+/* Cabeceras de columnas - Con mejor espaciado */
+.generic-data-table .p-datatable-thead > tr > th {
+  padding: 0.1rem 1rem !important; /* Más espacio interno */
+  background-color: #f5f7fa !important; /* Color de fondo para encabezados */
+  border-bottom: 2px solid #e0e0e0 !important;
+  font-weight: 600;
+  color: #2d3748;
 }
 
-.generic-data-table .p-datatable .p-sortable-column.p-highlight .p-sortable-column-icon {
-  color: var(--primary-color);
+/* Celdas - Con espaciado uniforme */
+.generic-data-table .p-datatable-tbody > tr > td {
+  padding: 0.1rem 1rem !important; /* Más espacio interno */
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* Filas alternas - Color diferenciado */
+.generic-data-table .p-datatable-tbody > tr:nth-child(even) {
+  background-color: #f9fafb !important; /* Color claro para filas pares */
+}
+
+/* Hover en filas */
+.generic-data-table .p-datatable-tbody > tr:hover {
+  background-color: #f0f4f8 !important; /* Color de hover más visible */
+}
+
+/* Mensajes de error */
+.generic-data-table .p-message-error {
+  margin: 0.5rem 0;
+  padding: 0.75rem;
+  border-radius: 4px;
+}
+
+/* Paginación - Mejor integración visual */
+.generic-data-table .p-paginator {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background-color: #f5f7fa;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Botones de acción - Más compactos */
+.generic-data-table .actions-column {
+  padding: 0.5rem !important;
+}
+
+.generic-data-table .actions-column .p-button {
+  margin: 0 0.125rem;
+  padding: 0.375rem !important;
 }

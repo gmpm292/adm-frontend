@@ -181,7 +181,7 @@ export function UserTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "8rem" }}
+          headerStyle={{ width: "10rem" }}
           bodyStyle={{ textAlign: "center" }}
         />
       </GenericDataTable>
