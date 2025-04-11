@@ -24,15 +24,25 @@ export function UserTable() {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [editDialogVisible, setEditDialogVisible] = useState(false);
   const toast = useRef(null);
-  const [lazyState, setLazyState] = useState({
-    first: 0,
-    rows: 10,
-    page: 0,
+  const tableStateRef = useRef({
+    filters: {},
+    sorts: [],
+    pagination: { first: 0, rows: 10 },
   });
 
   const handleFetchData = useCallback(
     async (params) => {
       try {
+        // Guardar el estado actual
+        tableStateRef.current = {
+          filters: params.filters || {},
+          sorts: params.sorts || [],
+          pagination: {
+            first: params.skip,
+            rows: params.take,
+          },
+        };
+
         const { data: responseData } = await getUsers({
           variables: {
             options: {
@@ -59,6 +69,21 @@ export function UserTable() {
     [getUsers]
   );
 
+  const handleRefresh = useCallback(() => {
+    // Recargar con el estado actual guardado
+    handleFetchData({
+      skip: tableStateRef.current.pagination.first,
+      take: tableStateRef.current.pagination.rows,
+      filters: tableStateRef.current.filters,
+      sorts: tableStateRef.current.sorts,
+    });
+  }, [handleFetchData]);
+
+  const handleEditSuccess = useCallback(() => {
+    // Recargar después de editar con el estado actual
+    handleRefresh();
+  }, [handleRefresh]);
+
   const handleEdit = (userId) => {
     setSelectedUserId(userId);
     setEditDialogVisible(true);
@@ -66,31 +91,31 @@ export function UserTable() {
 
   const handleDelete = (userId) => {
     confirmDialog({
-      message: '¿Estás seguro de que deseas eliminar este usuario?',
-      header: 'Confirmación',
-      icon: 'pi pi-exclamation-triangle',
+      message: "¿Estás seguro de que deseas eliminar este usuario?",
+      header: "Confirmación",
+      icon: "pi pi-exclamation-triangle",
       accept: async () => {
         try {
           await deleteUsers({ variables: { ids: [userId] } });
-          
+
           toast.current.show({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Usuario eliminado correctamente',
-            life: 3000
+            severity: "success",
+            summary: "Éxito",
+            detail: "Usuario eliminado correctamente",
+            life: 3000,
           });
 
-          // Refrescar la tabla
-          handleFetchData({ skip: 0, take: 10, filters: [], sorts: [] });
+          // Recargar manteniendo el estado actual
+          handleRefresh();
         } catch (err) {
           toast.current.show({
-            severity: 'error',
-            summary: 'Error',
+            severity: "error",
+            summary: "Error",
             detail: err.message,
-            life: 3000
+            life: 3000,
           });
         }
-      }
+      },
     });
   };
 
@@ -150,21 +175,11 @@ export function UserTable() {
     },
   ];
 
-  const handleEditSuccess = () => {
-    // Refrescar la tabla después de editar
-    handleFetchData({ 
-      skip: lazyState?.first || 0, 
-      take: lazyState?.rows || 10, 
-      filters: [], 
-      sorts: [] 
-    });
-  };
-
   return (
     <>
       <Toast ref={toast} />
       <ConfirmDialog />
-      
+
       <GenericDataTable
         columns={columns}
         data={data?.users?.data}
@@ -174,7 +189,7 @@ export function UserTable() {
         globalFilterFields={["name", "lastName", "email", "role"]}
         emptyMessage="No se encontraron usuarios"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
-        onRefresh={() => handleFetchData({ skip: 0, take: 10, filters: [], sorts: [] })}
+        onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
       >
