@@ -33,6 +33,7 @@ const GenericDataTable = ({
   scrollable,
   scrollHeight,
   children,
+  header, // Nuevo prop para el header personalizado
 }) => {
   const {
     lazyState,
@@ -44,7 +45,7 @@ const GenericDataTable = ({
     onGlobalFilterChange,
     onFilter,
     loadData,
-  } = useDataTable(onFetchData);
+  } = useDataTable(onFetchData, globalFilterFields);
 
   // Initialize filters
   const initFilters = () => {
@@ -67,6 +68,57 @@ const GenericDataTable = ({
       loadData();
     }
   }, [onRefresh, loadData]);
+
+  // Header por defecto
+  const defaultHeader = (
+    <div className="flex justify-content-between align-items-center">
+      {refreshable && (
+        <Button
+          icon="pi pi-refresh"
+          onClick={onRefresh || loadData}
+          className="p-button-text"
+          tooltip="Recargar datos"
+          tooltipOptions={{ position: "bottom" }}
+        />
+      )}
+      <span className="p-input-icon-left w-full md:w-20rem">
+        <i className="pi pi-search" />
+        <InputText
+          value={globalFilterValue}
+          onChange={onGlobalFilterChange}
+          placeholder="Buscar en todos los campos..."
+        />
+      </span>
+    </div>
+  );
+
+  // Header combinado si se pasa el prop header
+  const combinedHeader = header ? (
+    <div className="flex justify-content-between align-items-center">
+      <div className="flex align-items-center gap-2">
+        {refreshable && (
+          <Button
+            icon="pi pi-refresh"
+            onClick={onRefresh || loadData}
+            className="p-button-text"
+            tooltip="Recargar datos"
+            tooltipOptions={{ position: "bottom" }}
+          />
+        )}
+        {header}
+      </div>
+      <span className="p-input-icon-left w-full md:w-20rem">
+        <i className="pi pi-search" />
+        <InputText
+          value={globalFilterValue}
+          onChange={onGlobalFilterChange}
+          placeholder="Buscar en todos los campos..."
+        />
+      </span>
+    </div>
+  ) : (
+    defaultHeader
+  );
 
   return (
     <div className="generic-data-table">
@@ -97,27 +149,7 @@ const GenericDataTable = ({
         filterDisplay="menu"
         globalFilter={globalFilterValue}
         globalFilterFields={globalFilterFields}
-        header={
-          <div className="flex justify-content-between align-items-center">
-            {refreshable && (
-              <Button
-                icon="pi pi-refresh"
-                onClick={onRefresh || loadData}
-                className="p-button-text"
-                tooltip="Recargar datos"
-                tooltipOptions={{ position: "bottom" }}
-              />
-            )}
-            <span className="p-input-icon-left w-full md:w-20rem">
-              <i className="pi pi-search" />
-              <InputText
-                value={globalFilterValue}
-                onChange={onGlobalFilterChange}
-                placeholder="Buscar en todos los campos..."
-              />
-            </span>
-          </div>
-        }
+        header={combinedHeader} // Usamos el header combinado
       >
         {columns.map((column) => (
           <Column
@@ -189,6 +221,7 @@ GenericDataTable.propTypes = {
   rowClassName: PropTypes.func,
   scrollable: PropTypes.bool,
   scrollHeight: PropTypes.string,
+  header: PropTypes.node, // Nuevo prop para el header personalizado
 };
 
 export default GenericDataTable;

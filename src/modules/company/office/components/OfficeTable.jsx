@@ -1,36 +1,31 @@
 import React, { useCallback, useState, useRef } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
-import { GET_USERS, DELETE_USERS } from "../graphql/queries";
-import GenericDataTable from "../../../components/BaseTable/index";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
-import { InputText } from "primereact/inputtext";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
-import { UserEditForm } from "./UserEditForm";
-import { UserCreateForm } from "./UserCreateForm";
-import { UserDetailForm } from "./UserDetailForm";
+import { Dropdown } from "primereact/dropdown";
 
-const statusBodyTemplate = (rowData) => {
-  return (
-    <span className={`badge status-${rowData.enabled ? "active" : "inactive"}`}>
-      {rowData.enabled ? "Activo" : "Inactivo"}
-    </span>
-  );
-};
+import { OfficeCreateForm } from "./OfficeCreateForm";
+import { OfficeEditForm } from "./OfficeEditForm";
 
-export function UserTable() {
-  const [getUsers, { loading, data, error }] = useLazyQuery(GET_USERS, {
+import GenericDataTable from "../../../../components/BaseTable";
+import { DELETE_OFFICES, GET_OFFICES } from "../graphql/queries";
+
+const officeTypes = [
+  { label: "Oficina", value: "OFFICE" },
+  { label: "Sucursal", value: "BRANCH" },
+];
+
+export function OfficeTable() {
+  const [getOffices, { loading, data, error }] = useLazyQuery(GET_OFFICES, {
     fetchPolicy: "network-only",
   });
-  const [deleteUsers] = useMutation(DELETE_USERS);
-  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [deleteOffices] = useMutation(DELETE_OFFICES);
+  const [selectedOfficeId, setSelectedOfficeId] = useState(null);
   const [editDialogVisible, setEditDialogVisible] = useState(false);
   const [createDialogVisible, setCreateDialogVisible] = useState(false);
-  const [globalFilter, setGlobalFilter] = useState("");
   const toast = useRef(null);
-  const [detailDialogVisible, setDetailDialogVisible] = useState(false);
-
   const tableStateRef = useRef({
     filters: {},
     sorts: [],
@@ -49,7 +44,7 @@ export function UserTable() {
           },
         };
 
-        const { data: responseData } = await getUsers({
+        const { data: responseData } = await getOffices({
           variables: {
             options: {
               skip: params.skip,
@@ -61,18 +56,18 @@ export function UserTable() {
         });
 
         return {
-          data: responseData?.users?.data,
-          totalCount: responseData?.users?.totalCount,
+          data: responseData?.offices?.data,
+          totalCount: responseData?.offices?.totalCount,
         };
       } catch (err) {
-        console.error("Error fetching users:", err);
+        console.error("Error fetching offices:", err);
         return {
           data: [],
           totalCount: 0,
         };
       }
     },
-    [getUsers]
+    [getOffices]
   );
 
   const handleRefresh = useCallback(() => {
@@ -92,29 +87,24 @@ export function UserTable() {
     handleRefresh();
   }, [handleRefresh]);
 
-  const handleEdit = (userId) => {
-    setSelectedUserId(userId);
+  const handleEdit = (officeId) => {
+    setSelectedOfficeId(officeId);
     setEditDialogVisible(true);
   };
 
-  const handleViewDetails = (userId) => {
-    setSelectedUserId(userId);
-    setDetailDialogVisible(true);
-  };
-
-  const handleDelete = (userId) => {
+  const handleDelete = (officeId) => {
     confirmDialog({
-      message: "¿Estás seguro de que deseas eliminar este usuario?",
+      message: "¿Estás seguro de que deseas eliminar esta oficina?",
       header: "Confirmación",
       icon: "pi pi-exclamation-triangle",
       accept: async () => {
         try {
-          await deleteUsers({ variables: { ids: [userId] } });
+          await deleteOffices({ variables: { ids: [officeId] } });
 
           toast.current.show({
             severity: "success",
             summary: "Éxito",
-            detail: "Usuario eliminado correctamente",
+            detail: "Oficina eliminada correctamente",
             life: 3000,
           });
 
@@ -131,29 +121,27 @@ export function UserTable() {
     });
   };
 
+  const officeTypeBodyTemplate = (rowData) => {
+    const type = officeTypes.find((t) => t.value === rowData.officeType);
+    return type ? type.label : rowData.officeType;
+  };
+
   const actionBodyTemplate = (rowData) => {
     return (
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
           className="p-button-rounded p-button-text"
-          tooltip="Editar usuario"
+          tooltip="Editar oficina"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
         <Button
           icon="pi pi-trash"
           className="p-button-rounded p-button-text p-button-danger"
-          tooltip="Eliminar usuario"
+          tooltip="Eliminar oficina"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleDelete(rowData.id)}
-        />
-        <Button
-          icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
-          tooltip="Ver detalles"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleViewDetails(rowData.id)}
         />
       </div>
     );
@@ -167,38 +155,30 @@ export function UserTable() {
       filter: true,
     },
     {
-      field: "lastName",
-      header: "Apellido",
+      field: "officeType",
+      header: "Tipo",
+      body: officeTypeBodyTemplate,
       sortable: true,
       filter: true,
     },
     {
-      field: "email",
-      header: "Email",
+      field: "business.name",
+      header: "Empresa",
       sortable: true,
       filter: true,
     },
     {
-      field: "role",
-      header: "Rol",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "enabled",
-      header: "Estado",
-      body: statusBodyTemplate,
+      field: "address",
+      header: "Dirección",
       sortable: true,
       filter: true,
     },
   ];
 
-  // Botón de nuevo usuario que se pasará al header
-  const addUserButton = (
+  const addButton = (
     <Button
-      //label="Nuevo Usuario"
       icon="pi pi-plus"
-      tooltip="Crear Usuario Nuevo"
+      tooltip="Crear nueva oficina"
       onClick={() => setCreateDialogVisible(true)}
     />
   );
@@ -210,18 +190,17 @@ export function UserTable() {
 
       <GenericDataTable
         columns={columns}
-        data={data?.users?.data}
-        totalRecords={data?.users?.totalCount}
+        data={data?.offices?.data}
+        totalRecords={data?.offices?.totalCount}
         loading={loading}
         error={error}
-        globalFilter={globalFilter}
-        globalFilterFields={["name", "email"]}
-        emptyMessage="No se encontraron usuarios"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
+        globalFilterFields={["name", "business.name", "address"]}
+        emptyMessage="No se encontraron oficinas"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} oficinas"
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        header={addUserButton} // Pasamos el botón como header personalizado
+        header={addButton}
       >
         <Column
           body={actionBodyTemplate}
@@ -231,26 +210,20 @@ export function UserTable() {
         />
       </GenericDataTable>
 
-      <UserEditForm
-        userId={selectedUserId}
+      <OfficeEditForm
+        officeId={selectedOfficeId}
         visible={editDialogVisible}
         onHide={() => setEditDialogVisible(false)}
         onSuccess={handleEditSuccess}
       />
 
-      <UserCreateForm
+      <OfficeCreateForm
         visible={createDialogVisible}
         onHide={() => setCreateDialogVisible(false)}
         onSuccess={handleCreateSuccess}
-      />
-
-      <UserDetailForm
-        userId={selectedUserId}
-        visible={detailDialogVisible}
-        onHide={() => setDetailDialogVisible(false)}
       />
     </>
   );
 }
 
-export default UserTable;
+export default OfficeTable;

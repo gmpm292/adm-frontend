@@ -51,8 +51,10 @@
   border-top: 1px solid #e0e0e0;
 }
 
-/* Botones de acción - Más compactos */
 .generic-data-table .actions-column {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
   padding: 0.5rem !important;
 }
 

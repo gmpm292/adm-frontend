@@ -14,10 +14,11 @@ import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import "primeflex/primeflex.css";
 import "./App.css";
-import './styles/ButtonStyles.css';
-import './styles/dialogs.css';
+import "./styles/ButtonStyles.css";
+import "./styles/dialogs.css";
 
-import './components/BaseTable/styles.css';
+import "./components/BaseTable/styles.css";
+import { CompanyModule } from "./modules/company";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false); // Estado de autenticación
@@ -60,6 +61,15 @@ function App() {
               element={
                 <MainLayout>
                   <UserListPage />
+                </MainLayout>
+              }
+            />
+            {/* Rutas del módulo de compañía */}
+            <Route
+              path="/company/*"
+              element={
+                <MainLayout>
+                  <CompanyModule />
                 </MainLayout>
               }
             />

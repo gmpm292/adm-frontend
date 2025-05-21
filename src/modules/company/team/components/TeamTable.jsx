@@ -1,36 +1,31 @@
 import React, { useCallback, useState, useRef } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
-import { GET_USERS, DELETE_USERS } from "../graphql/queries";
-import GenericDataTable from "../../../components/BaseTable/index";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
-import { InputText } from "primereact/inputtext";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
-import { UserEditForm } from "./UserEditForm";
-import { UserCreateForm } from "./UserCreateForm";
-import { UserDetailForm } from "./UserDetailForm";
+import { Dropdown } from "primereact/dropdown";
 
-const statusBodyTemplate = (rowData) => {
-  return (
-    <span className={`badge status-${rowData.enabled ? "active" : "inactive"}`}>
-      {rowData.enabled ? "Activo" : "Inactivo"}
-    </span>
-  );
-};
+import { TeamCreateForm } from "./TeamCreateForm";
+import { TeamEditForm } from "./TeamEditForm";
+import { DELETE_TEAMS, GET_TEAMS } from "../graphql/queries";
+import GenericDataTable from "../../../../components/BaseTable";
 
-export function UserTable() {
-  const [getUsers, { loading, data, error }] = useLazyQuery(GET_USERS, {
+const teamTypes = [
+  { label: "Operaciones", value: "OPERATIONS" },
+  { label: "Nuevos Negocios", value: "NEW_BUSINESS" },
+  { label: "Renovaciones", value: "RENOVATIONS" },
+];
+
+export function TeamTable() {
+  const [getTeams, { loading, data, error }] = useLazyQuery(GET_TEAMS, {
     fetchPolicy: "network-only",
   });
-  const [deleteUsers] = useMutation(DELETE_USERS);
-  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [deleteTeams] = useMutation(DELETE_TEAMS);
+  const [selectedTeamId, setSelectedTeamId] = useState(null);
   const [editDialogVisible, setEditDialogVisible] = useState(false);
   const [createDialogVisible, setCreateDialogVisible] = useState(false);
-  const [globalFilter, setGlobalFilter] = useState("");
   const toast = useRef(null);
-  const [detailDialogVisible, setDetailDialogVisible] = useState(false);
-
   const tableStateRef = useRef({
     filters: {},
     sorts: [],
@@ -49,7 +44,7 @@ export function UserTable() {
           },
         };
 
-        const { data: responseData } = await getUsers({
+        const { data: responseData } = await getTeams({
           variables: {
             options: {
               skip: params.skip,
@@ -61,18 +56,18 @@ export function UserTable() {
         });
 
         return {
-          data: responseData?.users?.data,
-          totalCount: responseData?.users?.totalCount,
+          data: responseData?.teams?.data,
+          totalCount: responseData?.teams?.totalCount,
         };
       } catch (err) {
-        console.error("Error fetching users:", err);
+        console.error("Error fetching teams:", err);
         return {
           data: [],
           totalCount: 0,
         };
       }
     },
-    [getUsers]
+    [getTeams]
   );
 
   const handleRefresh = useCallback(() => {
@@ -92,29 +87,24 @@ export function UserTable() {
     handleRefresh();
   }, [handleRefresh]);
 
-  const handleEdit = (userId) => {
-    setSelectedUserId(userId);
+  const handleEdit = (teamId) => {
+    setSelectedTeamId(teamId);
     setEditDialogVisible(true);
   };
 
-  const handleViewDetails = (userId) => {
-    setSelectedUserId(userId);
-    setDetailDialogVisible(true);
-  };
-
-  const handleDelete = (userId) => {
+  const handleDelete = (teamId) => {
     confirmDialog({
-      message: "¿Estás seguro de que deseas eliminar este usuario?",
+      message: "¿Estás seguro de que deseas eliminar este equipo?",
       header: "Confirmación",
       icon: "pi pi-exclamation-triangle",
       accept: async () => {
         try {
-          await deleteUsers({ variables: { ids: [userId] } });
+          await deleteTeams({ variables: { ids: [teamId] } });
 
           toast.current.show({
             severity: "success",
             summary: "Éxito",
-            detail: "Usuario eliminado correctamente",
+            detail: "Equipo eliminado correctamente",
             life: 3000,
           });
 
@@ -131,29 +121,27 @@ export function UserTable() {
     });
   };
 
+  const teamTypeBodyTemplate = (rowData) => {
+    const type = teamTypes.find((t) => t.value === rowData.teamType);
+    return type ? type.label : rowData.teamType;
+  };
+
   const actionBodyTemplate = (rowData) => {
     return (
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
           className="p-button-rounded p-button-text"
-          tooltip="Editar usuario"
+          tooltip="Editar equipo"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
         <Button
           icon="pi pi-trash"
           className="p-button-rounded p-button-text p-button-danger"
-          tooltip="Eliminar usuario"
+          tooltip="Eliminar equipo"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleDelete(rowData.id)}
-        />
-        <Button
-          icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
-          tooltip="Ver detalles"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleViewDetails(rowData.id)}
         />
       </div>
     );
@@ -161,44 +149,24 @@ export function UserTable() {
 
   const columns = [
     {
-      field: "name",
-      header: "Nombre",
+      field: "teamType",
+      header: "Tipo",
+      body: teamTypeBodyTemplate,
       sortable: true,
       filter: true,
     },
     {
-      field: "lastName",
-      header: "Apellido",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "email",
-      header: "Email",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "role",
-      header: "Rol",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "enabled",
-      header: "Estado",
-      body: statusBodyTemplate,
+      field: "department.name",
+      header: "Departamento",
       sortable: true,
       filter: true,
     },
   ];
 
-  // Botón de nuevo usuario que se pasará al header
-  const addUserButton = (
+  const addButton = (
     <Button
-      //label="Nuevo Usuario"
       icon="pi pi-plus"
-      tooltip="Crear Usuario Nuevo"
+      tooltip="Crear nuevo equipo"
       onClick={() => setCreateDialogVisible(true)}
     />
   );
@@ -210,18 +178,17 @@ export function UserTable() {
 
       <GenericDataTable
         columns={columns}
-        data={data?.users?.data}
-        totalRecords={data?.users?.totalCount}
+        data={data?.teams?.data}
+        totalRecords={data?.teams?.totalCount}
         loading={loading}
         error={error}
-        globalFilter={globalFilter}
-        globalFilterFields={["name", "email"]}
-        emptyMessage="No se encontraron usuarios"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
+        globalFilterFields={["teamType", "department.name"]}
+        emptyMessage="No se encontraron equipos"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} equipos"
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        header={addUserButton} // Pasamos el botón como header personalizado
+        header={addButton}
       >
         <Column
           body={actionBodyTemplate}
@@ -231,26 +198,20 @@ export function UserTable() {
         />
       </GenericDataTable>
 
-      <UserEditForm
-        userId={selectedUserId}
+      <TeamEditForm
+        teamId={selectedTeamId}
         visible={editDialogVisible}
         onHide={() => setEditDialogVisible(false)}
         onSuccess={handleEditSuccess}
       />
 
-      <UserCreateForm
+      <TeamCreateForm
         visible={createDialogVisible}
         onHide={() => setCreateDialogVisible(false)}
         onSuccess={handleCreateSuccess}
-      />
-
-      <UserDetailForm
-        userId={selectedUserId}
-        visible={detailDialogVisible}
-        onHide={() => setDetailDialogVisible(false)}
       />
     </>
   );
 }
 
-export default UserTable;
+export default TeamTable;

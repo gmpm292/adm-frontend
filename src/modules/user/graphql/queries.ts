@@ -27,6 +27,24 @@ export const GET_USER_BY_ID = gql`
       lastName
       mobile
       role
+      isTwoFactorConfigured
+      isTwoFactorEnabled
+      business {
+        id
+        name
+      }
+      office {
+        id
+        name
+      }
+      department {
+        id
+        name
+      }
+      team {
+        id
+        #name
+      }
     }
   }
 `;
@@ -57,6 +75,16 @@ export const DELETE_USERS = gql`
   mutation RemoveUsers($ids: [Int!]!) {
     removeUsers(ids: $ids) {
       id
+    }
+  }
+`;
+
+export const GET_ROLES = gql`
+  query {
+    __type(name: "Role") {
+      enumValues {
+        name
+      }
     }
   }
 `;

@@ -1,23 +1,35 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const mapPrimeReactOperatorToBackend = (primeOperator) => {
   switch (primeOperator) {
-    case 'startsWith': return 'START_WITH';
-    case 'contains': return 'CONTAINS';
-    case 'endsWith': return 'END_WITH';
-    case 'equals': return 'EQUAL';
-    case 'notEquals': return 'DISTINCT';
-    case 'lt': return 'LESS_THAN';
-    case 'lte': return 'LESS_EQUAL_THAN';
-    case 'gt': return 'GREATER_THAN';
-    case 'gte': return 'GREATER_EQUAL_THAN';
-    case 'is': return 'EQUAL';
-    case 'isNot': return 'DISTINCT';
-    default: return 'CONTAINS';
+    case "startsWith":
+      return "START_WITH";
+    case "contains":
+      return "CONTAINS";
+    case "endsWith":
+      return "END_WITH";
+    case "equals":
+      return "EQUAL";
+    case "notEquals":
+      return "DISTINCT";
+    case "lt":
+      return "LESS_THAN";
+    case "lte":
+      return "LESS_EQUAL_THAN";
+    case "gt":
+      return "GREATER_THAN";
+    case "gte":
+      return "GREATER_EQUAL_THAN";
+    case "is":
+      return "EQUAL";
+    case "isNot":
+      return "DISTINCT";
+    default:
+      return "CONTAINS";
   }
 };
 
-const useDataTable = (onFetchData) => {
+const useDataTable = (onFetchData, globalFilterFields = []) => {
   const [globalFilterValue, setGlobalFilterValue] = useState("");
   const [multiSortMeta, setMultiSortMeta] = useState([]);
   const [columnFilters, setColumnFilters] = useState({});
@@ -29,40 +41,58 @@ const useDataTable = (onFetchData) => {
   const isMounted = useRef(false);
   const prevParams = useRef(null);
 
-  const buildFilters = useCallback((filters) => {
-    const result = [];
-    
-    Object.entries(filters).forEach(([field, filterData]) => {
-      if (!filterData?.constraints) return;
-      
-      const filtersForField = filterData.constraints
-        .filter(constraint => constraint.value !== null && constraint.value !== '')
-        .map(constraint => ({
-          property: field,
-          operator: mapPrimeReactOperatorToBackend(constraint.matchMode),
-          value: String(constraint.value),
-          logicalOperator: filterData.operator === 'and' ? 'AND' : 'OR'
-        }));
-      
-      if (filtersForField.length > 0) {
-        result.push(...filtersForField);
-      }
-    });
+  const buildFilters = useCallback(
+    (filters, globalFilterValue, globalFilterFields) => {
+      const result = [];
 
-    return result;
-  }, []);
+      // Convertir global filter a filtros por campo si existe
+      if (globalFilterValue && globalFilterFields.length > 0) {
+        globalFilterFields.forEach((field) => {
+          result.push({
+            property: field,
+            operator: "CONTAINS",
+            value: globalFilterValue,
+            logicalOperator: "OR",
+          });
+        });
+      }
+
+      // Agregar filtros de columnas
+      Object.entries(filters).forEach(([field, filterData]) => {
+        if (!filterData?.constraints) return;
+
+        const filtersForField = filterData.constraints
+          .filter(
+            (constraint) => constraint.value !== null && constraint.value !== ""
+          )
+          .map((constraint) => ({
+            property: field,
+            operator: mapPrimeReactOperatorToBackend(constraint.matchMode),
+            value: String(constraint.value),
+            logicalOperator: filterData.operator === "and" ? "AND" : "OR",
+          }));
+
+        if (filtersForField.length > 0) {
+          result.push(...filtersForField);
+        }
+      });
+
+      return result;
+    },
+    []
+  );
 
   const buildSorts = useCallback((sortMeta) => {
-    return sortMeta.map(sort => ({
+    return sortMeta.map((sort) => ({
       property: sort.field,
-      direction: sort.order === 1 ? 'ASC' : 'DESC'
+      direction: sort.order === 1 ? "ASC" : "DESC",
     }));
   }, []);
 
   const loadData = useCallback(() => {
     if (!isMounted.current || !onFetchData) return;
 
-    const filters = buildFilters(columnFilters);
+    const filters = buildFilters(columnFilters, globalFilterValue, globalFilterFields);
     const sorts = buildSorts(multiSortMeta);
     const params = {
       skip: lazyState.first,
@@ -75,10 +105,10 @@ const useDataTable = (onFetchData) => {
       prevParams.current = params;
       onFetchData(params);
     }
-  }, [lazyState, columnFilters, multiSortMeta, onFetchData, buildFilters, buildSorts]);
+  }, [lazyState, columnFilters, multiSortMeta, globalFilterValue, globalFilterFields, onFetchData, buildFilters, buildSorts]);
 
   const onPage = (event) => {
-    setLazyState(prev => ({
+    setLazyState((prev) => ({
       ...prev,
       first: event.first,
       rows: event.rows,
@@ -88,19 +118,21 @@ const useDataTable = (onFetchData) => {
 
   const onSort = (event) => {
     setMultiSortMeta(
-      event.multiSortMeta || 
-      (event.sortField ? [{ field: event.sortField, order: event.sortOrder }] : [])
+      event.multiSortMeta ||
+        (event.sortField
+          ? [{ field: event.sortField, order: event.sortOrder }]
+          : [])
     );
   };
 
   const onGlobalFilterChange = (e) => {
     setGlobalFilterValue(e.target.value);
-    setLazyState(prev => ({ ...prev, first: 0 }));
+    setLazyState((prev) => ({ ...prev, first: 0 }));
   };
 
   const onFilter = (e) => {
     setColumnFilters(e.filters);
-    setLazyState(prev => ({ ...prev, first: 0 }));
+    setLazyState((prev) => ({ ...prev, first: 0 }));
   };
 
   useEffect(() => {
@@ -128,7 +160,7 @@ const useDataTable = (onFetchData) => {
     onSort,
     onGlobalFilterChange,
     onFilter,
-    loadData
+    loadData,
   };
 };
 

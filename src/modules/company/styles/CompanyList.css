@@ -1,0 +1,23 @@
+/* Estilos para los filtros */
+.p-column-filter {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.p-inputgroup {
+  margin-bottom: 0.5rem;
+}
+
+/* Tooltips */
+.pi-info-circle {
+  cursor: help;
+  color: var(--primary-color);
+}
+
+/* Mensajes de error */
+.p-message-error {
+  margin-top: 1rem;
+  background-color: #ffcdd2;
+  border-color: #ef9a9a;
+  color: #b71c1c;
+}
