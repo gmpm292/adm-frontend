@@ -1,22 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
+import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import { useMutation, useQuery } from "@apollo/client";
-import { Toast } from "primereact/toast";
-import { useRef } from "react";
-
 import { GET_TEAM_BY_ID, UPDATE_TEAM } from "../graphql/queries";
+import { Toast } from "primereact/toast";
 
 const teamTypes = [
+  { label: "Trabajo de campo", value: "FIELDWORK" },
   { label: "Operaciones", value: "OPERATIONS" },
-  { label: "Nuevos Negocios", value: "NEW_BUSINESS" },
-  { label: "Renovaciones", value: "RENOVATIONS" }
+  { label: "Entregas", value: "DELIVERIES" },
+  { label: "Ventas", value: "SALES" },
+  { label: "Publicidad y marketing", value: "ADVERTISING_MARKETING" },
 ];
 
 export const TeamEditForm = ({ teamId, visible, onHide, onSuccess }) => {
   const [formData, setFormData] = useState({
     teamType: null,
+    name: "",
+    description: "",
+    business: null,
+    office: null,
+    department: null,
   });
   const toast = useRef(null);
   const [updateTeam] = useMutation(UPDATE_TEAM);
@@ -28,6 +34,11 @@ export const TeamEditForm = ({ teamId, visible, onHide, onSuccess }) => {
       if (data?.team) {
         setFormData({
           teamType: data.team.teamType,
+          name: data.team.name || "",
+          description: data.team.description || "",
+          business: data.team.department?.office?.business || null,
+          office: data.team.department?.office || null,
+          department: data.team.department || null,
         });
       }
     },
@@ -37,13 +48,24 @@ export const TeamEditForm = ({ teamId, visible, onHide, onSuccess }) => {
     setFormData((prev) => ({ ...prev, teamType: e.value }));
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = async () => {
     try {
+      if (!formData.teamType || !formData.name) {
+        throw new Error("Tipo y nombre son campos requeridos");
+      }
+
       await updateTeam({
         variables: {
           team: {
             id: teamId,
-            ...formData,
+            teamType: formData.teamType,
+            name: formData.name,
+            description: formData.description,
           },
         },
       });
@@ -110,6 +132,56 @@ export const TeamEditForm = ({ teamId, visible, onHide, onSuccess }) => {
                 optionLabel="label"
                 placeholder="Seleccione tipo"
                 required
+              />
+            </div>
+
+            <div className="p-field">
+              <label htmlFor="name">Nombre*</label>
+              <InputText
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Nombre del equipo"
+                required
+              />
+            </div>
+
+            <div className="p-field">
+              <label htmlFor="description">Descripción</label>
+              <InputText
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="Descripción del equipo"
+              />
+            </div>
+
+            {/* <div className="p-field">
+              <label>Empresa</label>
+              <InputText
+                value={formData.business?.name || "No asignada"}
+                readOnly
+                className="readonly-input"
+              />
+            </div>
+
+            <div className="p-field">
+              <label>Oficina</label>
+              <InputText
+                value={formData.office?.name || "No asignada"}
+                readOnly
+                className="readonly-input"
+              />
+            </div> */}
+
+            <div className="p-field">
+              <label>Departamento</label>
+              <InputText
+                value={formData.department?.name || "No asignado"}
+                readOnly
+                className="readonly-input"
               />
             </div>
           </div>

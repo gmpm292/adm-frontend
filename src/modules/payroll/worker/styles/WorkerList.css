@@ -1,0 +1,48 @@
+/* Estilos para los filtros */
+.p-column-filter {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+  
+  /* Badges */
+  .badge {
+    border-radius: 2px;
+    padding: 0.25em 0.5rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+  }
+  
+  .badge.status-active {
+    background-color: #C8E6C9;
+    color: #256029;
+  }
+  
+  .badge.status-inactive {
+    background-color: #FFCDD2;
+    color: #C63737;
+  }
+  
+  /* Mensajes de error */
+  .p-message-error {
+    margin-top: 1rem;
+    background-color: #FFCDD2;
+    border-color: #EF9A9A;
+    color: #B71C1C;
+  }
+  
+  /* Estilos para la tabla */
+  .worker-list-page .p-datatable .p-datatable-thead > tr > th {
+    background-color: #f8f9fa;
+  }
+  
+  .worker-list-page .p-datatable .p-datatable-tbody > tr > td {
+    padding: 0.5rem 1rem;
+  }
+  
+  .actions-column {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+  }

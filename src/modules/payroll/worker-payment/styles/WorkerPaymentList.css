@@ -1,0 +1,21 @@
+.worker-payment-list-page .p-card {
+    margin: 1rem;
+}
+
+.worker-payment-list-page .p-card-title {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+.actions-column {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .worker-payment-list-page .p-datatable .p-datatable-thead > tr > th,
+    .worker-payment-list-page .p-datatable .p-datatable-tbody > tr > td {
+        padding: 0.5rem;
+    }
+}

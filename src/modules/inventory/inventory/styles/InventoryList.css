@@ -1,0 +1,30 @@
+.inventory-list-page {
+  padding: 1rem;
+}
+
+.inventory-list-page .p-card {
+  height: 100%;
+}
+
+.inventory-list-page .p-card-body {
+  padding: 1rem;
+}
+
+.inventory-list-page .p-card-content {
+  padding: 0;
+}
+
+.actions-column {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.stock-low {
+  color: #ff0000;
+  font-weight: bold;
+}
+
+.stock-ok {
+  color: #00aa00;
+}

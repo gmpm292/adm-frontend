@@ -5,8 +5,10 @@ import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import { Toast } from "primereact/toast";
 import { useMutation } from "@apollo/client";
-
 import { CREATE_OFFICE } from "../graphql/queries";
+import { EntityTypes } from "../../../../components/SecurityEntitySelector/entityTypes";
+import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
+
 
 const officeTypes = [
   { label: "Oficina", value: "OFFICE" },
@@ -19,6 +21,7 @@ export const OfficeCreateForm = ({ visible, onHide, onSuccess }) => {
     name: "",
     description: "",
     address: "",
+    businessId: null,
   });
   const toast = useRef(null);
   const [createOffice] = useMutation(CREATE_OFFICE);
@@ -32,15 +35,35 @@ export const OfficeCreateForm = ({ visible, onHide, onSuccess }) => {
     setFormData((prev) => ({ ...prev, officeType: e.value }));
   };
 
+  const handleSecurityEntitiesChange = (entities) => {
+    setFormData((prev) => ({
+      ...prev,
+      businessId: entities.businessId,
+    }));
+  };
+
   const handleSubmit = async () => {
     try {
-      if (!formData.officeType || !formData.name || !formData.description) {
-        throw new Error("Tipo, nombre y descripción son campos requeridos");
+      if (
+        !formData.officeType ||
+        !formData.name ||
+        !formData.description ||
+        !formData.businessId
+      ) {
+        throw new Error(
+          "Tipo, nombre, descripción y empresa son campos requeridos"
+        );
       }
 
       await createOffice({
         variables: {
-          office: formData,
+          office: {
+            officeType: formData.officeType,
+            name: formData.name,
+            description: formData.description,
+            address: formData.address,
+            businessId: formData.businessId,
+          },
         },
       });
 
@@ -58,6 +81,7 @@ export const OfficeCreateForm = ({ visible, onHide, onSuccess }) => {
         name: "",
         description: "",
         address: "",
+        businessId: null,
       });
     } catch (err) {
       toast.current.show({
@@ -141,6 +165,11 @@ export const OfficeCreateForm = ({ visible, onHide, onSuccess }) => {
               onChange={handleChange}
             />
           </div>
+
+          <SecurityEntitySelector
+            onSelectionChange={handleSecurityEntitiesChange}
+            entitiesToInclude={[EntityTypes.BUSINESS]}
+          />
         </div>
       </Dialog>
     </>

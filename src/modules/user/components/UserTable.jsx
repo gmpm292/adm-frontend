@@ -4,18 +4,37 @@ import { GET_USERS, DELETE_USERS } from "../graphql/queries";
 import GenericDataTable from "../../../components/BaseTable/index";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
+import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
 import { UserEditForm } from "./UserEditForm";
 import { UserCreateForm } from "./UserCreateForm";
 import { UserDetailForm } from "./UserDetailForm";
+import { FilterMatchMode } from "primereact/api";
 
 const statusBodyTemplate = (rowData) => {
   return (
     <span className={`badge status-${rowData.enabled ? "active" : "inactive"}`}>
       {rowData.enabled ? "Activo" : "Inactivo"}
     </span>
+  );
+};
+const statusOptions = [
+  { label: "Activo", value: true },
+  { label: "Inactivo", value: false },
+];
+const statusFilterTemplate = (options) => {
+  return (
+    <Dropdown
+      value={options.value}
+      options={statusOptions}
+      onChange={(e) => options.filterCallback(e.value)}
+      optionLabel="label"
+      placeholder="Seleccione estado"
+      className="p-column-filter"
+      showClear
+    />
   );
 };
 
@@ -190,6 +209,8 @@ export function UserTable() {
       body: statusBodyTemplate,
       sortable: true,
       filter: true,
+      filterElement: statusFilterTemplate,
+      filterMatchMode: FilterMatchMode.EQUALS,
     },
   ];
 

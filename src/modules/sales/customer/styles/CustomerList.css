@@ -1,0 +1,35 @@
+/* Estilos para los filtros */
+.p-column-filter {
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.p-inputgroup {
+    margin-bottom: 0.5rem;
+}
+
+/* Tooltips */
+.pi-info-circle {
+    cursor: help;
+    color: var(--primary-color);
+}
+
+/* Mensajes de error */
+.p-message-error {
+    margin-top: 1rem;
+    background-color: #FFCDD2;
+    border-color: #EF9A9A;
+    color: #B71C1C;
+}
+
+/* Estilos para la columna de acciones */
+.actions-column {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+/* Estilos para la página */
+.customer-list-page {
+    padding: 1rem;
+}

@@ -1,0 +1,29 @@
+.product-list-page {
+    padding: 1rem;
+}
+
+.product-list-page .p-card {
+    height: 100%;
+}
+
+.product-list-page .p-card-body {
+    padding: 1rem;
+}
+
+.product-list-page .p-card-content {
+    padding: 0;
+}
+
+.actions-column {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.price-increase {
+    color: #00aa00;
+}
+
+.price-decrease {
+    color: #ff0000;
+}

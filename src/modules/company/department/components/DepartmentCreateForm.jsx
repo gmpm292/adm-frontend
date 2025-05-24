@@ -5,13 +5,14 @@ import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import { Toast } from "primereact/toast";
 import { useMutation } from "@apollo/client";
-
 import { CREATE_DEPARTMENT } from "../graphql/queries";
+import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
+import { EntityTypes } from "../../../../components/SecurityEntitySelector/entityTypes";
 
 const departmentTypes = [
   { label: "Económico", value: "ECONOMIC" },
   { label: "Ventas", value: "SALES" },
-  { label: "Administración", value: "ADMINISTRATION" }
+  { label: "Administración", value: "ADMINISTRATION" },
 ];
 
 export const DepartmentCreateForm = ({ visible, onHide, onSuccess }) => {
@@ -20,6 +21,8 @@ export const DepartmentCreateForm = ({ visible, onHide, onSuccess }) => {
     name: "",
     description: "",
     address: "",
+    businessId: null,
+    officeId: null,
   });
   const toast = useRef(null);
   const [createDepartment] = useMutation(CREATE_DEPARTMENT);
@@ -33,15 +36,29 @@ export const DepartmentCreateForm = ({ visible, onHide, onSuccess }) => {
     setFormData((prev) => ({ ...prev, departmentType: e.value }));
   };
 
+  const handleSecurityEntitiesChange = (entities) => {
+    setFormData((prev) => ({
+      ...prev,
+      businessId: entities.businessId,
+      officeId: entities.officeId,
+    }));
+  };
+
   const handleSubmit = async () => {
     try {
-      if (!formData.departmentType || !formData.name) {
-        throw new Error("Tipo y nombre son campos requeridos");
+      if (!formData.departmentType || !formData.name || !formData.officeId) {
+        throw new Error("Tipo, nombre y oficina son campos requeridos");
       }
 
       await createDepartment({
         variables: {
-          department: formData,
+          department: {
+            departmentType: formData.departmentType,
+            name: formData.name,
+            description: formData.description,
+            address: formData.address,
+            officeId: formData.officeId,
+          },
         },
       });
 
@@ -59,6 +76,8 @@ export const DepartmentCreateForm = ({ visible, onHide, onSuccess }) => {
         name: "",
         description: "",
         address: "",
+        businessId: null,
+        officeId: null,
       });
     } catch (err) {
       toast.current.show({
@@ -141,6 +160,17 @@ export const DepartmentCreateForm = ({ visible, onHide, onSuccess }) => {
               onChange={handleChange}
             />
           </div>
+
+          <SecurityEntitySelector
+            onSelectionChange={handleSecurityEntitiesChange}
+            entitiesToInclude={[EntityTypes.BUSINESS, EntityTypes.OFFICE]}
+            labels={{
+              business: "Empresa",
+              office: "Oficina",
+              department: "Departamento",
+              team: "Equipo",
+            }}
+          />
         </div>
       </Dialog>
     </>

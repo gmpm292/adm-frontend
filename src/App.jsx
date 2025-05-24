@@ -19,6 +19,9 @@ import "./styles/dialogs.css";
 
 import "./components/BaseTable/styles.css";
 import { CompanyModule } from "./modules/company";
+import { InventoryModule } from "./modules/inventory";
+import { PayrollModule } from "./modules/payroll";
+import { SalesModule } from "./modules/sales";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false); // Estado de autenticación
@@ -70,6 +73,33 @@ function App() {
               element={
                 <MainLayout>
                   <CompanyModule />
+                </MainLayout>
+              }
+            />
+            {/* Rutas del módulo de inventario */}
+            <Route
+              path="/inventory/*"
+              element={
+                <MainLayout>
+                  <InventoryModule />
+                </MainLayout>
+              }
+            />
+            {/* Rutas del módulo payroll */}
+            <Route
+              path="/payroll/*"
+              element={
+                <MainLayout>
+                  <PayrollModule />
+                </MainLayout>
+              }
+            />
+            {/* Rutas del módulo sale */}
+            <Route
+              path="/sales/*"
+              element={
+                <MainLayout>
+                  <SalesModule />
                 </MainLayout>
               }
             />

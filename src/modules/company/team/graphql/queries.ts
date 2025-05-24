@@ -8,6 +8,8 @@ export const GET_TEAMS = gql`
       data {
         id
         teamType
+        name
+        description
         department {
           id
           name
@@ -22,6 +24,8 @@ export const GET_TEAM_BY_ID = gql`
     team(id: $id) {
       id
       teamType
+      name
+      description
       department {
         id
         name

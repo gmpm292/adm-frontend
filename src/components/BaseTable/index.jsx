@@ -51,10 +51,20 @@ const GenericDataTable = ({
   const initFilters = () => {
     const filters = {};
     columns.forEach((col) => {
+      console.log("filterfilterfilterfilterfilter",col.filterMatchMode ?? col.filterMatchModeOptions);
       if (col.filter) {
+        // Determina el matchMode inicial:
+        // 1. Usa filterMatchMode si está definido en la columna
+        // 2. Si no, usa el primer modo de filterMatchModeOptions
+        // 3. Si no hay opciones, usa EQUALS por defecto
+        const initialMatchMode =
+          col.filterMatchMode ||
+          col.filterMatchModeOptions?.[0]?.value ||
+          FilterMatchMode.EQUALS;
+
         filters[col.field] = {
           operator: FilterOperator.AND,
-          constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
+          constraints: [{ value: null, matchMode: initialMatchMode }],
         };
       }
     });
@@ -161,15 +171,18 @@ const GenericDataTable = ({
             sortField={column.sortField || column.field}
             filter={column.filter}
             filterField={column.field}
-            filterMatchModeOptions={[
-              { label: "Empieza con", value: FilterMatchMode.STARTS_WITH },
-              { label: "Contiene", value: FilterMatchMode.CONTAINS },
-              { label: "Termina con", value: FilterMatchMode.ENDS_WITH },
-              { label: "Igual a", value: FilterMatchMode.EQUALS },
-              { label: "Diferente a", value: FilterMatchMode.NOT_EQUALS },
-            ]}
+            filterMatchModeOptions={
+              column.filterMatchModeOptions ?? [
+                { label: "Empieza con", value: FilterMatchMode.STARTS_WITH },
+                { label: "Contiene", value: FilterMatchMode.CONTAINS },
+                { label: "Termina con", value: FilterMatchMode.ENDS_WITH },
+                { label: "Igual a", value: FilterMatchMode.EQUALS },
+                { label: "Diferente a", value: FilterMatchMode.NOT_EQUALS },
+              ]
+            }
+            filterElement={column.filterElement}
             showFilterMatchModes={column.filter}
-            showFilterMenuOptions={column.filter}
+            showFilterMenuOptions={column.filterElement ? false : column.filter}
             showFilterMenu={column.filter}
             style={column.style}
             headerStyle={column.headerStyle}

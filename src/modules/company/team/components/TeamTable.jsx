@@ -149,6 +149,12 @@ export function TeamTable() {
 
   const columns = [
     {
+      field: "name",
+      header: "Nombre",
+      sortable: true,
+      filter: true,
+    },
+    {
       field: "teamType",
       header: "Tipo",
       body: teamTypeBodyTemplate,
@@ -182,7 +188,7 @@ export function TeamTable() {
         totalRecords={data?.teams?.totalCount}
         loading={loading}
         error={error}
-        globalFilterFields={["teamType", "department.name"]}
+        globalFilterFields={["name", "department.name"]}
         emptyMessage="No se encontraron equipos"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} equipos"
         onRefresh={handleRefresh}

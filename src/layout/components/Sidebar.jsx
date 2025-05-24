@@ -37,6 +37,23 @@ export function Sidebar() {
       ],
     },
     {
+      label: "Ventas",
+      icon: "pi pi-shopping-cart",
+      key: "sales",
+      items: [
+        {
+          label: "Clientes",
+          icon: "pi pi-users",
+          command: () => navigate("/sales/customers"),
+        },
+        {
+          label: "Transacciones",
+          icon: "pi pi-money-bill",
+          command: () => navigate("/sales/sales"),
+        },
+      ],
+    },
+    {
       label: "Usuarios",
       icon: "pi pi-users",
       key: "users",
@@ -46,11 +63,6 @@ export function Sidebar() {
           icon: "pi pi-list",
           command: () => navigate("/users"),
         },
-        // {
-        //   label: "Crear Usuario",
-        //   icon: "pi pi-user-plus",
-        //   command: () => navigate("/users/create"),
-        // },
       ],
     },
     {
@@ -77,6 +89,70 @@ export function Sidebar() {
           label: "Equipos",
           icon: "pi pi-users",
           command: () => navigate("/company/team"),
+        },
+      ],
+    },
+    {
+      label: "Inventario",
+      icon: "pi pi-box",
+      key: "inventory",
+      items: [
+        {
+          label: "Categorías",
+          icon: "pi pi-tags",
+          command: () => navigate("/inventory/categories"),
+        },
+        {
+          label: "Productos",
+          icon: "pi pi-shopping-bag",
+          command: () => navigate("/inventory/products"),
+        },
+        {
+          label: "Inventarios",
+          icon: "pi pi-database",
+          command: () => navigate("/inventory/inventories"),
+        },
+        {
+          label: "Movimientos",
+          icon: "pi pi-sync",
+          command: () => navigate("/inventory/movements"),
+        },
+      ],
+    },
+    {
+      label: "Nómina",
+      icon: "pi pi-money-bill",
+      key: "payroll",
+      items: [
+        {
+          label: "Monedas",
+          icon: "pi pi-dollar",
+          command: () => navigate("/payroll/currencies"),
+        },
+        {
+          label: "Reglas de Pago",
+          icon: "pi pi-book",
+          command: () => navigate("/payroll/payment-rules"),
+        },
+        {
+          label: "Períodos",
+          icon: "pi pi-calendar",
+          command: () => navigate("/payroll/payroll-periods"),
+        },
+        {
+          label: "Horarios",
+          icon: "pi pi-clock",
+          command: () => navigate("/payroll/work-schedules"),
+        },
+        {
+          label: "Trabajadores",
+          icon: "pi pi-users",
+          command: () => navigate("/payroll/workers"),
+        },
+        {
+          label: "Pagos",
+          icon: "pi pi-wallet",
+          command: () => navigate("/payroll/worker-payments"),
         },
       ],
     },

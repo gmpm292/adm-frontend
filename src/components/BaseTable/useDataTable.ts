@@ -92,20 +92,33 @@ const useDataTable = (onFetchData, globalFilterFields = []) => {
   const loadData = useCallback(() => {
     if (!isMounted.current || !onFetchData) return;
 
-    const filters = buildFilters(columnFilters, globalFilterValue, globalFilterFields);
+    const filters = buildFilters(
+      columnFilters,
+      globalFilterValue,
+      globalFilterFields
+    );
     const sorts = buildSorts(multiSortMeta);
     const params = {
       skip: lazyState.first,
       take: lazyState.rows,
       filters: filters,
-      sorts: sorts
+      sorts: sorts,
     };
 
     if (JSON.stringify(params) !== JSON.stringify(prevParams.current)) {
       prevParams.current = params;
       onFetchData(params);
     }
-  }, [lazyState, columnFilters, multiSortMeta, globalFilterValue, globalFilterFields, onFetchData, buildFilters, buildSorts]);
+  }, [
+    lazyState,
+    columnFilters,
+    multiSortMeta,
+    globalFilterValue,
+    globalFilterFields,
+    onFetchData,
+    buildFilters,
+    buildSorts,
+  ]);
 
   const onPage = (event) => {
     setLazyState((prev) => ({

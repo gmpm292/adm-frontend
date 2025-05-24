@@ -1,0 +1,32 @@
+.payroll-period-list-page .p-card {
+    margin: 1rem;
+}
+
+.payroll-period-list-page .p-card-title {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 2px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    letter-spacing: 0.3px;
+}
+
+.status-badge.status-active {
+    background-color: #C8E6C9;
+    color: #256029;
+}
+
+.status-badge.status-inactive {
+    background-color: #FFCDD2;
+    color: #C63737;
+}
+
+.actions-column {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}

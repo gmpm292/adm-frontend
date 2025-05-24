@@ -1,0 +1,21 @@
+.inventory-movement-list-page {
+    padding: 1rem;
+}
+
+.inventory-movement-list-page .p-card {
+    height: 100%;
+}
+
+.inventory-movement-list-page .p-card-body {
+    padding: 1rem;
+}
+
+.inventory-movement-list-page .p-card-content {
+    padding: 0;
+}
+
+.actions-column {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+}
