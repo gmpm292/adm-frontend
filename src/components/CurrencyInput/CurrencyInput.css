@@ -1,0 +1,53 @@
+.currency-input {
+  margin-bottom: 1rem;
+}
+
+.currency-input label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.currency-input .required-asterisk {
+  color: var(--red-500);
+  margin-left: 0.25rem;
+}
+
+.currency-input .p-inputgroup {
+  display: flex;
+  align-items: center;
+}
+
+.currency-input .currency-input-number {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.currency-input .currency-dropdown {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
+
+/* Ajustes para modo responsive */
+@media (max-width: 768px) {
+  .currency-input .p-inputgroup {
+    flex-direction: column;
+  }
+
+  .currency-input .currency-input-number,
+  .currency-input .currency-dropdown {
+    width: 100% !important;
+  }
+
+  .currency-input .currency-input-number {
+    border-radius: 6px !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+  }
+
+  .currency-input .currency-dropdown {
+    border-radius: 6px !important;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+  }
+}

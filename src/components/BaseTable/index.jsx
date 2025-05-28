@@ -51,7 +51,6 @@ const GenericDataTable = ({
   const initFilters = () => {
     const filters = {};
     columns.forEach((col) => {
-      console.log("filterfilterfilterfilterfilter",col.filterMatchMode ?? col.filterMatchModeOptions);
       if (col.filter) {
         // Determina el matchMode inicial:
         // 1. Usa filterMatchMode si está definido en la columna

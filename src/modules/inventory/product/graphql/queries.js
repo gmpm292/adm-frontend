@@ -9,7 +9,9 @@ export const GET_PRODUCTS = gql`
         name
         unitOfMeasure
         costPrice
-        salePrice
+        costCurrency
+        basePrice
+        baseCurrency
         warranty
         createdAt
         updatedAt
@@ -28,7 +30,9 @@ export const GET_PRODUCT_BY_ID = gql`
       name
       unitOfMeasure
       costPrice
-      salePrice
+      costCurrency
+      basePrice
+      baseCurrency
       warranty
       attributes
       createdAt
@@ -36,6 +40,24 @@ export const GET_PRODUCT_BY_ID = gql`
       category {
         id
         name
+      }
+      pricingConfig {
+        acceptedCurrencies
+        fixedPrices {
+          currency
+          amount
+        }
+        exchangeRateMargin
+        decimalPlaces
+      }
+      saleRules {
+        minQuantity
+        maxQuantity
+        bulkDiscounts {
+          minQty
+          discount
+          applicableCurrencies
+        }
       }
     }
   }
@@ -56,9 +78,29 @@ export const UPDATE_PRODUCT = gql`
       name
       unitOfMeasure
       costPrice
-      salePrice
+      costCurrency
+      basePrice
+      baseCurrency
       warranty
       attributes
+      pricingConfig {
+        acceptedCurrencies
+        fixedPrices {
+          currency
+          amount
+        }
+        exchangeRateMargin
+        decimalPlaces
+      }
+      saleRules {
+        minQuantity
+        maxQuantity
+        bulkDiscounts {
+          minQty
+          discount
+          applicableCurrencies
+        }
+      }
     }
   }
 `;

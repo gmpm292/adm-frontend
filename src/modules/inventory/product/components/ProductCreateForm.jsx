@@ -1,170 +1,843 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { InputNumber } from "primereact/inputnumber";
-import { useMutation } from "@apollo/client";
+import { Dropdown } from "primereact/dropdown";
+import { MultiSelect } from "primereact/multiselect";
+import { useMutation, useQuery } from "@apollo/client";
 import { CREATE_PRODUCT } from "../graphql/queries";
 import { Toast } from "primereact/toast";
 import { CategorySelector } from "../../category/components/CategorySelector";
-//import { CategorySelector } from "../../category/components/CategorySelector";
+import { GET_CURRENCIES } from "../../../payroll/currency/graphql/queries";
+import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
+import { ConditionalOperator } from "../../../../enums/conditional-operation.enum";
+import { CurrencyInput } from "../../../../components/CurrencyInput/CurrencyInput";
+import { Panel } from "primereact/panel";
+import { InputTextarea } from "primereact/inputtextarea";
+import { Chips } from "primereact/chips";
+import { Badge } from "primereact/badge";
 
 export const ProductCreateForm = ({ visible, onHide, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: "",
     unitOfMeasure: "",
-    costPrice: 0,
-    salePrice: 0,
+    costPrice: null,
+    costCurrency: "",
+    basePrice: null,
+    baseCurrency: "",
     warranty: "",
-    categoryId: null
+    categoryId: null,
+    acceptedCurrencies: [],
+    exchangeRateMargin: 0,
+    decimalPlaces: 2,
+    fixedPrices: [],
+    businessId: null,
+    officeId: null,
+    departmentId: null,
+    teamId: null,
+    attributes: {},
+    saleRules: {
+      minQuantity: null,
+      maxQuantity: null,
+      bulkDiscounts: [],
+    },
   });
+
+  const [attributeKey, setAttributeKey] = useState("");
+  const [attributeValue, setAttributeValue] = useState("");
+  const [bulkDiscount, setBulkDiscount] = useState({
+    minQty: null,
+    discount: null,
+    applicableCurrencies: [],
+  });
+  const [fixedPrice, setFixedPrice] = useState({
+    currency: "",
+    amount: null,
+  });
+  const [openPanel, setOpenPanel] = useState(null);
+  const handleToggle = (index) => {
+    setOpenPanel(openPanel === index ? null : index);
+  };
+
   const toast = useRef(null);
   const [createProduct] = useMutation(CREATE_PRODUCT);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const {
+    data: currenciesData,
+    loading: currenciesLoading,
+    error: currenciesError,
+  } = useQuery(GET_CURRENCIES, {
+    fetchPolicy: "network-only",
+    variables: {
+      options: {
+        filters: {
+          property: "isActive",
+          operator: ConditionalOperator.IS_NOT_NULL,
+        },
+      },
+    },
+    skip: !visible,
+  });
+
+  const handleSecurityEntitiesChange = (entities) => {
+    setFormData((prev) => ({
+      ...prev,
+      ...entities,
+    }));
   };
 
-  const handleNumberChange = (e) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.value }));
+  const currencyOptions =
+    currenciesData?.currencies?.data?.map((currency) => ({
+      label: `${currency.code} - ${currency.name}`,
+      value: currency.code,
+    })) || [];
+
+  const availableFixedPriceCurrencies = currencyOptions.filter(
+    (currency) =>
+      currency.value !== formData.baseCurrency &&
+      !formData.fixedPrices.some((fp) => fp.currency === currency.value)
+  );
+
+  // Resetear el precio fijo cuando cambia la moneda base
+  useEffect(() => {
+    if (fixedPrice.currency === formData.baseCurrency) {
+      setFixedPrice((prev) => ({
+        ...prev,
+        currency: "",
+        amount: null,
+      }));
+    }
+  }, [formData.baseCurrency]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleNumberChange = (e, name) => {
+    setFormData((prev) => ({ ...prev, [name]: e.value }));
   };
 
   const handleCategorySelect = (categoryId) => {
-    setFormData(prev => ({ ...prev, categoryId }));
+    setFormData((prev) => ({ ...prev, categoryId }));
+  };
+
+  const handleAddAttribute = () => {
+    if (attributeKey && attributeValue) {
+      setFormData((prev) => ({
+        ...prev,
+        attributes: {
+          ...prev.attributes,
+          [attributeKey]: attributeValue,
+        },
+      }));
+      setAttributeKey("");
+      setAttributeValue("");
+    }
+  };
+
+  const handleRemoveAttribute = (key) => {
+    const newAttributes = { ...formData.attributes };
+    delete newAttributes[key];
+    setFormData((prev) => ({
+      ...prev,
+      attributes: newAttributes,
+    }));
+  };
+
+  const handleAddBulkDiscount = () => {
+    if (
+      bulkDiscount.minQty &&
+      bulkDiscount.discount &&
+      bulkDiscount.applicableCurrencies.length > 0
+    ) {
+      setFormData((prev) => ({
+        ...prev,
+        saleRules: {
+          ...prev.saleRules,
+          bulkDiscounts: [
+            ...prev.saleRules.bulkDiscounts,
+            {
+              minQty: bulkDiscount.minQty,
+              discount: bulkDiscount.discount,
+              applicableCurrencies: bulkDiscount.applicableCurrencies,
+            },
+          ],
+        },
+      }));
+      setBulkDiscount({
+        minQty: null,
+        discount: null,
+        applicableCurrencies: [],
+      });
+    }
+  };
+  const handleRemoveBulkDiscount = (index) => {
+    const newBulkDiscounts = [...formData.saleRules.bulkDiscounts];
+    newBulkDiscounts.splice(index, 1);
+    setFormData((prev) => ({
+      ...prev,
+      saleRules: {
+        ...prev.saleRules,
+        bulkDiscounts: newBulkDiscounts,
+      },
+    }));
+  };
+
+  const handleAddFixedPrice = () => {
+    if (fixedPrice.currency && fixedPrice.amount !== null) {
+      setFormData((prev) => ({
+        ...prev,
+        fixedPrices: [
+          ...prev.fixedPrices,
+          {
+            currency: fixedPrice.currency,
+            amount: fixedPrice.amount,
+          },
+        ],
+      }));
+      setFixedPrice({
+        currency: "",
+        amount: null,
+      });
+    }
+  };
+
+  const handleRemoveFixedPrice = (index) => {
+    const newFixedPrices = [...formData.fixedPrices];
+    newFixedPrices.splice(index, 1);
+    setFormData((prev) => ({
+      ...prev,
+      fixedPrices: newFixedPrices,
+    }));
   };
 
   const handleSubmit = async () => {
     try {
       if (!formData.name || !formData.unitOfMeasure || !formData.categoryId) {
-        throw new Error("Nombre, unidad de medida y categoría son campos requeridos");
+        throw new Error(
+          "Nombre, unidad de medida y categoría son campos requeridos"
+        );
       }
+
+      if (!formData.costPrice || !formData.costCurrency) {
+        throw new Error("Precio de costo y moneda son requeridos");
+      }
+
+      if (!formData.basePrice || !formData.baseCurrency) {
+        throw new Error("Precio base y moneda son requeridos");
+      }
+
+      if (formData.acceptedCurrencies.length === 0) {
+        throw new Error("Debe seleccionar al menos una moneda aceptada");
+      }
+
+      const pricingConfig = {
+        acceptedCurrencies: formData.acceptedCurrencies,
+        fixedPrices:
+          formData.fixedPrices.length > 0 ? formData.fixedPrices : null,
+        exchangeRateMargin: formData.exchangeRateMargin || 0,
+        decimalPlaces: formData.decimalPlaces || 2,
+      };
+
+      const input = {
+        name: formData.name,
+        unitOfMeasure: formData.unitOfMeasure,
+        costPrice: formData.costPrice,
+        costCurrency: formData.costCurrency,
+        basePrice: formData.basePrice,
+        baseCurrency: formData.baseCurrency,
+        warranty: formData.warranty,
+        categoryId: formData.categoryId,
+        businessId: formData.businessId,
+        officeId: formData.officeId,
+        departmentId: formData.departmentId,
+        teamId: formData.teamId,
+        attributes:
+          Object.keys(formData.attributes).length > 0
+            ? formData.attributes
+            : null,
+        pricingConfig,
+        saleRules:
+          formData.saleRules.bulkDiscounts.length > 0 ||
+          formData.saleRules.minQuantity !== null ||
+          formData.saleRules.maxQuantity !== null
+            ? formData.saleRules
+            : null,
+      };
 
       await createProduct({
         variables: {
-          product: {
-            name: formData.name,
-            unitOfMeasure: formData.unitOfMeasure,
-            costPrice: formData.costPrice,
-            salePrice: formData.salePrice,
-            warranty: formData.warranty,
-            categoryId: formData.categoryId
-          }
-        }
+          product: input,
+        },
       });
 
       toast.current.show({
         severity: "success",
         summary: "Éxito",
         detail: "Producto creado correctamente",
-        life: 3000
+        life: 3000,
       });
 
       onSuccess();
       onHide();
-      setFormData({
-        name: "",
-        unitOfMeasure: "",
-        costPrice: 0,
-        salePrice: 0,
-        warranty: "",
-        categoryId: null
-      });
+      resetForm();
     } catch (err) {
       toast.current.show({
         severity: "error",
         summary: "Error",
         detail: err.message,
-        life: 3000
+        life: 3000,
       });
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      unitOfMeasure: "",
+      costPrice: null,
+      costCurrency: "",
+      basePrice: null,
+      baseCurrency: "",
+      warranty: "",
+      categoryId: null,
+      acceptedCurrencies: [],
+      exchangeRateMargin: 0,
+      decimalPlaces: 2,
+      fixedPrices: [],
+      businessId: null,
+      officeId: null,
+      departmentId: null,
+      teamId: null,
+      attributes: {},
+      saleRules: {
+        minQuantity: null,
+        maxQuantity: null,
+        bulkDiscounts: [],
+      },
+    });
+    setAttributeKey("");
+    setAttributeValue("");
+    setBulkDiscount({
+      minQty: null,
+      discount: null,
+      applicableCurrencies: [],
+    });
+    setFixedPrice({
+      currency: "",
+      amount: null,
+    });
+  };
+
   const footer = (
     <div>
-      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} className="p-button-text" />
-      <Button label="Crear" icon="pi pi-check" onClick={handleSubmit} autoFocus />
+      <Button
+        label="Cancelar"
+        icon="pi pi-times"
+        onClick={onHide}
+        className="p-button-text"
+      />
+      <Button
+        label="Crear"
+        icon="pi pi-check"
+        onClick={handleSubmit}
+        autoFocus
+        disabled={currenciesLoading}
+      />
     </div>
   );
 
   return (
     <>
       <Toast ref={toast} />
-      <Dialog 
-        header="Crear Nuevo Producto" 
-        visible={visible} 
-        style={{ width: '50vw' }} 
-        footer={footer} 
+      <Dialog
+        header="Crear Nuevo Producto"
+        visible={visible}
+        style={{ width: "70vw" }}
+        footer={footer}
         onHide={onHide}
+        resizable
+        draggable
       >
+        {currenciesError && (
+          <div className="p-message p-message-error">
+            Error al cargar las monedas: {currenciesError.message}
+          </div>
+        )}
+
         <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="name">Nombre*</label>
-            <InputText
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          <Panel
+            header="Información Básica"
+            toggleable
+            collapsed={openPanel !== 0}
+            onToggle={() => handleToggle(0)}
+          >
+            <div className="p-grid p-fluid">
+              <div className="p-col-12 p-md-6">
+                <div className="p-field">
+                  <label htmlFor="name">Nombre*</label>
+                  <InputText
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="p-col-12 p-md-6">
+                <div className="p-field">
+                  <label htmlFor="unitOfMeasure">Unidad de Medida*</label>
+                  <InputText
+                    id="unitOfMeasure"
+                    name="unitOfMeasure"
+                    value={formData.unitOfMeasure}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="p-col-12 p-md-6">
+                <div className="p-field">
+                  <label htmlFor="categoryId">Categoría*</label>
+                  <CategorySelector
+                    onCategorySelect={handleCategorySelect}
+                    selectedCategoryId={formData.categoryId}
+                  />
+                </div>
+              </div>
+              <div className="p-col-12 p-md-6">
+                <div className="p-field">
+                  <label htmlFor="warranty">Garantía</label>
+                  <InputText
+                    id="warranty"
+                    name="warranty"
+                    value={formData.warranty}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+              <div className="p-col-12">
+                <SecurityEntitySelector
+                  onSelectionChange={handleSecurityEntitiesChange}
+                />
+              </div>
+            </div>
+          </Panel>
 
-          <div className="p-field">
-            <label htmlFor="unitOfMeasure">Unidad de Medida*</label>
-            <InputText
-              id="unitOfMeasure"
-              name="unitOfMeasure"
-              value={formData.unitOfMeasure}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          <Panel
+            header="Atributos"
+            toggleable
+            collapsed={openPanel !== 1}
+            onToggle={() => handleToggle(1)}
+          >
+            <div className="p-grid p-fluid">
+              <div className="p-col-12 p-md-4">
+                <div className="p-field">
+                  <label htmlFor="attributeKey">Clave</label>
+                  <InputText
+                    id="attributeKey"
+                    value={attributeKey}
+                    onChange={(e) => setAttributeKey(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="p-col-12 p-md-4">
+                <div className="p-field">
+                  <label htmlFor="attributeValue">Valor</label>
+                  <InputText
+                    id="attributeValue"
+                    value={attributeValue}
+                    onChange={(e) => setAttributeValue(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="p-col-12 p-md-4">
+                <div className="p-field" style={{ paddingTop: "1.5rem" }}>
+                  <Button
+                    label="Agregar"
+                    icon="pi pi-plus"
+                    onClick={handleAddAttribute}
+                    disabled={!attributeKey || !attributeValue}
+                  />
+                </div>
+              </div>
+              <div className="p-col-12">
+                {Object.keys(formData.attributes).length > 0 ? (
+                  <div className="p-grid">
+                    {Object.entries(formData.attributes).map(([key, value]) => (
+                      <div className="p-col-12 p-md-6" key={key}>
+                        <div className="p-inputgroup">
+                          <span className="p-inputgroup-addon">{key}</span>
+                          <InputText value={value} disabled />
+                          <Button
+                            icon="pi pi-trash"
+                            className="p-button-danger"
+                            onClick={() => handleRemoveAttribute(key)}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p>No hay atributos definidos</p>
+                )}
+              </div>
+            </div>
+          </Panel>
 
-          <div className="p-field">
-            <label htmlFor="categoryId">Categoría*</label>
-            <CategorySelector
-              onCategorySelect={handleCategorySelect}
-              selectedCategoryId={formData.categoryId}
-            />
-          </div>
+          <Panel
+            header="Costos y Precios"
+            toggleable
+            collapsed={openPanel !== 2}
+            onToggle={() => handleToggle(2)}
+          >
+            <div className="p-grid p-fluid">
+              <div className="p-col-12 p-md-6">
+                <CurrencyInput
+                  id="costPrice"
+                  name="costPrice"
+                  label="Precio Costo*"
+                  value={formData.costPrice}
+                  currency={formData.costCurrency}
+                  onValueChange={(e) => handleNumberChange(e, "costPrice")}
+                  onCurrencyChange={(e) =>
+                    setFormData((prev) => ({ ...prev, costCurrency: e.value }))
+                  }
+                  currencyOptions={currencyOptions}
+                  disabled={currenciesLoading}
+                  placeholder={
+                    currenciesLoading ? "Cargando..." : "Ingrese precio"
+                  }
+                  currencyPlaceholder={
+                    currenciesLoading ? "Cargando..." : "Moneda"
+                  }
+                  required
+                />
+              </div>
+              <div className="p-col-12 p-md-6">
+                <CurrencyInput
+                  id="basePrice"
+                  name="basePrice"
+                  label="Precio Base*"
+                  value={formData.basePrice}
+                  currency={formData.baseCurrency}
+                  onValueChange={(e) => handleNumberChange(e, "basePrice")}
+                  onCurrencyChange={(e) =>
+                    setFormData((prev) => ({ ...prev, baseCurrency: e.value }))
+                  }
+                  currencyOptions={currencyOptions}
+                  disabled={currenciesLoading}
+                  placeholder={
+                    currenciesLoading ? "Cargando..." : "Ingrese precio"
+                  }
+                  currencyPlaceholder={
+                    currenciesLoading ? "Cargando..." : "Moneda"
+                  }
+                  required
+                />
+              </div>
+              <div className="p-col-12">
+                <div className="p-field">
+                  <label>Monedas Aceptadas*</label>
+                  <MultiSelect
+                    value={formData.acceptedCurrencies}
+                    options={currencyOptions}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        acceptedCurrencies: e.value,
+                      }))
+                    }
+                    placeholder={
+                      currenciesLoading
+                        ? "Cargando monedas..."
+                        : "Seleccione monedas"
+                    }
+                    display="chip"
+                    disabled={currenciesLoading}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="p-col-12 p-md-6">
+                <div className="p-field">
+                  <label htmlFor="exchangeRateMargin">
+                    Margen sobre tipo de cambio (%)
+                  </label>
+                  <InputNumber
+                    id="exchangeRateMargin"
+                    value={formData.exchangeRateMargin}
+                    onValueChange={(e) =>
+                      handleNumberChange(e, "exchangeRateMargin")
+                    }
+                    mode="decimal"
+                    min={0}
+                    max={100}
+                    step={0.1}
+                    suffix="%"
+                    disabled={currenciesLoading}
+                  />
+                </div>
+              </div>
+              <div className="p-col-12 p-md-6">
+                <div className="p-field">
+                  <label htmlFor="decimalPlaces">Decimales para redondeo</label>
+                  <InputNumber
+                    id="decimalPlaces"
+                    value={formData.decimalPlaces}
+                    onValueChange={(e) =>
+                      handleNumberChange(e, "decimalPlaces")
+                    }
+                    mode="decimal"
+                    min={0}
+                    max={6}
+                    disabled={currenciesLoading}
+                  />
+                </div>
+              </div>
 
-          <div className="p-field">
-            <label htmlFor="costPrice">Precio Costo</label>
-            <InputNumber
-              id="costPrice"
-              name="costPrice"
-              value={formData.costPrice}
-              onValueChange={handleNumberChange}
-              mode="currency"
-              currency="USD"
-              locale="en-US"
-              min={0}
-            />
-          </div>
+              {/* Sección de precios fijos */}
+              <div className="p-col-12">
+                <div className="p-field">
+                  <label>Precios Fijos en Otras Monedas</label>
+                  <div className="p-grid p-fluid">
+                    <div className="p-col-12 p-md-4">
+                      <label htmlFor="fixedPriceCurrency">Moneda</label>
+                      <Dropdown
+                        id="fixedPriceCurrency"
+                        value={fixedPrice.currency}
+                        options={availableFixedPriceCurrencies}
+                        onChange={(e) =>
+                          setFixedPrice((prev) => ({
+                            ...prev,
+                            currency: e.value,
+                          }))
+                        }
+                        placeholder="Seleccione moneda"
+                        disabled={availableFixedPriceCurrencies.length === 0}
+                      />
+                    </div>
+                    <div className="p-col-12 p-md-4">
+                      <label htmlFor="fixedPriceAmount">Precio</label>
+                      {fixedPrice.currency ? (
+                        <InputNumber
+                          id="fixedPriceAmount"
+                          value={fixedPrice.amount}
+                          onValueChange={(e) =>
+                            setFixedPrice((prev) => ({
+                              ...prev,
+                              amount: e.value,
+                            }))
+                          }
+                          mode="currency"
+                          currency={fixedPrice.currency}
+                          locale="es-ES"
+                        />
+                      ) : (
+                        <InputNumber
+                          id="fixedPriceAmount"
+                          value={fixedPrice.amount}
+                          onValueChange={(e) =>
+                            setFixedPrice((prev) => ({
+                              ...prev,
+                              amount: e.value,
+                            }))
+                          }
+                          mode="decimal"
+                          disabled
+                          placeholder="Seleccione moneda primero"
+                        />
+                      )}
+                    </div>
+                    <div className="p-col-12 p-md-4">
+                      <div className="p-field" style={{ paddingTop: "1.5rem" }}>
+                        <Button
+                          label="Agregar"
+                          icon="pi pi-plus"
+                          onClick={handleAddFixedPrice}
+                          disabled={
+                            !fixedPrice.currency || fixedPrice.amount === null
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {formData.fixedPrices.length > 0 && (
+                  <div className="p-grid">
+                    {formData.fixedPrices.map((price, index) => (
+                      <div className="p-col-12 p-md-6" key={index}>
+                        <div className="p-inputgroup">
+                          <span className="p-inputgroup-addon">
+                            {price.currency}
+                          </span>
+                          <InputNumber
+                            value={price.amount}
+                            mode="currency"
+                            currency={price.currency}
+                            locale="es-ES"
+                            disabled
+                          />
+                          <Button
+                            icon="pi pi-trash"
+                            className="p-button-danger"
+                            onClick={() => handleRemoveFixedPrice(index)}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </Panel>
 
-          <div className="p-field">
-            <label htmlFor="salePrice">Precio Venta</label>
-            <InputNumber
-              id="salePrice"
-              name="salePrice"
-              value={formData.salePrice}
-              onValueChange={handleNumberChange}
-              mode="currency"
-              currency="USD"
-              locale="en-US"
-              min={0}
-            />
-          </div>
-
-          <div className="p-field">
-            <label htmlFor="warranty">Garantía</label>
-            <InputText
-              id="warranty"
-              name="warranty"
-              value={formData.warranty}
-              onChange={handleChange}
-            />
-          </div>
+          <Panel
+            header="Reglas de Venta"
+            toggleable
+            collapsed={openPanel !== 3}
+            onToggle={() => handleToggle(3)}
+          >
+            <div className="p-grid p-fluid">
+              <div className="p-col-12 p-md-6">
+                <div className="p-field">
+                  <label htmlFor="minQuantity">Cantidad mínima</label>
+                  <InputNumber
+                    id="minQuantity"
+                    value={formData.saleRules.minQuantity}
+                    onValueChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        saleRules: {
+                          ...prev.saleRules,
+                          minQuantity: e.value,
+                        },
+                      }))
+                    }
+                    mode="decimal"
+                    min={0}
+                  />
+                </div>
+              </div>
+              <div className="p-col-12 p-md-6">
+                <div className="p-field">
+                  <label htmlFor="maxQuantity">Cantidad máxima</label>
+                  <InputNumber
+                    id="maxQuantity"
+                    value={formData.saleRules.maxQuantity}
+                    onValueChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        saleRules: {
+                          ...prev.saleRules,
+                          maxQuantity: e.value,
+                        },
+                      }))
+                    }
+                    mode="decimal"
+                    min={0}
+                  />
+                </div>
+              </div>
+              <div className="p-col-12">
+                <div className="p-field">
+                  <label>Descuentos por volumen</label>
+                  <div className="p-grid p-fluid">
+                    <div className="p-col-12 p-md-3">
+                      <label htmlFor="bulkMinQty">Cantidad mínima</label>
+                      <InputNumber
+                        id="bulkMinQty"
+                        value={bulkDiscount.minQty}
+                        onValueChange={(e) =>
+                          setBulkDiscount((prev) => ({
+                            ...prev,
+                            minQty: e.value,
+                          }))
+                        }
+                        mode="decimal"
+                        min={1}
+                      />
+                    </div>
+                    <div className="p-col-12 p-md-3">
+                      <label htmlFor="bulkDiscount">Descuento (%)</label>
+                      <InputNumber
+                        id="bulkDiscount"
+                        value={bulkDiscount.discount}
+                        onValueChange={(e) =>
+                          setBulkDiscount((prev) => ({
+                            ...prev,
+                            discount: e.value,
+                          }))
+                        }
+                        mode="decimal"
+                        min={0}
+                        max={100}
+                        suffix="%"
+                      />
+                    </div>
+                    <div className="p-col-12 p-md-4">
+                      <label htmlFor="bulkCurrencies">Monedas aplicables</label>
+                      <MultiSelect
+                        id="bulkCurrencies"
+                        value={bulkDiscount.applicableCurrencies}
+                        options={currencyOptions}
+                        onChange={(e) =>
+                          setBulkDiscount((prev) => ({
+                            ...prev,
+                            applicableCurrencies: e.value,
+                          }))
+                        }
+                        placeholder="Seleccione monedas"
+                        display="chip"
+                      />
+                    </div>
+                    <div className="p-col-12 p-md-2">
+                      <div className="p-field" style={{ paddingTop: "1.5rem" }}>
+                        <Button
+                          label="Agregar"
+                          icon="pi pi-plus"
+                          onClick={handleAddBulkDiscount}
+                          disabled={
+                            !bulkDiscount.minQty ||
+                            !bulkDiscount.discount ||
+                            bulkDiscount.applicableCurrencies.length === 0
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {formData.saleRules.bulkDiscounts.length > 0 && (
+                  <div className="p-grid">
+                    {formData.saleRules.bulkDiscounts.map((discount, index) => (
+                      <div className="p-col-12" key={index}>
+                        <div className="p-inputgroup">
+                          <span className="p-inputgroup-addon">
+                            Mín: {discount.minQty}
+                          </span>
+                          <span className="p-inputgroup-addon">
+                            Desc: {discount.discount}%
+                          </span>
+                          <Chips
+                            value={discount.applicableCurrencies}
+                            disabled
+                          />
+                          <Button
+                            icon="pi pi-trash"
+                            className="p-button-danger"
+                            onClick={() => handleRemoveBulkDiscount(index)}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </Panel>
         </div>
       </Dialog>
     </>
