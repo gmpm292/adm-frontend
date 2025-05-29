@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 /.idx
 
+# Environment variable files
+.env
+
