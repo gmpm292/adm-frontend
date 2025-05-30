@@ -29,7 +29,7 @@ const mapPrimeReactOperatorToBackend = (primeOperator) => {
   }
 };
 
-const useDataTable = (onFetchData, globalFilterFields = []) => {
+const useDataTable = (onFetchData, globalFilterFields = [], showDeleted) => {
   const [globalFilterValue, setGlobalFilterValue] = useState("");
   const [multiSortMeta, setMultiSortMeta] = useState([]);
   const [columnFilters, setColumnFilters] = useState({});
@@ -45,7 +45,6 @@ const useDataTable = (onFetchData, globalFilterFields = []) => {
     (filters, globalFilterValue, globalFilterFields) => {
       const result = [];
 
-      // Convertir global filter a filtros por campo si existe
       if (globalFilterValue && globalFilterFields.length > 0) {
         globalFilterFields.forEach((field) => {
           result.push({
@@ -57,7 +56,6 @@ const useDataTable = (onFetchData, globalFilterFields = []) => {
         });
       }
 
-      // Agregar filtros de columnas
       Object.entries(filters).forEach(([field, filterData]) => {
         if (!filterData?.constraints) return;
 
@@ -103,6 +101,7 @@ const useDataTable = (onFetchData, globalFilterFields = []) => {
       take: lazyState.rows,
       filters: filters,
       sorts: sorts,
+      showDeleted: showDeleted,
     };
 
     if (JSON.stringify(params) !== JSON.stringify(prevParams.current)) {
@@ -118,6 +117,7 @@ const useDataTable = (onFetchData, globalFilterFields = []) => {
     onFetchData,
     buildFilters,
     buildSorts,
+    showDeleted,
   ]);
 
   const onPage = (event) => {
@@ -150,7 +150,7 @@ const useDataTable = (onFetchData, globalFilterFields = []) => {
 
   useEffect(() => {
     isMounted.current = true;
-    loadData(); // Carga inicial
+    loadData();
     return () => {
       isMounted.current = false;
     };

@@ -5,6 +5,8 @@ export const GET_USERS = gql`
     users(options: $options) {
       totalCount
       data {
+        deletedAt
+
         id
         email
         enabled
@@ -20,6 +22,8 @@ export const GET_USERS = gql`
 export const GET_USER_BY_ID = gql`
   query User($id: Int!) {
     user(id: $id) {
+      deletedAt
+
       id
       email
       enabled
@@ -76,6 +80,12 @@ export const DELETE_USERS = gql`
     removeUsers(ids: $ids) {
       id
     }
+  }
+`;
+
+export const RESTORE_USERS = gql`
+  mutation RestoreUsers($ids: [Int!]!) {
+    restoreUsers(ids: $ids)
   }
 `;
 

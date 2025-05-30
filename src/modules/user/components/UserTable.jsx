@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useRef } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
-import { GET_USERS, DELETE_USERS } from "../graphql/queries";
+import { GET_USERS, DELETE_USERS, RESTORE_USERS } from "../graphql/queries";
 import GenericDataTable from "../../../components/BaseTable/index";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
@@ -43,6 +43,7 @@ export function UserTable() {
     fetchPolicy: "network-only",
   });
   const [deleteUsers] = useMutation(DELETE_USERS);
+  const [restoreUsers] = useMutation(RESTORE_USERS);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [editDialogVisible, setEditDialogVisible] = useState(false);
   const [createDialogVisible, setCreateDialogVisible] = useState(false);
@@ -54,6 +55,7 @@ export function UserTable() {
     filters: {},
     sorts: [],
     pagination: { first: 0, rows: 10 },
+    showDeleted: false,
   });
 
   const handleFetchData = useCallback(
@@ -66,6 +68,7 @@ export function UserTable() {
             first: params.skip,
             rows: params.take,
           },
+          showDeleted: params.showDeleted,
         };
 
         const { data: responseData } = await getUsers({
@@ -73,6 +76,7 @@ export function UserTable() {
             options: {
               skip: params.skip,
               take: params.take,
+              withDeleted: params.showDeleted,
               filters: params.filters,
               sorts: params.sorts,
             },
@@ -98,6 +102,7 @@ export function UserTable() {
     handleFetchData({
       skip: tableStateRef.current.pagination.first,
       take: tableStateRef.current.pagination.rows,
+      showDeleted: tableStateRef.current.showDeleted,
       filters: tableStateRef.current.filters,
       sorts: tableStateRef.current.sorts,
     });
@@ -150,7 +155,50 @@ export function UserTable() {
     });
   };
 
+  const handleRestore = (userId) => {
+    confirmDialog({
+      message: "¿Estás seguro de que deseas restaurar este usuario?",
+      header: "Confirmación",
+      icon: "pi pi-exclamation-triangle",
+      accept: async () => {
+        try {
+          await restoreUsers({ variables: { ids: [userId] } });
+
+          toast.current.show({
+            severity: "success",
+            summary: "Éxito",
+            detail: "Usuario restaurado correctamente",
+            life: 3000,
+          });
+
+          handleRefresh();
+        } catch (err) {
+          toast.current.show({
+            severity: "error",
+            summary: "Error",
+            detail: err.message,
+            life: 3000,
+          });
+        }
+      },
+    });
+  };
+
   const actionBodyTemplate = (rowData) => {
+    if (rowData.deletedAt) {
+      return (
+        <div className="actions-column">
+          <Button
+            icon="pi pi-history"
+            className="p-button-rounded p-button-text p-button-success"
+            tooltip="Restaurar usuario"
+            tooltipOptions={{ position: "top" }}
+            onClick={() => handleRestore(rowData.id)}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="actions-column">
         <Button
@@ -243,6 +291,7 @@ export function UserTable() {
         onFetchData={handleFetchData}
         initialPageSize={10}
         header={addUserButton} // Pasamos el botón como header personalizado
+        showDeleted={true}
       >
         <Column
           body={actionBodyTemplate}

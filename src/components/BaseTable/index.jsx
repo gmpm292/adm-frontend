@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
+import { ToggleButton } from "primereact/togglebutton";
 import PropTypes from "prop-types";
 import { FilterMatchMode, FilterOperator } from "primereact/api";
 import "./styles.css";
@@ -33,8 +34,10 @@ const GenericDataTable = ({
   scrollable,
   scrollHeight,
   children,
-  header, // Nuevo prop para el header personalizado
+  header,
+  showDeleted = false, // Nueva prop para controlar si se muestran eliminados
 }) => {
+  const [showDeletedState, setShowDeletedState] = useState(false);
   const {
     lazyState,
     globalFilterValue,
@@ -45,17 +48,16 @@ const GenericDataTable = ({
     onGlobalFilterChange,
     onFilter,
     loadData,
-  } = useDataTable(onFetchData, globalFilterFields);
+  } = useDataTable(
+    onFetchData,
+    globalFilterFields,
+    showDeleted ? showDeletedState : undefined
+  );
 
-  // Initialize filters
   const initFilters = () => {
     const filters = {};
     columns.forEach((col) => {
       if (col.filter) {
-        // Determina el matchMode inicial:
-        // 1. Usa filterMatchMode si está definido en la columna
-        // 2. Si no, usa el primer modo de filterMatchModeOptions
-        // 3. Si no hay opciones, usa EQUALS por defecto
         const initialMatchMode =
           col.filterMatchMode ||
           col.filterMatchModeOptions?.[0]?.value ||
@@ -78,18 +80,42 @@ const GenericDataTable = ({
     }
   }, [onRefresh, loadData]);
 
-  // Header por defecto
+  const handleRefresh = useCallback(() => {
+    if (onRefresh) {
+      onRefresh(showDeleted ? showDeletedState : undefined);
+    } else {
+      loadData();
+    }
+  }, [onRefresh, loadData, showDeleted, showDeletedState]);
+
+  const handleToggleDeleted = () => {
+    setShowDeletedState(!showDeletedState);
+  };
+
   const defaultHeader = (
     <div className="flex justify-content-between align-items-center">
-      {refreshable && (
-        <Button
-          icon="pi pi-refresh"
-          onClick={onRefresh || loadData}
-          className="p-button-text"
-          tooltip="Recargar datos"
-          tooltipOptions={{ position: "bottom" }}
-        />
-      )}
+      <div className="flex align-items-center gap-2">
+        {refreshable && (
+          <Button
+            icon="pi pi-refresh"
+            onClick={handleRefresh}
+            className="p-button-text"
+            tooltip="Recargar datos"
+            tooltipOptions={{ position: "bottom" }}
+          />
+        )}
+        {showDeleted && (
+          <ToggleButton
+            checked={showDeletedState}
+            onChange={handleToggleDeleted}
+            onLabel="" //"Mostrando eliminados"
+            offLabel="" //"Ocultando eliminados"
+            onIcon="pi pi-eye"
+            offIcon="pi pi-eye-slash"
+            className="p-button-sm"
+          />
+        )}
+      </div>
       <span className="p-input-icon-left w-full md:w-20rem">
         <i className="pi pi-search" />
         <InputText
@@ -101,17 +127,27 @@ const GenericDataTable = ({
     </div>
   );
 
-  // Header combinado si se pasa el prop header
   const combinedHeader = header ? (
     <div className="flex justify-content-between align-items-center">
       <div className="flex align-items-center gap-2">
         {refreshable && (
           <Button
             icon="pi pi-refresh"
-            onClick={onRefresh || loadData}
+            onClick={handleRefresh}
             className="p-button-text"
             tooltip="Recargar datos"
             tooltipOptions={{ position: "bottom" }}
+          />
+        )}
+        {showDeleted && (
+          <ToggleButton
+            checked={showDeletedState}
+            onChange={handleToggleDeleted}
+            onLabel="" //"Mostrando eliminados"
+            offLabel="" //"Ocultando eliminados"
+            onIcon="pi pi-eye"
+            offIcon="pi pi-eye-slash"
+            className="p-button-sm"
           />
         )}
         {header}
@@ -128,6 +164,11 @@ const GenericDataTable = ({
   ) : (
     defaultHeader
   );
+
+  const getRowClassName = (data) => {
+    const baseClass = rowClassName ? rowClassName(data) : "";
+    return data.deletedAt ? `${baseClass} deleted-row` : baseClass;
+  };
 
   return (
     <div className="generic-data-table">
@@ -152,13 +193,13 @@ const GenericDataTable = ({
         scrollable={scrollable}
         scrollHeight={scrollHeight}
         onRowClick={onRowClick}
-        rowClassName={rowClassName}
+        rowClassName={getRowClassName}
         filters={filters}
         onFilter={onFilter}
         filterDisplay="menu"
         globalFilter={globalFilterValue}
         globalFilterFields={globalFilterFields}
-        header={combinedHeader} // Usamos el header combinado
+        header={combinedHeader}
       >
         {columns.map((column) => (
           <Column
@@ -233,7 +274,8 @@ GenericDataTable.propTypes = {
   rowClassName: PropTypes.func,
   scrollable: PropTypes.bool,
   scrollHeight: PropTypes.string,
-  header: PropTypes.node, // Nuevo prop para el header personalizado
+  header: PropTypes.node,
+  showDeleted: PropTypes.bool, // Nueva prop
 };
 
 export default GenericDataTable;

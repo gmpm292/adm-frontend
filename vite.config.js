@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   base: "/adm-frontend/",
   server: {
-    port: 3000,
+    port: 3001,
     open: true,
   },
   build: {
