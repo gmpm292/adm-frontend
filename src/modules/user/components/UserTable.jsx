@@ -228,6 +228,16 @@ export function UserTable() {
 
   const columns = [
     {
+      field: "id",
+      header: "Id",
+      sortable: true,
+      filter: true,
+      filterMatchModeOptions: [
+        { label: "Igual a", value: FilterMatchMode.EQUALS },
+        { label: "Diferente a", value: FilterMatchMode.NOT_EQUALS },
+      ],
+    },
+    {
       field: "name",
       header: "Nombre",
       sortable: true,

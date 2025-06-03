@@ -3,7 +3,7 @@
   padding-left: 1rem !important; /* Separa el título del borde izquierdo */
 }
 
-/* Estilos base para la tabla - Versión mejorada */
+/* Estilos base para la tabla */
 .generic-data-table .p-datatable {
   margin-top: 0.5rem;
   border: 1px solid #e0e0e0;

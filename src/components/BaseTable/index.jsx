@@ -1,9 +1,10 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { ToggleButton } from "primereact/togglebutton";
+import { MultiSelect } from "primereact/multiselect";
 import PropTypes from "prop-types";
 import { FilterMatchMode, FilterOperator } from "primereact/api";
 import "./styles.css";
@@ -35,9 +36,13 @@ const GenericDataTable = ({
   scrollHeight,
   children,
   header,
-  showDeleted = false, // Nueva prop para controlar si se muestran eliminados
+  showDeleted = false,
 }) => {
   const [showDeletedState, setShowDeletedState] = useState(false);
+  const [selectedColumns, setSelectedColumns] = useState(
+    columns.map((col) => col.field)
+  );
+
   const {
     lazyState,
     globalFilterValue,
@@ -92,6 +97,13 @@ const GenericDataTable = ({
     setShowDeletedState(!showDeletedState);
   };
 
+  const columnOptions = useMemo(() => {
+    return columns.map((col) => ({
+      label: col.header,
+      value: col.field,
+    }));
+  }, [columns]);
+
   const defaultHeader = (
     <div className="flex justify-content-between align-items-center">
       <div className="flex align-items-center gap-2">
@@ -108,22 +120,35 @@ const GenericDataTable = ({
           <ToggleButton
             checked={showDeletedState}
             onChange={handleToggleDeleted}
-            onLabel="" //"Mostrando eliminados"
-            offLabel="" //"Ocultando eliminados"
+            onLabel=""
+            offLabel=""
             onIcon="pi pi-eye"
             offIcon="pi pi-eye-slash"
             className="p-button-sm"
           />
         )}
       </div>
-      <span className="p-input-icon-left w-full md:w-20rem">
-        <i className="pi pi-search" />
-        <InputText
-          value={globalFilterValue}
-          onChange={onGlobalFilterChange}
-          placeholder="Buscar en todos los campos..."
+      <div className="flex align-items-center gap-2">
+        <MultiSelect
+          value={selectedColumns}
+          options={columnOptions}
+          onChange={(e) => setSelectedColumns(e.value)}
+          optionLabel="label"
+          placeholder="Columnas"
+          display="chip"
+          maxSelectedLabels={0}
+          selectedItemsLabel="{0} columnas"
+          className="flex-1"
         />
-      </span>
+        <span className="p-input-icon-left w-full md:w-20rem">
+          <i className="pi pi-search" />
+          <InputText
+            value={globalFilterValue}
+            onChange={onGlobalFilterChange}
+            placeholder=" Buscar en todos los campos... "
+          />
+        </span>
+      </div>
     </div>
   );
 
@@ -143,8 +168,8 @@ const GenericDataTable = ({
           <ToggleButton
             checked={showDeletedState}
             onChange={handleToggleDeleted}
-            onLabel="" //"Mostrando eliminados"
-            offLabel="" //"Ocultando eliminados"
+            onLabel=""
+            offLabel=""
             onIcon="pi pi-eye"
             offIcon="pi pi-eye-slash"
             className="p-button-sm"
@@ -152,14 +177,27 @@ const GenericDataTable = ({
         )}
         {header}
       </div>
-      <span className="p-input-icon-left w-full md:w-20rem">
-        <i className="pi pi-search" />
-        <InputText
-          value={globalFilterValue}
-          onChange={onGlobalFilterChange}
-          placeholder="Buscar en todos los campos..."
+      <div className="flex align-items-center gap-2">
+        <MultiSelect
+          value={selectedColumns}
+          options={columnOptions}
+          onChange={(e) => setSelectedColumns(e.value)}
+          optionLabel="label"
+          placeholder="Columnas"
+          display="chip"
+          maxSelectedLabels={0}
+          selectedItemsLabel="{0} columnas"
+          className="flex-1"
         />
-      </span>
+        <span className="p-input-icon-left w-full md:w-20rem">
+          <i className="pi pi-search" />
+          <InputText
+            value={globalFilterValue}
+            onChange={onGlobalFilterChange}
+            placeholder=" Buscar en todos los campos... "
+          />
+        </span>
+      </div>
     </div>
   ) : (
     defaultHeader
@@ -169,6 +207,10 @@ const GenericDataTable = ({
     const baseClass = rowClassName ? rowClassName(data) : "";
     return data.deletedAt ? `${baseClass} deleted-row` : baseClass;
   };
+
+  const visibleColumns = useMemo(() => {
+    return columns.filter((col) => selectedColumns.includes(col.field));
+  }, [columns, selectedColumns]);
 
   return (
     <div className="generic-data-table">
@@ -201,7 +243,7 @@ const GenericDataTable = ({
         globalFilterFields={globalFilterFields}
         header={combinedHeader}
       >
-        {columns.map((column) => (
+        {visibleColumns.map((column) => (
           <Column
             key={column.field}
             field={column.field}
@@ -275,7 +317,7 @@ GenericDataTable.propTypes = {
   scrollable: PropTypes.bool,
   scrollHeight: PropTypes.string,
   header: PropTypes.node,
-  showDeleted: PropTypes.bool, // Nueva prop
+  showDeleted: PropTypes.bool,
 };
 
 export default GenericDataTable;
