@@ -24,7 +24,7 @@ import { PayrollModule } from "./modules/payroll";
 import { SalesModule } from "./modules/sales";
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(true); // Estado de autenticación
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Estado de autenticación
 
   useEffect(() => {
     const auth = localStorage.getItem("isAuthenticated");
