@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ApolloProvider } from "@apollo/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { client } from "./apollo";
@@ -26,14 +26,19 @@ import { SalesModule } from "./modules/sales";
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false); // Estado de autenticación
 
+  useEffect(() => {
+    const auth = localStorage.getItem("isAuthenticated");
+    setIsAuthenticated(auth === "true");
+  }, []);
+
   // Función que se pasa a LoginPage para manejar el inicio de sesión exitoso
   const handleLogin = () => {
-    setIsAuthenticated(true); // Actualiza el estado de autenticación
+    localStorage.setItem("isAuthenticated", "true");
+    setIsAuthenticated(true);
   };
 
   return (
     <ApolloProvider client={client}>
-      {/* <BrowserRouter basename="/adm-frontend"> */}
       <BrowserRouter>
         <Routes>
           {/* Ruta pública (login) */}
