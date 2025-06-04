@@ -1,23 +1,17 @@
 import React from "react";
 import { Button } from "primereact/button";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@apollo/client";
-
 import logo from "../../assets/images/logo.png";
 import { LOGOUT } from "../../modules/auth/graphql/queries";
 import "../styles/TopBar.css";
+import useLogout from "../../hooks/useLogout";
 
 export function TopBar() {
+  const logout = useLogout();
   const navigate = useNavigate();
-  const [logout] = useMutation(LOGOUT);
 
   const handleLogout = async () => {
-    try {
-      await logout();
-      navigate("/");
-    } catch (error) {
-      console.error("Error al cerrar sesión:", error);
-    }
+    await logout();
   };
 
   return (

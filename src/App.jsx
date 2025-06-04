@@ -33,7 +33,6 @@ function App() {
 
   // Función que se pasa a LoginPage para manejar el inicio de sesión exitoso
   const handleLogin = () => {
-    localStorage.setItem("isAuthenticated", "true");
     setIsAuthenticated(true);
   };
 

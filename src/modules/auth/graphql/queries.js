@@ -16,14 +16,19 @@ const GET_PROFILE = gql`
   query Profile {
     profile {
       id
-      email
-      enabled
-      name
-      lastName
-      mobile
       role
-      isTwoFactorEnabled
-      isTwoFactorConfigured
+      business {
+        id
+      }
+      office {
+        id
+      }
+      department {
+        id
+      }
+      team {
+        id
+      }
     }
   }
 `;

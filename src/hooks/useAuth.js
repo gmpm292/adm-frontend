@@ -5,11 +5,21 @@ const useAuth = () => {
   const { data, error, loading } = useQuery(GET_PROFILE, {
     fetchPolicy: "network-only",
     onError: (error) => {
-      console.error("Error al verificar autenticación query(GET_PROFILE):", error);
+      console.error(
+        "Error al verificar autenticación query(GET_PROFILE):",
+        error
+      );
     },
   });
 
   const isAuthenticated = !error && data?.profile;
+  if (isAuthenticated) {
+    localStorage.setItem("isAuthenticated", "true");
+    localStorage.setItem("userAuthenticated", JSON.stringify(data.profile));
+  } else {
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("userAuthenticated");
+  }
 
   return { isAuthenticated, loading };
 };
