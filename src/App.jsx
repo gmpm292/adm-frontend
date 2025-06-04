@@ -33,7 +33,8 @@ function App() {
 
   return (
     <ApolloProvider client={client}>
-      <BrowserRouter basename="/adm-frontend">
+      {/* <BrowserRouter basename="/adm-frontend"> */}
+      <BrowserRouter>
         <Routes>
           {/* Ruta pública (login) */}
           <Route
