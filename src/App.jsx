@@ -25,16 +25,20 @@ import { SalesModule } from "./modules/sales";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false); // Estado de autenticación
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
 
   useEffect(() => {
     const auth = localStorage.getItem("isAuthenticated");
     setIsAuthenticated(auth === "true");
+    setIsAuthChecked(true);
   }, []);
 
   // Función que se pasa a LoginPage para manejar el inicio de sesión exitoso
   const handleLogin = () => {
     setIsAuthenticated(true);
   };
+
+  if (!isAuthChecked) return null;
 
   return (
     <ApolloProvider client={client}>
