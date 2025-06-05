@@ -23,57 +23,17 @@ const rejectPendingRequests = () => {
   pendingRequests = [];
 };
 
-// const errorLink = onError(({ graphQLErrors, operation, forward }) => {
-//   if (graphQLErrors) {
-//     for (const err of graphQLErrors) {
-//       console.log("Error extensions", err.extensions);
-//       if (
-//         err.extensions?.code === "401" &&
-//         (err.message === "Unauthorized" || err.message === "UnauthorizedError")
-//       ) {
-//         // Si no está refrescando, inicia el proceso de refresh
-//         if (!isRefreshing) {
-//           isRefreshing = true;
-
-//           client
-//             .mutate({ mutation: REFRESH_TOKEN })
-//             .then(() => {
-//               // Resuelve las solicitudes pendientes
-//               resolvePendingRequests();
-//               isRefreshing = false;
-//             })
-//             .catch((error) => {
-//               console.error("Error al refrescar el token:", error);
-//               // Si el refresh falla, redirige al login
-//               rejectPendingRequests();
-//               isRefreshing = false;
-//               window.location.href = "/login";
-//             });
-//         }
-
-//         return new Observable((observer) => {
-//           pendingRequests.push(() => {
-//             forward(operation).subscribe({
-//               next: (value) => observer.next(value),
-//               error: (err) => observer.error(err),
-//               complete: () => observer.complete(),
-//             });
-//           });
-//         });
-//       }
-//     }
-//   }
-// });
-
 const errorLink = onError(({ graphQLErrors, operation, forward }) => {
   if (graphQLErrors) {
     for (const err of graphQLErrors) {
-      console.log("Error extensions", err.extensions);
-
-      if (
+      console.log("err", err);
+      console.log("operation", operation);
+      const isUnauthorized =
         err.extensions?.code === "401" &&
-        (err.message === "Unauthorized" || err.message === "UnauthorizedError")
-      ) {
+        (err.message === "Unauthorized" || err.message === "UnauthorizedError");
+
+      console.log("isUnauthorized", isUnauthorized);
+      if (isUnauthorized) {
         if (!isRefreshing) {
           isRefreshing = true;
 
@@ -83,6 +43,8 @@ const errorLink = onError(({ graphQLErrors, operation, forward }) => {
               if (data?.refresh?.accessToken) {
                 console.log("Token refrescado correctamente");
                 resolvePendingRequests();
+                console.log("Retorna true.");
+                return true;
               } else {
                 throw new Error("Refresh token falló");
               }
@@ -90,22 +52,46 @@ const errorLink = onError(({ graphQLErrors, operation, forward }) => {
             .catch((error) => {
               console.error("Error al refrescar el token:", error);
               rejectPendingRequests();
-              window.location.href = "/login"; // Redirigir al login si falla el refresh
+
+              // Limpiar estado antes de redirigir
+              localStorage.removeItem("isAuthenticated");
+              localStorage.removeItem("userAuthenticated");
+
+              window.dispatchEvent(new Event("auth-failed"));
+              return false;
             })
             .finally(() => {
+              console.error("Error al refrescar el token: .finally");
               isRefreshing = false;
             });
 
           return new Observable((observer) => {
-            refreshPromise.finally(() => {
-              forward(operation).subscribe(observer);
+            refreshPromise.then((success) => {
+              console.log("success", success);
+              if (success) {
+                forward(operation).subscribe({
+                  next: observer.next.bind(observer),
+                  error: observer.error.bind(observer),
+                  complete: observer.complete.bind(observer),
+                });
+              } else {
+                observer.error(new Error("No se pudo refrescar el token"));
+              }
             });
           });
+        } else {
+          console.log("isRefreshing", isRefreshing);
+          isRefreshing = false;
+          window.dispatchEvent(new Event("auth-failed"));
         }
 
         return new Observable((observer) => {
           pendingRequests.push(() => {
-            forward(operation).subscribe(observer);
+            forward(operation).subscribe({
+              next: observer.next.bind(observer),
+              error: observer.error.bind(observer),
+              complete: observer.complete.bind(observer),
+            });
           });
         });
       }

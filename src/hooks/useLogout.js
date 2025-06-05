@@ -1,24 +1,8 @@
-import { useMutation } from "@apollo/client";
-
-import { useNavigate } from "react-router-dom";
-import { LOGOUT } from "../modules/auth/graphql/queries";
+import { useAuthContext } from "../modules/auth/components/AuthContext";
 
 const useLogout = () => {
-  const [logout] = useMutation(LOGOUT);
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      localStorage.removeItem("isAuthenticated");
-      localStorage.removeItem("userAuthenticated");
-      navigate("/login");
-    } catch (error) {
-      console.error("Error al cerrar sesión:", error);
-    }
-  };
-
-  return handleLogout;
+  const { logout } = useAuthContext();
+  return logout;
 };
 
 export default useLogout;

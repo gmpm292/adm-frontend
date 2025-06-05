@@ -7,11 +7,12 @@ import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Message } from "primereact/message";
 import { useNavigate } from "react-router-dom";
+import { useAuthContext } from "./AuthContext";
 
-export function LoginForm({ onLogin }) {
+export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [login, { loading, error, data }] = useLazyQuery(CLASSIC_LOGIN, {
+  const [loginQuery, { loading, error }] = useLazyQuery(CLASSIC_LOGIN, {
     fetchPolicy: "network-only",
     onError: (error) => {
       console.error("Error detallado:", {
@@ -22,42 +23,21 @@ export function LoginForm({ onLogin }) {
       });
     },
   });
+
+  const { login } = useAuthContext(); // authContext.login()
   const navigate = useNavigate();
-
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   console.log("Iniciando login con:", { email, password });
-
-  //   try {
-  //     console.log("Enviando request...");
-  //     const result = await login({
-  //       variables: {
-  //         input: {
-  //           email,
-  //           password,
-  //         },
-  //       },
-  //     });
-
-  //     console.log("Respuesta completa:", result);
-
-  //     if (result.data?.classicLogin?.profile) {
-  //       console.log("Login exitoso:", result.data.classicLogin.profile);
-  //       onLogin();
-  //     }
-  //   } catch (err) {
-  //     console.error("Error en login:", err);
-  //   }
-  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await login({
+      const { data } = await loginQuery({
         variables: { input: { email, password } },
       });
-      if (data?.classicLogin?.profile) {
-        onLogin();
+
+      const profile = data?.classicLogin?.profile;
+
+      if (profile) {
+        login(profile); // Guarda en contexto
         navigate("/statistics/analytics");
       }
     } catch (err) {

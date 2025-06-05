@@ -1,9 +1,10 @@
-import { LoginForm } from '../components/LoginForm';
-import '../styles/LoginPage.css';
-import '../../../styles/ButtonStyles.css'
+import { LoginForm } from "../components/LoginForm";
+import "../styles/LoginPage.css";
+import "../../../styles/ButtonStyles.css";
 
-export function LoginPage({ onLogin }) {
-  console.log('Styles should be loaded'); // Para debug
+export function LoginPage() {
+  console.log("Styles should be loaded"); // Para debug
+
   return (
     <div className="login-page">
       <div className="login-container w-full lg:w-6 md:w-8">
@@ -13,8 +14,8 @@ export function LoginPage({ onLogin }) {
           <div className="login-title">Bienvenido</div>
           <span className="login-subtitle">Inicia sesión para continuar</span>
         </div>
-        <LoginForm onLogin={onLogin} />
+        <LoginForm /> 
       </div>
     </div>
   );
-} 
+}
