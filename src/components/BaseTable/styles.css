@@ -1,9 +1,14 @@
-/* Estilos para el título de la tarjeta */
+/* ============================================================================
+   BASE TABLE STYLES (BaseTable) - Estilos comunes para todas las tablas
+============================================================================ */
+
+/* -------------------------------
+   TITULARES Y ESTRUCTURA BÁSICA
+--------------------------------*/
 .p-card-title {
-  padding-left: 1rem !important; /* Separa el título del borde izquierdo */
+  padding-left: 1rem !important;
 }
 
-/* Estilos base para la tabla */
 .generic-data-table .p-datatable {
   margin-top: 0.5rem;
   border: 1px solid #e0e0e0;
@@ -11,39 +16,36 @@
   overflow: hidden;
 }
 
-/* Cabeceras de columnas - Con mejor espaciado */
+/* -------------------------------
+   ENCABEZADOS DE COLUMNA
+--------------------------------*/
 .generic-data-table .p-datatable-thead > tr > th {
-  padding: 0.1rem 1rem !important; /* Más espacio interno */
-  background-color: #f5f7fa !important; /* Color de fondo para encabezados */
+  padding: 0.1rem 1rem !important;
+  background-color: #f5f7fa !important;
   border-bottom: 2px solid #e0e0e0 !important;
   font-weight: 600;
   color: #2d3748;
 }
 
-/* Celdas - Con espaciado uniforme */
+/* -------------------------------
+   CELDAS Y FILAS
+--------------------------------*/
 .generic-data-table .p-datatable-tbody > tr > td {
-  padding: 0.1rem 1rem !important; /* Más espacio interno */
+  padding: 0.1rem 1rem !important;
   border-bottom: 1px solid #f0f0f0;
 }
 
-/* Filas alternas - Color diferenciado */
 .generic-data-table .p-datatable-tbody > tr:nth-child(even) {
-  background-color: #f9fafb !important; /* Color claro para filas pares */
+  background-color: #f9fafb !important;
 }
 
-/* Hover en filas */
 .generic-data-table .p-datatable-tbody > tr:hover {
-  background-color: #f0f4f8 !important; /* Color de hover más visible */
+  background-color: #f0f4f8 !important;
 }
 
-/* Mensajes de error */
-.generic-data-table .p-message-error {
-  margin: 0.5rem 0;
-  padding: 0.75rem;
-  border-radius: 4px;
-}
-
-/* Paginación - Mejor integración visual */
+/* -------------------------------
+   PAGINACIÓN
+--------------------------------*/
 .generic-data-table .p-paginator {
   margin-top: 0.5rem;
   padding: 0.75rem;
@@ -51,6 +53,9 @@
   border-top: 1px solid #e0e0e0;
 }
 
+/* -------------------------------
+   COLUMNA DE ACCIONES
+--------------------------------*/
 .generic-data-table .actions-column {
   display: flex;
   justify-content: center;
@@ -63,61 +68,74 @@
   padding: 0.375rem !important;
 }
 
+/* ============================================================================
+   FILTROS Y FORMULARIOS EN TABLAS
+============================================================================ */
 
-/* Agregar al archivo styles.css */
+.generic-data-table .p-column-filter {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.generic-data-table .p-inputgroup {
+  margin-bottom: 0.5rem;
+}
+
+.generic-data-table .pi-info-circle {
+  cursor: help;
+  color: var(--primary-color);
+}
+
+/* ============================================================================
+   BADGES DE ESTADO (Reutilizables)
+============================================================================ */
+
+.generic-data-table .badge {
+  border-radius: 2px;
+  padding: 0.25em 0.5rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  display: inline-block;
+}
+
+.generic-data-table .badge.status-active {
+  background-color: #C8E6C9;
+  color: #256029;
+}
+
+.generic-data-table .badge.status-inactive {
+  background-color: #FFCDD2;
+  color: #C63737;
+}
+
+/* ============================================================================
+   FILAS MARCADAS COMO ELIMINADAS
+============================================================================ */
 .generic-data-table .deleted-row td {
   position: relative;
   color: #6c757d;
-}
-
-.generic-data-table .deleted-row td::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 100%;
-  height: 1px;
-  background-color: #dc3545;
-  transform: translateY(-50%);
+  opacity: 0.7;
 }
 
 .generic-data-table .deleted-row td::after {
-  content: " (Eliminado)";
-  color: #dc3545;
-  font-size: 0.8em;
-}
-
-/* Estilos para filas eliminadas */
-.generic-data-table .row-deleted td {
-  color: #6c757d;
-  position: relative;
-}
-
-.generic-data-table .row-deleted td span {
-  position: relative;
-  display: inline-block;
-}
-
-.generic-data-table .row-deleted td span::after {
   content: "";
   position: absolute;
   left: 0;
+  right: 0;
   top: 50%;
-  width: 100%;
-  height: 1px;
-  background-color: #dc3545;
+  border-top: 1px solid #dc3545;
   transform: translateY(-50%);
+  pointer-events: none;
 }
 
-/* Opcional: agregar texto "(Eliminado)" después del contenido */
-.generic-data-table .row-deleted td .deleted-label {
-  margin-left: 0.5rem;
-  color: #dc3545;
-  font-size: 0.8em;
-  display: inline-block;
+/* ============================================================================
+   MENSAJES DE ERROR
+============================================================================ */
+.generic-data-table .p-message-error {
+  margin-top: 1rem;
+  background-color: #FFCDD2;
+  border-color: #EF9A9A;
+  color: #B71C1C;
 }
-
-.generic-data-table .row-deleted td .deleted-label::after {
-  content: none; /* Eliminar la línea para el texto "(Eliminado)" */
-}
-

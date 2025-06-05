@@ -204,8 +204,10 @@ const GenericDataTable = ({
   );
 
   const getRowClassName = (data) => {
+    console.log("Row data:", data);
+    console.log("Row data deletedAt:", data[0].deletedAt);
     const baseClass = rowClassName ? rowClassName(data) : "";
-    return data.deletedAt ? `${baseClass} deleted-row` : baseClass;
+    return data[0].deletedAt ? `${baseClass} deleted-row` : baseClass;
   };
 
   const visibleColumns = useMemo(() => {
