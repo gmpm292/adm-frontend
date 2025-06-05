@@ -1,5 +1,12 @@
 import { ApolloProvider } from "@apollo/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+//import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  HashRouter as BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+
 import { client } from "./apollo";
 
 import { AuthProvider } from "./modules/auth/components/AuthContext";
@@ -30,7 +37,8 @@ function App() {
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/login" element={<LoginPage />} />
+            {/* <Route path="/login" element={<LoginPage />} /> */}
+            <Route path="*" element={<LoginPage />} />
             <Route element={<ProtectedRoute />}>
               <Route
                 path="/statistics/analytics"
