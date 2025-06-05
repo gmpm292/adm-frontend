@@ -1,11 +1,20 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuthContext } from "./AuthContext";
+import { ProgressSpinner } from "primereact/progressspinner";
 
 const ProtectedRoute = () => {
   const { isAuthenticated, loading, authFailed, ready } = useAuthContext();
 
   if (!ready) {
-    return <div>Cargando....</div>;
+    //return <div>Cargando....</div>;
+    return (
+      <div
+        className="flex justify-content-center align-items-center"
+        style={{ height: "100vh" }}
+      >
+        <ProgressSpinner />
+      </div>
+    );
   }
 
   console.log("!isAuthenticated", !isAuthenticated);
