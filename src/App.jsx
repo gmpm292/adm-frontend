@@ -21,6 +21,8 @@ import { CompanyModule } from "./modules/company";
 import { InventoryModule } from "./modules/inventory";
 import { PayrollModule } from "./modules/payroll";
 import { SalesModule } from "./modules/sales";
+import { UserCreateFirstPage } from "./modules/user/pages/UserCreateFirstPage";
+import { ChangePasswordPage } from "./modules/user/pages/ChangePasswordPage";
 
 import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
@@ -38,7 +40,12 @@ function App() {
         <AuthProvider>
           <Routes>
             {/* <Route path="/login" element={<LoginPage />} /> */}
-            <Route path="*" element={<LoginPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/cfu" element={<UserCreateFirstPage />} />
+            <Route
+              path="/change-password/:confirmationToken"
+              element={<ChangePasswordPage />}
+            />
             <Route element={<ProtectedRoute />}>
               <Route
                 path="/statistics/analytics"

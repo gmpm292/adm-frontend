@@ -65,6 +65,11 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
             lastName: formData.lastName,
             mobile: formData.mobile,
             role: [formData.role], // Enviar como array con un solo elemento
+
+            businessId: formData.businessId,
+            officeId: formData.officeId,
+            departmentId: formData.departmentId,
+            teamId: formData.teamId,
           },
         },
       });

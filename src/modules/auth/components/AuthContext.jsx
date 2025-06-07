@@ -18,17 +18,18 @@ export const AuthProvider = ({ children }) => {
 
   const location = useLocation();
   const isLoginPage = location.pathname === "/login";
+  const isChangePasswordPage = location.pathname.startsWith("/change-password/");
 
   const { data, loading, error } = useQuery(GET_PROFILE, {
     fetchPolicy: "network-only",
-    //skip: isLoginPage,
+    skip: isChangePasswordPage, 
     onError: (err) => {
       console.error("Error al obtener el perfil:", err);
     },
   });
 
   useEffect(() => {
-    console.log("!loading", !loading);
+    console.log("isChangePasswordPage", isChangePasswordPage);
     if (!loading) {
       if (error) {
         console.warn("Fallo de autenticación:", error);

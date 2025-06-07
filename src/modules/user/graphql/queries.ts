@@ -1,5 +1,13 @@
 import { gql } from "@apollo/client";
 
+export const CREATE_FIRST_USER = gql`
+  mutation createUser($input: CreateFirstUserInput!) {
+    createFirstUser(createFirstUserInput: $input) {
+      id
+    }
+  }
+`;
+
 export const GET_USERS = gql`
   query Users($options: ListOptions) {
     users(options: $options) {
