@@ -13,7 +13,9 @@ export const GET_USERS = gql`
     users(options: $options) {
       totalCount
       data {
+        createdAt
         deletedAt
+        updatedAt
 
         id
         email

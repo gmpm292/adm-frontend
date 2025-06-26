@@ -8,7 +8,6 @@ import { CREATE_USER } from "../graphql/queries";
 import { Toast } from "primereact/toast";
 import SecurityEntitySelector from "../../../components/SecurityEntitySelector/SecurityEntitySelector";
 
-
 const roles = [
   { label: "Super", value: "SUPER" },
   { label: "Principal", value: "PRINCIPAL" },
@@ -26,12 +25,14 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
     email: "",
     mobile: "",
     role: null,
-
     businessId: null,
     officeId: null,
     departmentId: null,
     teamId: null,
   });
+  
+  const [showSecurityEntities, setShowSecurityEntities] = useState(false);
+  const [entitiesToInclude, setEntitiesToInclude] = useState([]);
   const toast = useRef(null);
   const [createUser] = useMutation(CREATE_USER);
 
@@ -48,7 +49,33 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
   };
 
   const handleRoleChange = (e) => {
-    setFormData((prev) => ({ ...prev, role: e.value }));
+    const selectedRole = e.value;
+    setFormData((prev) => ({ ...prev, role: selectedRole }));
+    
+    // Determinar qué entidades mostrar según el rol
+    let entities = [];
+    switch(selectedRole) {
+      case 'PRINCIPAL':
+      case 'USER':
+        entities = ['BUSINESS'];
+        break;
+      case 'ADMIN':
+        entities = ['BUSINESS', 'OFFICE'];
+        break;
+      case 'MANAGER':
+        entities = ['BUSINESS', 'OFFICE', 'DEPARTMENT'];
+        break;
+      case 'SUPERVISOR':
+      case 'AGENT':
+        entities = ['BUSINESS', 'OFFICE', 'DEPARTMENT', 'TEAM'];
+        break;
+      case 'SUPER':
+      default:
+        entities = [];
+    }
+    
+    setEntitiesToInclude(entities);
+    setShowSecurityEntities(entities.length > 0);
   };
 
   const handleSubmit = async () => {
@@ -64,8 +91,7 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
             name: formData.name,
             lastName: formData.lastName,
             mobile: formData.mobile,
-            role: [formData.role], // Enviar como array con un solo elemento
-
+            role: [formData.role],
             businessId: formData.businessId,
             officeId: formData.officeId,
             departmentId: formData.departmentId,
@@ -89,7 +115,13 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
         email: "",
         mobile: "",
         role: null,
+        businessId: null,
+        officeId: null,
+        departmentId: null,
+        teamId: null,
       });
+      setShowSecurityEntities(false);
+      setEntitiesToInclude([]);
     } catch (err) {
       toast.current.show({
         severity: "error",
@@ -183,9 +215,12 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
             />
           </div>
 
-          <SecurityEntitySelector
-            onSelectionChange={handleSecurityEntitiesChange}
-          />
+          {showSecurityEntities && (
+            <SecurityEntitySelector
+              onSelectionChange={handleSecurityEntitiesChange}
+              entitiesToInclude={entitiesToInclude}
+            />
+          )}
         </div>
       </Dialog>
     </>

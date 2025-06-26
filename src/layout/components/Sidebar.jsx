@@ -162,6 +162,11 @@ export function Sidebar() {
       key: "settings",
       items: [
         {
+          label: "Configuraciones",
+          icon: "pi pi-sliders-h",
+          command: () => navigate("/configurations"),
+        },
+        {
           label: "Sistema",
           icon: "pi pi-desktop",
         },

@@ -1,6 +1,9 @@
 import React, { useCallback, useState, useRef } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
 import { GET_USERS, DELETE_USERS, RESTORE_USERS } from "../graphql/queries";
+import { REQUEST_PASSWORD_CHANGE_FOR_ANOTHER_USER } from "../../auth/graphql/queries";
+import { Calendar } from "primereact/calendar";
+
 import GenericDataTable from "../../../components/BaseTable/index";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
@@ -11,7 +14,11 @@ import { Toast } from "primereact/toast";
 import { UserEditForm } from "./UserEditForm";
 import { UserCreateForm } from "./UserCreateForm";
 import { UserDetailForm } from "./UserDetailForm";
-import { FilterMatchMode } from "primereact/api";
+import { FilterMatchMode, FilterOperator } from "primereact/api";
+import {
+  PrimeReactSortMeta,
+  PrimeReactFilters,
+} from "../../../components/BaseTable/types";
 
 const statusBodyTemplate = (rowData) => {
   return (
@@ -20,19 +27,51 @@ const statusBodyTemplate = (rowData) => {
     </span>
   );
 };
+
 const statusOptions = [
   { label: "Activo", value: true },
   { label: "Inactivo", value: false },
 ];
+
 const statusFilterTemplate = (options) => {
   return (
     <Dropdown
       value={options.value}
       options={statusOptions}
-      onChange={(e) => options.filterCallback(e.value)}
+      onChange={(e) => options.filterCallback(e.value, options.index)}
       optionLabel="label"
       placeholder="Seleccione estado"
       className="p-column-filter"
+      showClear
+    />
+  );
+};
+
+const dateBodyTemplate = (rowData, field) => {
+  if (!rowData[field]) return "-";
+
+  const date = new Date(rowData[field]);
+  return date.toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const dateFilterTemplate = (options) => {
+  return (
+    <Calendar
+      value={options.value}
+      onChange={(e) =>
+        options.filterCallback(e.value.toISOString(), options.index)
+      }
+      dateFormat="dd/mm/yy"
+      placeholder="dd/mm/aaaa"
+      showIcon
+      icon="pi pi-calendar"
+      showButtonBar
       showClear
     />
   );
@@ -44,6 +83,9 @@ export function UserTable() {
   });
   const [deleteUsers] = useMutation(DELETE_USERS);
   const [restoreUsers] = useMutation(RESTORE_USERS);
+  const [requestPasswordChangeForAnorherUser] = useMutation(
+    REQUEST_PASSWORD_CHANGE_FOR_ANOTHER_USER
+  );
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [editDialogVisible, setEditDialogVisible] = useState(false);
   const [createDialogVisible, setCreateDialogVisible] = useState(false);
@@ -51,9 +93,38 @@ export function UserTable() {
   const toast = useRef(null);
   const [detailDialogVisible, setDetailDialogVisible] = useState(false);
 
+  // Ejemplo para pasar filtros iniciales o por defecto.
+  // const defaultFilters: PrimeReactFilters = {
+  //   name: {
+  //     operator: FilterOperator.AND,
+  //     constraints: [
+  //       {
+  //         value: "carlos",
+  //         matchMode: FilterMatchMode.CONTAINS,
+  //       },
+  //     ],
+  //   },
+  // };
+  const defaultFilters: PrimeReactFilters = {
+    enabled: {
+      operator: FilterOperator.AND,
+      constraints: [
+        {
+          value: "true",
+          matchMode: FilterMatchMode.EQUALS,
+        },
+      ],
+    },
+  };
+
+  // Ejemplo para pasar ordenamientos iniciales o por defecto.
+  const defaultSorts: PrimeReactSortMeta[] = [
+    { field: "createdAt", order: -1 },
+  ];
+
   const tableStateRef = useRef({
-    filters: {},
-    sorts: [],
+    filters: { ...defaultFilters },
+    sorts: [...defaultSorts],
     pagination: { first: 0, rows: 10 },
     showDeleted: false,
   });
@@ -61,6 +132,7 @@ export function UserTable() {
   const handleFetchData = useCallback(
     async (params) => {
       try {
+        console.log("params", params);
         tableStateRef.current = {
           filters: params.filters || {},
           sorts: params.sorts || [],
@@ -184,6 +256,40 @@ export function UserTable() {
     });
   };
 
+  const handleRequestPasswordChange = (email) => {
+    confirmDialog({
+      message: `¿Estás seguro de que deseas solicitar un cambio de contraseña para ${email}?`,
+      header: "Confirmación",
+      icon: "pi pi-exclamation-triangle",
+      accept: async () => {
+        try {
+          await requestPasswordChangeForAnorherUser({
+            variables: {
+              input: {
+                email: email,
+              },
+            },
+          });
+
+          toast.current.show({
+            severity: "success",
+            summary: "Éxito",
+            detail:
+              "Solicitud de cambio de contraseña enviada correctamente. El usuario recibirá un correo con las instrucciones.",
+            life: 5000,
+          });
+        } catch (err) {
+          toast.current.show({
+            severity: "error",
+            summary: "Error",
+            detail: `No se pudo enviar la solicitud de cambio de contraseña: ${err.message}`,
+            life: 5000,
+          });
+        }
+      },
+    });
+  };
+
   const actionBodyTemplate = (rowData) => {
     if (rowData.deletedAt) {
       return (
@@ -222,6 +328,13 @@ export function UserTable() {
           tooltipOptions={{ position: "top" }}
           onClick={() => handleViewDetails(rowData.id)}
         />
+        <Button
+          icon="pi pi-key"
+          className="p-button-rounded p-button-text p-button-help"
+          tooltip="Solicitar cambio de contraseña"
+          tooltipOptions={{ position: "top" }}
+          onClick={() => handleRequestPasswordChange(rowData.email)}
+        />
       </div>
     );
   };
@@ -232,6 +345,7 @@ export function UserTable() {
       header: "Id",
       sortable: true,
       filter: true,
+      visible: false,
       filterMatchModeOptions: [
         { label: "Igual a", value: FilterMatchMode.EQUALS },
         { label: "Diferente a", value: FilterMatchMode.NOT_EQUALS },
@@ -264,18 +378,47 @@ export function UserTable() {
     {
       field: "enabled",
       header: "Estado",
-      body: statusBodyTemplate,
       sortable: true,
       filter: true,
+      body: statusBodyTemplate,
       filterElement: statusFilterTemplate,
-      filterMatchMode: FilterMatchMode.EQUALS,
+      filterMatchModeOptions: [FilterMatchMode.EQUALS],
+    },
+    {
+      field: "createdAt",
+      header: "Fecha de creación",
+      sortable: true,
+      filter: true,
+      visible: false,
+      body: (rowData) => dateBodyTemplate(rowData, "createdAt"),
+      filterElement: dateFilterTemplate,
+      dataType: "date",
+    },
+    {
+      field: "updatedAt",
+      header: "Fecha de actualización",
+      sortable: true,
+      filter: true,
+      visible: false,
+      body: (rowData) => dateBodyTemplate(rowData, "updatedAt"),
+      filterElement: dateFilterTemplate,
+      dataType: "date",
+    },
+    {
+      field: "deletedAt",
+      header: "Fecha de eliminación",
+      sortable: true,
+      filter: true,
+      visible: false,
+      body: (rowData) => dateBodyTemplate(rowData, "deletedAt"),
+      filterElement: dateFilterTemplate,
+      dataType: "date",
     },
   ];
 
   // Botón de nuevo usuario que se pasará al header
   const addUserButton = (
     <Button
-      //label="Nuevo Usuario"
       icon="pi pi-plus"
       tooltip="Crear Usuario Nuevo"
       onClick={() => setCreateDialogVisible(true)}
@@ -294,13 +437,15 @@ export function UserTable() {
         loading={loading}
         error={error}
         globalFilter={globalFilter}
-        globalFilterFields={["name", "email"]}
+        globalFilterFields={["name", "lastName", "email", "fullName"]}
         emptyMessage="No se encontraron usuarios"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        header={addUserButton} // Pasamos el botón como header personalizado
+        initialFilters={defaultFilters}
+        initialSorts={defaultSorts}
+        header={addUserButton}
         showDeleted={true}
       >
         <Column

@@ -55,6 +55,14 @@ const CHECK_CONFIRMATION_TOKEN = gql`
   }
 `;
 
+const REQUEST_PASSWORD_CHANGE = gql`
+  mutation RequestPasswordChange($input: RequestPasswordChangeInput!) {
+    requestPasswordChange(input: $input) {
+      message
+    }
+  }
+`;
+
 const REQUEST_PASSWORD_CHANGE_FOR_ANOTHER_USER = gql`
   mutation RequestPasswordChangeForAnotherUser(
     $input: RequestPasswordChangeInput!
@@ -129,6 +137,7 @@ export {
   REFRESH_TOKEN,
   CHANGE_PASSWORD,
   CHECK_CONFIRMATION_TOKEN,
+  REQUEST_PASSWORD_CHANGE,
   REQUEST_PASSWORD_CHANGE_FOR_ANOTHER_USER,
   GENERATE_2FA_SECRET,
   VERIFY_2FA,

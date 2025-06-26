@@ -1,4 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ConditionalOperator,
+  ListFilter,
+  LogicalOperator,
+  PrimeReactFilters,
+  PrimeReactSortMeta,
+  UseDataTableParams,
+} from "./types";
+import { FilterOperator } from "primereact/api";
 
 const mapPrimeReactOperatorToBackend = (primeOperator) => {
   switch (primeOperator) {
@@ -29,10 +38,18 @@ const mapPrimeReactOperatorToBackend = (primeOperator) => {
   }
 };
 
-const useDataTable = (onFetchData, globalFilterFields = [], showDeleted) => {
+const useDataTable = (
+  onFetchData,
+  globalFilterFields = [],
+  showDeleted,
+  initialFilters = {},
+  initialSorts = []
+): UseDataTableParams => {
   const [globalFilterValue, setGlobalFilterValue] = useState("");
-  const [multiSortMeta, setMultiSortMeta] = useState([]);
-  const [columnFilters, setColumnFilters] = useState({});
+  const [multiSortMeta, setMultiSortMeta] =
+    useState<PrimeReactSortMeta[]>(initialSorts);
+  const [columnFilters, setColumnFilters] =
+    useState<PrimeReactFilters>(initialFilters);
   const [lazyState, setLazyState] = useState({
     first: 0,
     rows: 10,
@@ -42,24 +59,39 @@ const useDataTable = (onFetchData, globalFilterFields = [], showDeleted) => {
   const prevParams = useRef(null);
 
   const buildFilters = useCallback(
-    (filters, globalFilterValue, globalFilterFields) => {
-      const result = [];
+    (
+      filters: PrimeReactFilters,
+      globalFilterValue: string,
+      globalFilterFields: string[]
+    ): ListFilter[] => {
+      const result: ListFilter[] = [];
 
+      // Filtro global
       if (globalFilterValue && globalFilterFields.length > 0) {
-        globalFilterFields.forEach((field) => {
+        const globalFilters = globalFilterFields.map((field) => ({
+          property: field,
+          operator: ConditionalOperator.CONTAINS,
+          value: globalFilterValue,
+          logicalOperator: LogicalOperator.OR,
+        }));
+
+        if (globalFilters.length > 1) {
           result.push({
-            property: field,
-            operator: "CONTAINS",
-            value: globalFilterValue,
-            logicalOperator: "OR",
+            property: "",
+            operator: ConditionalOperator.ANY,
+            logicalOperator: LogicalOperator.OR,
+            filters: globalFilters,
           });
-        });
+        } else {
+          result.push(...globalFilters);
+        }
       }
 
+      // Filtros por columna
       Object.entries(filters).forEach(([field, filterData]) => {
         if (!filterData?.constraints) return;
 
-        const filtersForField = filterData.constraints
+        const constraints = filterData.constraints
           .filter(
             (constraint) => constraint.value !== null && constraint.value !== ""
           )
@@ -67,11 +99,14 @@ const useDataTable = (onFetchData, globalFilterFields = [], showDeleted) => {
             property: field,
             operator: mapPrimeReactOperatorToBackend(constraint.matchMode),
             value: String(constraint.value),
-            logicalOperator: filterData.operator === "and" ? "AND" : "OR",
+            logicalOperator:
+              filterData.operator === FilterOperator.AND
+                ? LogicalOperator.AND
+                : LogicalOperator.OR,
           }));
 
-        if (filtersForField.length > 0) {
-          result.push(...filtersForField);
+        if (constraints.length > 0) {
+          result.push(...constraints);
         }
       });
 

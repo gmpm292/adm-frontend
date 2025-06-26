@@ -23,6 +23,7 @@ import { PayrollModule } from "./modules/payroll";
 import { SalesModule } from "./modules/sales";
 import { UserCreateFirstPage } from "./modules/user/pages/UserCreateFirstPage";
 import { ChangePasswordPage } from "./modules/user/pages/ChangePasswordPage";
+import { ConfigListPage } from "./modules/config/pages/ConfigListPage";
 
 import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
@@ -68,6 +69,14 @@ function App() {
                 element={
                   <MainLayout>
                     <UserListPage />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/configurations"
+                element={
+                  <MainLayout>
+                    <ConfigListPage />
                   </MainLayout>
                 }
               />

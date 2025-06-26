@@ -25,8 +25,10 @@ const GenericDataTable = ({
   emptyMessage = "No se encontraron registros",
   currentPageReportTemplate = "Mostrando {first} a {last} de {totalRecords} registros",
   pageSizeOptions = [5, 10, 25, 50],
-  initialPageSize = 10,
   globalFilterFields = [],
+  initialPageSize = 10,
+  initialFilters = {},
+  initialSorts = [],
   refreshable = true,
   onRefresh,
   onFetchData,
@@ -40,7 +42,7 @@ const GenericDataTable = ({
 }) => {
   const [showDeletedState, setShowDeletedState] = useState(false);
   const [selectedColumns, setSelectedColumns] = useState(
-    columns.map((col) => col.field)
+    columns.filter((col) => col.visible !== false).map((col) => col.field)
   );
 
   const {
@@ -56,7 +58,9 @@ const GenericDataTable = ({
   } = useDataTable(
     onFetchData,
     globalFilterFields,
-    showDeleted ? showDeletedState : undefined
+    showDeleted ? showDeletedState : undefined,
+    initialFilters,
+    initialSorts
   );
 
   const initFilters = () => {
@@ -74,10 +78,14 @@ const GenericDataTable = ({
         };
       }
     });
+    console.log("filters", filters);
     return filters;
   };
 
-  const [filters, setFilters] = useState(initFilters());
+  const [filters, setFilters] = useState({
+    ...initFilters(), // Solo añade filtros para columnas no especificadas
+    ...initialFilters,
+  });
 
   React.useEffect(() => {
     if (onRefresh) {
@@ -204,8 +212,6 @@ const GenericDataTable = ({
   );
 
   const getRowClassName = (data) => {
-    console.log("Row data:", data);
-    console.log("Row data deletedAt:", data[0].deletedAt);
     const baseClass = rowClassName ? rowClassName(data) : "";
     return data[0].deletedAt ? `${baseClass} deleted-row` : baseClass;
   };
@@ -254,19 +260,37 @@ const GenericDataTable = ({
             sortable={column.sortable !== false}
             sortField={column.sortField || column.field}
             filter={column.filter}
-            filterField={column.field}
+            filterField={column.filterField || column.field}
+            dataType={column.dataType}
             filterMatchModeOptions={
-              column.filterMatchModeOptions ?? [
-                { label: "Empieza con", value: FilterMatchMode.STARTS_WITH },
-                { label: "Contiene", value: FilterMatchMode.CONTAINS },
-                { label: "Termina con", value: FilterMatchMode.ENDS_WITH },
-                { label: "Igual a", value: FilterMatchMode.EQUALS },
-                { label: "Diferente a", value: FilterMatchMode.NOT_EQUALS },
-              ]
+              column.filterMatchModeOptions ??
+              (column.dataType === "date"
+                ? [
+                    { label: "Igual a", value: FilterMatchMode.EQUALS },
+                    {
+                      label: "Antes de",
+                      value: FilterMatchMode.LESS_THAN_OR_EQUAL_TO,
+                    },
+                    {
+                      label: "Después de",
+                      value: FilterMatchMode.GREATER_THAN_OR_EQUAL_TO,
+                    },
+                  ]
+                : [
+                    {
+                      label: "Empieza con",
+                      value: FilterMatchMode.STARTS_WITH,
+                    },
+                    { label: "Contiene", value: FilterMatchMode.CONTAINS },
+                    { label: "Termina con", value: FilterMatchMode.ENDS_WITH },
+                    { label: "Igual a", value: FilterMatchMode.EQUALS },
+                    { label: "Diferente a", value: FilterMatchMode.NOT_EQUALS },
+                  ])
             }
             filterElement={column.filterElement}
             showFilterMatchModes={column.filter}
-            showFilterMenuOptions={column.filterElement ? false : column.filter}
+            //showFilterMenuOptions={column.filterElement ? false : column.filter}
+            showFilterMenuOptions={column.filter}
             showFilterMenu={column.filter}
             style={column.style}
             headerStyle={column.headerStyle}
