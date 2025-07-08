@@ -1,0 +1,39 @@
+.profile-page .p-card {
+  border-radius: 8px;
+}
+
+.profile-page .p-tabview .p-tabview-nav {
+  background: transparent;
+  border: none;
+}
+
+.profile-page .p-tabview .p-tabview-panels {
+  padding: 1.5rem 0 0 0;
+  background: transparent;
+  border: none;
+}
+
+.profile-page .p-tabview .p-tabview-nav-link {
+  padding: 1rem 1.5rem;
+  border: none;
+  background: transparent;
+}
+
+.profile-page .p-tabview .p-tabview-nav-link:not(.p-disabled):focus {
+  box-shadow: none;
+}
+
+.profile-page .p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link {
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.profile-page .field label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.profile-page .p-divider.p-divider-horizontal {
+  margin: 1.5rem 0;
+}

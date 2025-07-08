@@ -8,6 +8,7 @@ import { CurrencyInput } from '../../../../../../components/CurrencyInput/Curren
 
 export const PricingPanel = ({
   formData,
+  setFormData,
   openPanel,
   handleToggle,
   currenciesLoading,

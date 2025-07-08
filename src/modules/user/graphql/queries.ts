@@ -108,3 +108,55 @@ export const GET_ROLES = gql`
     }
   }
 `;
+
+export const GET_PROFILE = gql`
+  query Profile {
+    profile {
+      createdAt
+      updatedAt
+      email
+      name
+      lastName
+      mobile
+      role
+      enabled
+      isTwoFactorEnabled
+      isTwoFactorConfigured
+      business {
+        id
+        name
+      }
+      office {
+        id
+        name
+      }
+      department {
+        id
+        name
+      }
+      team {
+        id
+      }
+    }
+  }
+`;
+
+export const UPDATE_USER_PROFILE = gql`
+  mutation UpdateUserProfile($input: UpdateUserProfileInput!) {
+    updateUserProfile(updateUserProfileInput: $input) {
+      id
+      email
+      name
+      lastName
+      mobile
+    }
+  }
+`;
+
+export const CHANGE_PASSWORD_BY_EMAIL = gql`
+  mutation ChangePasswordByEmail($input: ChangePasswordByEmailInput!) {
+    changePasswordByEmail(changePasswordByEmailInput: $input) {
+      id
+    }
+  }
+`;

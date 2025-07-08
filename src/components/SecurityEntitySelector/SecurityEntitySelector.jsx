@@ -107,27 +107,77 @@ const SecurityEntitySelector = ({
     skip: !includeTeam || (!selectedDepartment && !userProfile?.department),
   });
 
-  // Funciones de manejo de cambios
+  // Funciones de manejo de cambios con opción para vaciar
   const handleBusinessChange = (e) => {
-    setSelectedBusiness(e.value);
-    if (includeOffice) setSelectedOffice(null);
-    if (includeDepartment) setSelectedDepartment(null);
-    if (includeTeam) setSelectedTeam(null);
+    const newValue = e.value;
+    setSelectedBusiness(newValue);
+
+    // Si se vacía el business, vaciar todos los campos inferiores
+    if (!newValue) {
+      if (includeOffice) setSelectedOffice(null);
+      if (includeDepartment) setSelectedDepartment(null);
+      if (includeTeam) setSelectedTeam(null);
+    }
   };
 
   const handleOfficeChange = (e) => {
-    setSelectedOffice(e.value);
-    if (includeDepartment) setSelectedDepartment(null);
-    if (includeTeam) setSelectedTeam(null);
+    const newValue = e.value;
+    setSelectedOffice(newValue);
+
+    // Si se vacía el office, vaciar los campos inferiores
+    if (!newValue) {
+      if (includeDepartment) setSelectedDepartment(null);
+      if (includeTeam) setSelectedTeam(null);
+    }
   };
 
   const handleDepartmentChange = (e) => {
-    setSelectedDepartment(e.value);
-    if (includeTeam) setSelectedTeam(null);
+    const newValue = e.value;
+    setSelectedDepartment(newValue);
+
+    // Si se vacía el department, vaciar el team
+    if (!newValue && includeTeam) {
+      setSelectedTeam(null);
+    }
   };
 
   const handleTeamChange = (e) => {
     setSelectedTeam(e.value);
+  };
+
+  // Función para limpiar un campo específico y sus dependientes
+  const clearField = (field) => {
+    switch (field) {
+      case EntityTypes.BUSINESS:
+        setSelectedBusiness(null);
+        if (includeOffice) setSelectedOffice(null);
+        if (includeDepartment) setSelectedDepartment(null);
+        if (includeTeam) setSelectedTeam(null);
+        break;
+      case EntityTypes.OFFICE:
+        setSelectedOffice(null);
+        if (includeDepartment) setSelectedDepartment(null);
+        if (includeTeam) setSelectedTeam(null);
+        break;
+      case EntityTypes.DEPARTMENT:
+        setSelectedDepartment(null);
+        if (includeTeam) setSelectedTeam(null);
+        break;
+      case EntityTypes.TEAM:
+        setSelectedTeam(null);
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Función para determinar si mostrar el botón de limpiar
+  const showClearButton = (field, value, profileValue) => {
+    // No mostrar si el campo está deshabilitado (por perfil de usuario)
+    if (profileValue) return false;
+
+    // Mostrar solo si hay un valor seleccionado
+    return !!value;
   };
 
   useEffect(() => {
@@ -225,7 +275,21 @@ const SecurityEntitySelector = ({
     <div className="security-entity-selector">
       {showBusinessField && (
         <div className="p-field">
-          <label>Business</label>
+          <div className="flex align-items-center justify-content-between">
+            <label>Business</label>
+            {showClearButton(
+              EntityTypes.BUSINESS,
+              selectedBusiness,
+              userProfile?.business
+            ) && (
+              <button
+                className="p-button p-button-text p-button-sm"
+                onClick={() => clearField(EntityTypes.BUSINESS)}
+              >
+                Clear
+              </button>
+            )}
+          </div>
           <Dropdown
             value={selectedBusiness}
             options={businessesData?.businesses?.data || []}
@@ -244,7 +308,21 @@ const SecurityEntitySelector = ({
 
       {showOfficeField && (
         <div className="p-field">
-          <label>Office</label>
+          <div className="flex align-items-center justify-content-between">
+            <label>Office</label>
+            {showClearButton(
+              EntityTypes.OFFICE,
+              selectedOffice,
+              userProfile?.office
+            ) && (
+              <button
+                className="p-button p-button-text p-button-sm"
+                onClick={() => clearField(EntityTypes.OFFICE)}
+              >
+                Clear
+              </button>
+            )}
+          </div>
           <Dropdown
             value={selectedOffice}
             options={availableOffices}
@@ -261,7 +339,21 @@ const SecurityEntitySelector = ({
 
       {showDepartmentField && (
         <div className="p-field">
-          <label>Department</label>
+          <div className="flex align-items-center justify-content-between">
+            <label>Department</label>
+            {showClearButton(
+              EntityTypes.DEPARTMENT,
+              selectedDepartment,
+              userProfile?.department
+            ) && (
+              <button
+                className="p-button p-button-text p-button-sm"
+                onClick={() => clearField(EntityTypes.DEPARTMENT)}
+              >
+                Clear
+              </button>
+            )}
+          </div>
           <Dropdown
             value={selectedDepartment}
             options={availableDepartments}
@@ -280,7 +372,21 @@ const SecurityEntitySelector = ({
 
       {showTeamField && (
         <div className="p-field">
-          <label>Team</label>
+          <div className="flex align-items-center justify-content-between">
+            <label>Team</label>
+            {showClearButton(
+              EntityTypes.TEAM,
+              selectedTeam,
+              userProfile?.team
+            ) && (
+              <button
+                className="p-button p-button-text p-button-sm"
+                onClick={() => clearField(EntityTypes.TEAM)}
+              >
+                Clear
+              </button>
+            )}
+          </div>
           <Dropdown
             value={selectedTeam}
             options={availableTeams}

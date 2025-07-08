@@ -193,6 +193,7 @@ export const ProductEditForm = ({ productId, visible, onHide, onSuccess }) => {
 
           <PricingPanel
             formData={formData}
+            setFormData={setFormData}
             openPanel={openPanel}
             handleToggle={() => handleToggle(2)}
             currenciesLoading={currenciesLoading}

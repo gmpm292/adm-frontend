@@ -192,9 +192,9 @@ export function ProductTable() {
       sortable: true,
     },
     {
-      field: "salePrice",
+      field: "basePrice",
       header: "Precio Venta",
-      body: (rowData) => priceBodyTemplate(rowData, "salePrice"),
+      body: (rowData) => priceBodyTemplate(rowData, "basePrice"),
       sortable: true,
     },
     {
