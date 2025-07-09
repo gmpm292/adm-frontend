@@ -108,7 +108,7 @@ const UserCreateFirstForm = () => {
               <div className="field mb-4 col-12 md:col-4">
                 <div className="field">
                   <label htmlFor="lastName" className="font-medium text-900">
-                    Apellido
+                    Apellidos
                   </label>
                   <InputText
                     id="lastName"
