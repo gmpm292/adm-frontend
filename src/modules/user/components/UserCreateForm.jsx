@@ -81,7 +81,7 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
   const handleSubmit = async () => {
     try {
       if (!formData.email || !formData.name || !formData.role) {
-        throw new Error("Email, nombre y rol son campos requeridos");
+        throw new Error("Email, nombres y rol son campos requeridos");
       }
 
       await createUser({
@@ -161,7 +161,7 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
       >
         <div className="p-fluid">
           <div className="p-field">
-            <label htmlFor="name">Nombre*</label>
+            <label htmlFor="name">Nombres*</label>
             <InputText
               id="name"
               name="name"
@@ -172,7 +172,7 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
           </div>
 
           <div className="p-field">
-            <label htmlFor="lastName">Apellido</label>
+            <label htmlFor="lastName">Apellidos</label>
             <InputText
               id="lastName"
               name="lastName"

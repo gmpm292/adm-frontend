@@ -14,6 +14,7 @@ import { Toast } from "primereact/toast";
 import { UserEditForm } from "./UserEditForm";
 import { UserCreateForm } from "./UserCreateForm";
 import { UserDetailForm } from "./UserDetailForm";
+import { UserChangePasswordForm } from "./UserChangePasswordForm";
 import { FilterMatchMode, FilterOperator } from "primereact/api";
 import {
   PrimeReactSortMeta,
@@ -92,6 +93,9 @@ export function UserTable() {
   const [globalFilter, setGlobalFilter] = useState("");
   const toast = useRef(null);
   const [detailDialogVisible, setDetailDialogVisible] = useState(false);
+  const [changePasswordDialogVisible, setChangePasswordDialogVisible] =
+    useState(false);
+  const [selectedUserEmail, setSelectedUserEmail] = useState("");
 
   // Ejemplo para pasar filtros iniciales o por defecto.
   // const defaultFilters: PrimeReactFilters = {
@@ -128,6 +132,11 @@ export function UserTable() {
     pagination: { first: 0, rows: 10 },
     showDeleted: false,
   });
+
+  const handleDirectPasswordChange = (email) => {
+    setSelectedUserEmail(email);
+    setChangePasswordDialogVisible(true);
+  };
 
   const handleFetchData = useCallback(
     async (params) => {
@@ -329,11 +338,18 @@ export function UserTable() {
           onClick={() => handleViewDetails(rowData.id)}
         />
         <Button
-          icon="pi pi-key"
+          icon="pi pi-envelope"
           className="p-button-rounded p-button-text p-button-help"
-          tooltip="Solicitar cambio de contraseña"
+          tooltip="Solicitar cambio de contraseña (envía correo)"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleRequestPasswordChange(rowData.email)}
+        />
+        <Button
+          icon="pi pi-key"
+          className="p-button-rounded p-button-text p-button-warning"
+          tooltip="Cambiar contraseña directamente"
+          tooltipOptions={{ position: "top" }}
+          onClick={() => handleDirectPasswordChange(rowData.email)}
         />
       </div>
     );
@@ -353,13 +369,13 @@ export function UserTable() {
     },
     {
       field: "name",
-      header: "Nombre",
+      header: "Nombres",
       sortable: true,
       filter: true,
     },
     {
       field: "lastName",
-      header: "Apellido",
+      header: "Apellidos",
       sortable: true,
       filter: true,
     },
@@ -473,6 +489,13 @@ export function UserTable() {
         userId={selectedUserId}
         visible={detailDialogVisible}
         onHide={() => setDetailDialogVisible(false)}
+      />
+
+      <UserChangePasswordForm
+        userEmail={selectedUserEmail}
+        visible={changePasswordDialogVisible}
+        onHide={() => setChangePasswordDialogVisible(false)}
+        onSuccess={handleRefresh}
       />
     </>
   );

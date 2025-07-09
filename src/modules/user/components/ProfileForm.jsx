@@ -41,7 +41,7 @@ export function ProfileForm({ showSuccess }) {
       }
 
       if (!values.name) {
-        errors.name = "Nombre es requerido";
+        errors.name = "Nombres es requerido";
       } else if (values.name.length < 2) {
         errors.name = "Nombre muy corto";
       }
@@ -110,7 +110,7 @@ export function ProfileForm({ showSuccess }) {
         <div className="grid">
           <div className="col-12 md:col-6">
             <div className="field">
-              <label htmlFor="name">Nombre*</label>
+              <label htmlFor="name">Nombres*</label>
               <InputText
                 id="name"
                 name="name"
@@ -126,7 +126,7 @@ export function ProfileForm({ showSuccess }) {
 
           <div className="col-12 md:col-6">
             <div className="field">
-              <label htmlFor="lastName">Apellido</label>
+              <label htmlFor="lastName">Apellidos</label>
               <InputText
                 id="lastName"
                 name="lastName"

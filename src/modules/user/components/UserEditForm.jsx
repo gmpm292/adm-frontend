@@ -98,7 +98,7 @@ export const UserEditForm = ({ userId, visible, onHide, onSuccess }) => {
         ) : (
           <div className="p-fluid">
             <div className="p-field">
-              <label htmlFor="name">Nombre</label>
+              <label htmlFor="name">Nombres</label>
               <InputText 
                 id="name" 
                 name="name" 
@@ -108,7 +108,7 @@ export const UserEditForm = ({ userId, visible, onHide, onSuccess }) => {
             </div>
 
             <div className="p-field">
-              <label htmlFor="lastName">Apellido</label>
+              <label htmlFor="lastName">Apellidos</label>
               <InputText 
                 id="lastName" 
                 name="lastName" 

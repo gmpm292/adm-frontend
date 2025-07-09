@@ -17,7 +17,7 @@ const UserCreateFirstForm = () => {
   const [createFirstUser] = useMutation(CREATE_FIRST_USER);
 
   const validationSchema = Yup.object({
-    name: Yup.string().required("Nombre es requerido"),
+    name: Yup.string().required("Nombres es requerido"),
     email: Yup.string().email("Email inválido").required("Email es requerido"),
     mobile: Yup.string().required("Teléfono es requerido"),
     newPassword: Yup.string().required("Contraseña es requerida"),
@@ -90,7 +90,7 @@ const UserCreateFirstForm = () => {
               <div className="field mb-4 col-12 md:col-4">
                 <div className="field">
                   <label htmlFor="name" className="font-medium text-900">
-                    Nombre <small className="p-error">*</small>
+                    Nombres <small className="p-error">*</small>
                   </label>
                   <InputText
                     id="name"

@@ -35,8 +35,8 @@ export function UserDetailForm({ userId, visible, onHide }) {
         </div>
       ) : user ? (
         <div className="p-fluid">
-          <div className="field"><b>Nombre:</b> {user.name}</div>
-          <div className="field"><b>Apellido:</b> {user.lastName}</div>
+          <div className="field"><b>Nombres:</b> {user.name}</div>
+          <div className="field"><b>Apellidos:</b> {user.lastName}</div>
           <div className="field"><b>Email:</b> {user.email}</div>
           <div className="field"><b>Móvil:</b> {user.mobile}</div>
           <div className="field"><b>Estado:</b> {user.enabled ? "Activo" : "Inactivo"}</div>
