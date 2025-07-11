@@ -169,6 +169,12 @@ export function Sidebar() {
         {
           label: "Sistema",
           icon: "pi pi-desktop",
+          command: () => navigate("/system"),
+        },
+        {
+          label: "Correo OAuth2",
+          icon: "pi pi-envelope",
+          command: () => navigate("/system/email"),
         },
         {
           label: "Seguridad",
