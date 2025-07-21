@@ -10,6 +10,7 @@ import { InventoryEditForm } from "./InventoryEditForm";
 import { InventoryCreateForm } from "./InventoryCreateForm";
 import { InventoryDetailForm } from "./InventoryDetailForm";
 import { formatDate } from "../../../../utils/dateUtils";
+import { InventoryMovementCreateForm } from "../../inventory-movement/components/InventoryMovementCreateForm";
 
 export function InventoryTable() {
   const [getInventories, { loading, data, error }] = useLazyQuery(
@@ -23,6 +24,7 @@ export function InventoryTable() {
   const [editDialogVisible, setEditDialogVisible] = useState(false);
   const [createDialogVisible, setCreateDialogVisible] = useState(false);
   const [detailDialogVisible, setDetailDialogVisible] = useState(false);
+  const [movementDialogVisible, setMovementDialogVisible] = useState(false);
   const toast = useRef(null);
 
   const tableStateRef = useRef({
@@ -86,6 +88,10 @@ export function InventoryTable() {
     handleRefresh();
   }, [handleRefresh]);
 
+  const handleMovementSuccess = useCallback(() => {
+    handleRefresh();
+  }, [handleRefresh]);
+
   const handleEdit = (inventoryId) => {
     setSelectedInventoryId(inventoryId);
     setEditDialogVisible(true);
@@ -94,6 +100,11 @@ export function InventoryTable() {
   const handleViewDetails = (inventoryId) => {
     setSelectedInventoryId(inventoryId);
     setDetailDialogVisible(true);
+  };
+
+  const handleCreateMovement = (inventoryId) => {
+    setSelectedInventoryId(inventoryId);
+    setMovementDialogVisible(true);
   };
 
   const handleDelete = (inventoryId) => {
@@ -141,6 +152,13 @@ export function InventoryTable() {
     return (
       <div className="actions-column">
         <Button
+          icon="pi pi-truck"
+          className="p-button-rounded p-button-text p-button-help"
+          tooltip="Registrar movimiento"
+          tooltipOptions={{ position: "top" }}
+          onClick={() => handleCreateMovement(rowData.id)}
+        />
+        <Button
           icon="pi pi-pencil"
           className="p-button-rounded p-button-text"
           tooltip="Editar inventario"
@@ -171,6 +189,7 @@ export function InventoryTable() {
       header: "ID",
       sortable: true,
       filter: true,
+      visible: false,
     },
     {
       field: "product.name",
@@ -227,11 +246,11 @@ export function InventoryTable() {
       filter: true,
     },
     {
-      visible: false,
       field: "createdAt",
       header: "Fecha de Creación",
       body: (rowData) => dateBodyTemplate(rowData, "createdAt"),
       sortable: true,
+      visible: false,
     },
   ];
 
@@ -265,7 +284,7 @@ export function InventoryTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "10rem" }}
+          headerStyle={{ width: "12rem" }}
           bodyStyle={{ textAlign: "center" }}
         />
       </GenericDataTable>
@@ -287,6 +306,13 @@ export function InventoryTable() {
         inventoryId={selectedInventoryId}
         visible={detailDialogVisible}
         onHide={() => setDetailDialogVisible(false)}
+      />
+
+      <InventoryMovementCreateForm
+        visible={movementDialogVisible}
+        onHide={() => setMovementDialogVisible(false)}
+        onSuccess={handleMovementSuccess}
+        inventoryId={selectedInventoryId}
       />
     </>
   );

@@ -1,14 +1,12 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { InputNumber } from "primereact/inputnumber";
 import { Dropdown } from "primereact/dropdown";
-import { Checkbox } from "primereact/checkbox";
 import { useMutation } from "@apollo/client";
 import { CREATE_INVENTORY_MOVEMENT } from "../graphql/queries";
 import { Toast } from "primereact/toast";
-import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
 import { InventorySelector } from "../../inventory/components/InventorySelector";
 
 const movementTypes = [
@@ -17,6 +15,7 @@ const movementTypes = [
 ];
 
 const movementReasons = [
+  { label: "Inventario Inicial", value: "INITIAL_INVENTORY" },
   { label: "Compra", value: "PURCHASE" },
   { label: "Venta", value: "SALE" },
   { label: "Ajuste de inventario", value: "INVENTORY_ADJUSTMENT" },
@@ -26,20 +25,28 @@ const movementReasons = [
   { label: "Otro", value: "OTHER" },
 ];
 
-export const InventoryMovementCreateForm = ({ visible, onHide, onSuccess }) => {
+export const InventoryMovementCreateForm = ({
+  visible,
+  onHide,
+  onSuccess,
+  inventoryId: selectedInventoryId = null,
+}) => {
   const [formData, setFormData] = useState({
     inventoryId: null,
     type: null,
     quantity: 0,
     reason: "",
-    businessId: null,
-    officeId: null,
-    departmentId: null,
-    teamId: null,
   });
 
   const toast = useRef(null);
   const [createMovement] = useMutation(CREATE_INVENTORY_MOVEMENT);
+
+  // Actualizar el inventoryId cuando cambia el prop selectedInventoryId
+  useEffect(() => {
+    if (selectedInventoryId) {
+      setFormData((prev) => ({ ...prev, inventoryId: selectedInventoryId }));
+    }
+  }, [selectedInventoryId]);
 
   const handleNumberChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.value }));
@@ -59,7 +66,6 @@ export const InventoryMovementCreateForm = ({ visible, onHide, onSuccess }) => {
 
   const handleSubmit = async () => {
     try {
-      // Validación de campos requeridos
       if (
         !formData.inventoryId ||
         !formData.type ||
@@ -71,16 +77,14 @@ export const InventoryMovementCreateForm = ({ visible, onHide, onSuccess }) => {
         );
       }
 
-      const movementInput = {
-        inventoryId: formData.inventoryId,
-        type: formData.type,
-        quantity: formData.quantity,
-        reason: formData.reason,
-      };
-
       await createMovement({
         variables: {
-          movement: movementInput,
+          movement: {
+            inventoryId: formData.inventoryId,
+            type: formData.type,
+            quantity: formData.quantity,
+            reason: formData.reason,
+          },
         },
       });
 
@@ -94,14 +98,10 @@ export const InventoryMovementCreateForm = ({ visible, onHide, onSuccess }) => {
       onSuccess();
       onHide();
       setFormData({
-        inventoryId: null,
+        inventoryId: selectedInventoryId, // Mantener el inventoryId si hay uno seleccionado
         type: null,
         quantity: 0,
         reason: "",
-        businessId: null,
-        officeId: null,
-        departmentId: null,
-        teamId: null,
       });
     } catch (err) {
       toast.current.show({
@@ -146,7 +146,13 @@ export const InventoryMovementCreateForm = ({ visible, onHide, onSuccess }) => {
             <InventorySelector
               onInventorySelect={handleInventorySelect}
               selectedInventoryId={formData.inventoryId}
+              disabled={!!selectedInventoryId} // Deshabilitar si hay un inventoryId seleccionado
             />
+            {selectedInventoryId && (
+              <small className="p-d-block p-mt-1">
+                El inventario está preseleccionado desde la tabla
+              </small>
+            )}
           </div>
 
           <div className="p-field">
