@@ -6,6 +6,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import { useEffect } from "react";
 
 import { client } from "./apollo";
 
@@ -25,7 +26,9 @@ import { UserCreateFirstPage } from "./modules/user/pages/UserCreateFirstPage";
 import { ChangePasswordPage } from "./modules/user/pages/ChangePasswordPage";
 import { ConfigListPage } from "./modules/config/pages/ConfigListPage";
 import { ProfilePage } from "./modules/user/pages/ProfilePage";
+import { EmailSettingsPage } from "./modules/auth/email/email_oauth_config/pages/EmailSettingsPage";
 
+// Importaciones de PrimeReact
 import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
@@ -34,10 +37,18 @@ import "./App.css";
 import "./styles/ButtonStyles.css";
 import "./styles/dialogs.css";
 import "./components/BaseTable/styles.css";
-import { EmailSettingsPage } from "./modules/auth/email/email_oauth_config/pages/EmailSettingsPage";
-import { useEffect } from "react";
+
+// Importar locale español
+import { PrimeReactProvider } from "primereact/api";
+import { setupLocales } from "./locales/i18n";
+import { LanguageSwitcher } from "./components/LanguageSwitcher";
 
 function App() {
+  // Inicializar locales
+  useEffect(() => {
+    setupLocales();
+  }, []);
+
   // 🔁 Redirige automáticamente si viene de Google OAuth sin hash
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -56,103 +67,105 @@ function App() {
 
   return (
     <ApolloProvider client={client}>
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/cfu" element={<UserCreateFirstPage />} />
-            <Route
-              path="/change-password/:confirmationToken"
-              element={<ChangePasswordPage />}
-            />
+      <PrimeReactProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/cfu" element={<UserCreateFirstPage />} />
+              <Route
+                path="/change-password/:confirmationToken"
+                element={<ChangePasswordPage />}
+              />
 
-            <Route element={<ProtectedRoute />}>
-              <Route
-                path="/statistics/analytics"
-                element={
-                  <MainLayout>
-                    <Analytics />
-                  </MainLayout>
-                }
-              />
-              <Route
-                path="/statistics/sales"
-                element={
-                  <MainLayout>
-                    <Sales />
-                  </MainLayout>
-                }
-              />
-              <Route
-                path="/users"
-                element={
-                  <MainLayout>
-                    <UserListPage />
-                  </MainLayout>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <MainLayout>
-                    <ProfilePage />
-                  </MainLayout>
-                }
-              />
-              <Route
-                path="/configurations"
-                element={
-                  <MainLayout>
-                    <ConfigListPage />
-                  </MainLayout>
-                }
-              />
-              <Route
-                path="/company/*"
-                element={
-                  <MainLayout>
-                    <CompanyModule />
-                  </MainLayout>
-                }
-              />
-              <Route
-                path="/inventory/*"
-                element={
-                  <MainLayout>
-                    <InventoryModule />
-                  </MainLayout>
-                }
-              />
-              <Route
-                path="/payroll/*"
-                element={
-                  <MainLayout>
-                    <PayrollModule />
-                  </MainLayout>
-                }
-              />
-              <Route
-                path="/sales/*"
-                element={
-                  <MainLayout>
-                    <SalesModule />
-                  </MainLayout>
-                }
-              />
-              <Route
-                path="/system/email"
-                element={
-                  <MainLayout>
-                    <EmailSettingsPage />
-                  </MainLayout>
-                }
-              />
-            </Route>
+              <Route element={<ProtectedRoute />}>
+                <Route
+                  path="/statistics/analytics"
+                  element={
+                    <MainLayout>
+                      <Analytics />
+                    </MainLayout>
+                  }
+                />
+                <Route
+                  path="/statistics/sales"
+                  element={
+                    <MainLayout>
+                      <Sales />
+                    </MainLayout>
+                  }
+                />
+                <Route
+                  path="/users"
+                  element={
+                    <MainLayout>
+                      <UserListPage />
+                    </MainLayout>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <MainLayout>
+                      <ProfilePage />
+                    </MainLayout>
+                  }
+                />
+                <Route
+                  path="/configurations"
+                  element={
+                    <MainLayout>
+                      <ConfigListPage />
+                    </MainLayout>
+                  }
+                />
+                <Route
+                  path="/company/*"
+                  element={
+                    <MainLayout>
+                      <CompanyModule />
+                    </MainLayout>
+                  }
+                />
+                <Route
+                  path="/inventory/*"
+                  element={
+                    <MainLayout>
+                      <InventoryModule />
+                    </MainLayout>
+                  }
+                />
+                <Route
+                  path="/payroll/*"
+                  element={
+                    <MainLayout>
+                      <PayrollModule />
+                    </MainLayout>
+                  }
+                />
+                <Route
+                  path="/sales/*"
+                  element={
+                    <MainLayout>
+                      <SalesModule />
+                    </MainLayout>
+                  }
+                />
+                <Route
+                  path="/system/email"
+                  element={
+                    <MainLayout>
+                      <EmailSettingsPage />
+                    </MainLayout>
+                  }
+                />
+              </Route>
 
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </PrimeReactProvider>
     </ApolloProvider>
   );
 }

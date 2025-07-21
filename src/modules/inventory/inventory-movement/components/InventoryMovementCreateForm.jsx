@@ -41,18 +41,6 @@ export const InventoryMovementCreateForm = ({ visible, onHide, onSuccess }) => {
   const toast = useRef(null);
   const [createMovement] = useMutation(CREATE_INVENTORY_MOVEMENT);
 
-  const handleSecurityEntitiesChange = (entities) => {
-    setFormData((prev) => ({
-      ...prev,
-      ...entities,
-    }));
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
   const handleNumberChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.value }));
   };
@@ -88,10 +76,6 @@ export const InventoryMovementCreateForm = ({ visible, onHide, onSuccess }) => {
         type: formData.type,
         quantity: formData.quantity,
         reason: formData.reason,
-        ...(formData.businessId && { businessId: formData.businessId }),
-        ...(formData.officeId && { officeId: formData.officeId }),
-        ...(formData.departmentId && { departmentId: formData.departmentId }),
-        ...(formData.teamId && { teamId: formData.teamId }),
       };
 
       await createMovement({
@@ -201,14 +185,6 @@ export const InventoryMovementCreateForm = ({ visible, onHide, onSuccess }) => {
               optionLabel="label"
               placeholder="Seleccione un motivo"
               required
-            />
-          </div>
-
-          <hr className="my-4" />
-
-          <div className="p-field">
-            <SecurityEntitySelector
-              onSelectionChange={handleSecurityEntitiesChange}
             />
           </div>
         </div>

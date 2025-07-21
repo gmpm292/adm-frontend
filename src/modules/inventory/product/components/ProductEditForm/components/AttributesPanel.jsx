@@ -1,7 +1,7 @@
-import React from 'react';
-import { Panel } from 'primereact/panel';
-import { InputText } from 'primereact/inputtext';
-import { Button } from 'primereact/button';
+import React from "react";
+import { Panel } from "primereact/panel";
+import { InputText } from "primereact/inputtext";
+import { Button } from "primereact/button";
 
 export const AttributesPanel = ({
   formData,
@@ -12,7 +12,7 @@ export const AttributesPanel = ({
   attributeValue,
   setAttributeValue,
   handleAddAttribute,
-  handleRemoveAttribute
+  handleRemoveAttribute,
 }) => (
   <Panel
     header="Atributos"
@@ -23,7 +23,7 @@ export const AttributesPanel = ({
     <div className="p-grid p-fluid">
       <div className="p-col-12 p-md-4">
         <div className="p-field">
-          <label htmlFor="attributeKey">Clave</label>
+          <label htmlFor="attributeKey">Característica</label>
           <InputText
             id="attributeKey"
             value={attributeKey}
@@ -33,7 +33,7 @@ export const AttributesPanel = ({
       </div>
       <div className="p-col-12 p-md-4">
         <div className="p-field">
-          <label htmlFor="attributeValue">Valor</label>
+          <label htmlFor="attributeValue">Descripción</label>
           <InputText
             id="attributeValue"
             value={attributeValue}

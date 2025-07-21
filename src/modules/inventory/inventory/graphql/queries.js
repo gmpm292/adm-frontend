@@ -15,6 +15,22 @@ export const GET_INVENTORIES = gql`
           id
           name
         }
+        business {
+          id
+          name
+        }
+        office {
+          id
+          name
+        }
+        department {
+          id
+          name
+        }
+        team {
+          id
+          name
+        }
       }
     }
   }
@@ -32,6 +48,38 @@ export const GET_INVENTORY_BY_ID = gql`
       product {
         id
         name
+        unitOfMeasure
+        category {
+          id
+          name
+        }
+      }
+
+      business {
+        id
+        name
+      }
+      office {
+        id
+        name
+      }
+      department {
+        id
+        name
+      }
+      team {
+        id
+        name
+      }
+      createdBy {
+        id
+        name
+        lastName
+      }
+      updatedBy {
+        id
+        name
+        lastName
       }
     }
   }

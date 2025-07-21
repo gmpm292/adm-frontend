@@ -23,7 +23,7 @@ export const AttributesPanel = ({
     <div className="p-grid p-fluid">
       <div className="p-col-12 p-md-4">
         <div className="p-field">
-          <label htmlFor="attributeKey">Clave</label>
+          <label htmlFor="attributeKey">Característica</label>
           <InputText
             id="attributeKey"
             value={attributeKey}
@@ -33,7 +33,7 @@ export const AttributesPanel = ({
       </div>
       <div className="p-col-12 p-md-4">
         <div className="p-field">
-          <label htmlFor="attributeValue">Valor</label>
+          <label htmlFor="attributeValue">Descripción</label>
           <InputText
             id="attributeValue"
             value={attributeValue}

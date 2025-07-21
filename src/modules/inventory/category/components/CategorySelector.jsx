@@ -1,13 +1,13 @@
-import React from 'react';
-import { Dropdown } from 'primereact/dropdown';
-import { useLazyQuery } from '@apollo/client';
-import { GET_CATEGORIES } from '../graphql/queries';
-import { useEffect, useState } from 'react';
+import React from "react";
+import { Dropdown } from "primereact/dropdown";
+import { useLazyQuery } from "@apollo/client";
+import { GET_CATEGORIES } from "../graphql/queries";
+import { useEffect, useState } from "react";
 
 export const CategorySelector = ({ selectedCategoryId, onCategorySelect }) => {
   const [getCategories, { data, loading }] = useLazyQuery(GET_CATEGORIES, {
     variables: { options: { take: 1000 } },
-    fetchPolicy: 'network-only'
+    fetchPolicy: "network-only",
   });
   const [selectedCategory, setSelectedCategory] = useState(null);
 
@@ -17,14 +17,16 @@ export const CategorySelector = ({ selectedCategoryId, onCategorySelect }) => {
 
   useEffect(() => {
     if (data?.categories?.data && selectedCategoryId) {
-      const category = data.categories.data.find(c => c.id === selectedCategoryId);
+      const category = data.categories.data.find(
+        (c) => c.id === selectedCategoryId
+      );
       setSelectedCategory(category);
     }
   }, [data, selectedCategoryId]);
 
   const handleChange = (e) => {
     setSelectedCategory(e.value);
-    onCategorySelect(e.value?.id || null);
+    onCategorySelect(e.value || null);
   };
 
   return (

@@ -1,6 +1,9 @@
 import React, { useCallback, useState, useRef } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
-import { GET_INVENTORY_MOVEMENTS, DELETE_INVENTORY_MOVEMENTS } from "../graphql/queries";
+import {
+  GET_INVENTORY_MOVEMENTS,
+  DELETE_INVENTORY_MOVEMENTS,
+} from "../graphql/queries";
 import GenericDataTable from "../../../../components/BaseTable/index";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
@@ -13,9 +16,12 @@ import { formatDate } from "../../../../utils/dateUtils";
 import { Tag } from "primereact/tag";
 
 export function InventoryMovementTable() {
-  const [getMovements, { loading, data, error }] = useLazyQuery(GET_INVENTORY_MOVEMENTS, {
-    fetchPolicy: "network-only",
-  });
+  const [getMovements, { loading, data, error }] = useLazyQuery(
+    GET_INVENTORY_MOVEMENTS,
+    {
+      fetchPolicy: "network-only",
+    }
+  );
   const [deleteMovements] = useMutation(DELETE_INVENTORY_MOVEMENTS);
   const [selectedMovementId, setSelectedMovementId] = useState(null);
   const [editDialogVisible, setEditDialogVisible] = useState(false);
@@ -129,9 +135,9 @@ export function InventoryMovementTable() {
 
   const typeBodyTemplate = (rowData) => {
     return (
-      <Tag 
-        value={rowData.type === 'IN' ? 'ENTRADA' : 'SALIDA'} 
-        severity={rowData.type === 'IN' ? 'success' : 'danger'} 
+      <Tag
+        value={rowData.type === "IN" ? "ENTRADA" : "SALIDA"}
+        severity={rowData.type === "IN" ? "success" : "danger"}
       />
     );
   };
@@ -143,7 +149,7 @@ export function InventoryMovementTable() {
   const actionBodyTemplate = (rowData) => {
     return (
       <div className="actions-column">
-        <Button
+        {/* <Button
           icon="pi pi-pencil"
           className="p-button-rounded p-button-text"
           tooltip="Editar movimiento"
@@ -156,7 +162,7 @@ export function InventoryMovementTable() {
           tooltip="Eliminar movimiento"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleDelete(rowData.id)}
-        />
+        /> */}
         <Button
           icon="pi pi-eye"
           className="p-button-rounded p-button-text p-button-info"
@@ -170,7 +176,7 @@ export function InventoryMovementTable() {
 
   const columns = [
     {
-      field: "inventory.product.name",
+      field: "product.name",
       header: "Producto",
       body: productBodyTemplate,
       sortable: true,
@@ -196,9 +202,9 @@ export function InventoryMovementTable() {
       filter: true,
     },
     {
-      field: "timestamp",
+      field: "createdAt",
       header: "Fecha",
-      body: (rowData) => dateBodyTemplate(rowData, "timestamp"),
+      body: (rowData) => dateBodyTemplate(rowData, "createdAt"),
       sortable: true,
     },
     {
@@ -228,7 +234,7 @@ export function InventoryMovementTable() {
         totalRecords={data?.inventoryMovements?.totalCount}
         loading={loading}
         error={error}
-        globalFilterFields={["inventory.product.name", "reason", "user.name"]}
+        globalFilterFields={["product.name", "reason", "user.name"]}
         emptyMessage="No se encontraron movimientos"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} movimientos"
         onRefresh={handleRefresh}

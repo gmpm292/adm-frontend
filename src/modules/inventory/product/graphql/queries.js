@@ -59,6 +59,34 @@ export const GET_PRODUCT_BY_ID = gql`
           applicableCurrencies
         }
       }
+      business {
+        id
+        name
+      }
+      office {
+        id
+        name
+      }
+      department {
+        id
+        name
+      }
+      team {
+        id
+        teamType
+      }
+      createdBy {
+        id
+        name
+      }
+      updatedBy {
+        id
+        name
+      }
+      deletedBy {
+        id
+        name
+      }
     }
   }
 `;

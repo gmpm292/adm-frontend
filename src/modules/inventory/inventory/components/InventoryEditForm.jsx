@@ -15,8 +15,8 @@ export const InventoryEditForm = ({
   onSuccess,
 }) => {
   const [formData, setFormData] = useState({
-    productId: null,
-    currentStock: 0,
+    //productId: null,
+    // currentStock: 0,
     minStock: null,
     location: "",
   });
@@ -30,7 +30,7 @@ export const InventoryEditForm = ({
       if (data?.inventory) {
         setFormData({
           productId: data.inventory.product?.id || null,
-          currentStock: data.inventory.currentStock,
+          //currentStock: data.inventory.currentStock,
           minStock: data.inventory.minStock,
           location: data.inventory.location || "",
         });
@@ -47,9 +47,9 @@ export const InventoryEditForm = ({
     setFormData((prev) => ({ ...prev, [e.target.name]: e.value }));
   };
 
-  const handleProductSelect = (productId) => {
-    setFormData((prev) => ({ ...prev, productId }));
-  };
+  // const handleProductSelect = (productId) => {
+  //   setFormData((prev) => ({ ...prev, productId }));
+  // };
 
   const handleSubmit = async () => {
     try {
@@ -57,8 +57,8 @@ export const InventoryEditForm = ({
         variables: {
           inventory: {
             id: inventoryId,
-            productId: formData.productId,
-            currentStock: formData.currentStock,
+            //productId: formData.productId,
+            //currentStock: formData.currentStock,
             minStock: formData.minStock,
             location: formData.location,
           },
@@ -117,15 +117,15 @@ export const InventoryEditForm = ({
           <p>Error al cargar inventario</p>
         ) : (
           <div className="p-fluid">
-            <div className="p-field">
+            {/* <div className="p-field">
               <label htmlFor="productId">Producto</label>
               <ProductSelector
                 onProductSelect={handleProductSelect}
                 selectedProductId={formData.productId}
               />
-            </div>
+            </div> */}
 
-            <div className="p-field">
+            {/* <div className="p-field">
               <label htmlFor="currentStock">Stock Actual</label>
               <InputNumber
                 id="currentStock"
@@ -135,7 +135,7 @@ export const InventoryEditForm = ({
                 mode="decimal"
                 min={0}
               />
-            </div>
+            </div> */}
 
             <div className="p-field">
               <label htmlFor="minStock">Stock Mínimo</label>

@@ -9,7 +9,6 @@ import { CREATE_OFFICE } from "../graphql/queries";
 import { EntityTypes } from "../../../../components/SecurityEntitySelector/entityTypes";
 import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
 
-
 const officeTypes = [
   { label: "Oficina", value: "OFFICE" },
   { label: "Sucursal", value: "BRANCH" },
@@ -121,6 +120,11 @@ export const OfficeCreateForm = ({ visible, onHide, onSuccess }) => {
         onHide={onHide}
       >
         <div className="p-fluid">
+          <SecurityEntitySelector
+            onSelectionChange={handleSecurityEntitiesChange}
+            entitiesToInclude={[EntityTypes.BUSINESS]}
+          />
+
           <div className="p-field">
             <label htmlFor="officeType">Tipo*</label>
             <Dropdown
@@ -165,11 +169,6 @@ export const OfficeCreateForm = ({ visible, onHide, onSuccess }) => {
               onChange={handleChange}
             />
           </div>
-
-          <SecurityEntitySelector
-            onSelectionChange={handleSecurityEntitiesChange}
-            entitiesToInclude={[EntityTypes.BUSINESS]}
-          />
         </div>
       </Dialog>
     </>

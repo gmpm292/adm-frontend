@@ -133,6 +133,10 @@ export function InventoryTable() {
     return rowData.product?.name || "N/A";
   };
 
+  const entityBodyTemplate = (rowData, field) => {
+    return rowData[field]?.name || "N/A";
+  };
+
   const actionBodyTemplate = (rowData) => {
     return (
       <div className="actions-column">
@@ -163,6 +167,12 @@ export function InventoryTable() {
 
   const columns = [
     {
+      field: "id",
+      header: "ID",
+      sortable: true,
+      filter: true,
+    },
+    {
       field: "product.name",
       header: "Producto",
       body: productBodyTemplate,
@@ -176,8 +186,37 @@ export function InventoryTable() {
       filter: true,
     },
     {
+      visible: false,
       field: "minStock",
       header: "Stock Mínimo",
+      sortable: true,
+      filter: true,
+    },
+    {
+      field: "business",
+      header: "Negocio",
+      body: (rowData) => entityBodyTemplate(rowData, "business"),
+      sortable: true,
+      filter: true,
+    },
+    {
+      field: "office",
+      header: "Oficina",
+      body: (rowData) => entityBodyTemplate(rowData, "office"),
+      sortable: true,
+      filter: true,
+    },
+    {
+      field: "department",
+      header: "Departamento",
+      body: (rowData) => entityBodyTemplate(rowData, "department"),
+      sortable: true,
+      filter: true,
+    },
+    {
+      field: "team",
+      header: "Equipo",
+      body: (rowData) => entityBodyTemplate(rowData, "team"),
       sortable: true,
       filter: true,
     },
@@ -188,6 +227,7 @@ export function InventoryTable() {
       filter: true,
     },
     {
+      visible: false,
       field: "createdAt",
       header: "Fecha de Creación",
       body: (rowData) => dateBodyTemplate(rowData, "createdAt"),

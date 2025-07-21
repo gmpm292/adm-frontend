@@ -175,14 +175,14 @@ export function ProfileForm({ showSuccess }) {
         <h4>Información del Sistema</h4>
         <Divider />
         <div className="grid">
-          <div className="col-12 md:col-6">
+          {/* <div className="col-12 md:col-6">
             <div className="field">
               <label>ID de Usuario</label>
               <div className="p-inputtext">
                 {data?.profile?.id || "N/A"}
               </div>
             </div>
-          </div>
+          </div> */}
 
           <div className="col-12 md:col-6">
             <div className="field">

@@ -9,6 +9,8 @@ export const GET_INVENTORY_MOVEMENTS = gql`
         type
         quantity
         reason
+        createdAt
+        updatedAt
         inventory {
           id
           product {
@@ -30,6 +32,8 @@ export const GET_INVENTORY_MOVEMENT_BY_ID = gql`
       type
       quantity
       reason
+      createdAt
+      updatedAt
       inventory {
         id
         product {
@@ -58,6 +62,8 @@ export const UPDATE_INVENTORY_MOVEMENT = gql`
       type
       quantity
       reason
+      createdAt
+      updatedAt
     }
   }
 `;

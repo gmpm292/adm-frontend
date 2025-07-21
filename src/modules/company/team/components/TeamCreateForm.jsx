@@ -119,6 +119,21 @@ export const TeamCreateForm = ({ visible, onHide, onSuccess }) => {
         onHide={onHide}
       >
         <div className="p-fluid">
+          <SecurityEntitySelector
+            onSelectionChange={handleSecurityEntitiesChange}
+            entitiesToInclude={[
+              EntityTypes.BUSINESS,
+              EntityTypes.OFFICE,
+              EntityTypes.DEPARTMENT,
+            ]}
+            labels={{
+              business: "Empresa",
+              office: "Oficina",
+              department: "Departamento",
+              team: "Equipo",
+            }}
+          />
+
           <div className="p-field">
             <label htmlFor="teamType">Tipo*</label>
             <Dropdown
@@ -154,21 +169,6 @@ export const TeamCreateForm = ({ visible, onHide, onSuccess }) => {
               placeholder="Ingrese descripción del equipo"
             />
           </div>
-
-          <SecurityEntitySelector
-            onSelectionChange={handleSecurityEntitiesChange}
-            entitiesToInclude={[
-              EntityTypes.BUSINESS,
-              EntityTypes.OFFICE,
-              EntityTypes.DEPARTMENT,
-            ]}
-            labels={{
-              business: "Empresa",
-              office: "Oficina",
-              department: "Departamento",
-              team: "Equipo",
-            }}
-          />
         </div>
       </Dialog>
     </>

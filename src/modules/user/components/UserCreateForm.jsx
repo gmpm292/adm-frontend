@@ -45,7 +45,7 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value.trim() }));
   };
 
   const handleRoleChange = (e) => {
@@ -80,22 +80,31 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
 
   const handleSubmit = async () => {
     try {
-      if (!formData.email || !formData.name || !formData.role) {
+      // Trim all string fields before validation and submission
+      const trimmedData = {
+        ...formData,
+        name: formData.name.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
+        mobile: formData.mobile.trim(),
+      };
+
+      if (!trimmedData.email || !trimmedData.name || !trimmedData.role) {
         throw new Error("Email, nombres y rol son campos requeridos");
       }
 
       await createUser({
         variables: {
           user: {
-            email: formData.email,
-            name: formData.name,
-            lastName: formData.lastName,
-            mobile: formData.mobile,
-            role: [formData.role],
-            businessId: formData.businessId,
-            officeId: formData.officeId,
-            departmentId: formData.departmentId,
-            teamId: formData.teamId,
+            email: trimmedData.email,
+            name: trimmedData.name,
+            lastName: trimmedData.lastName,
+            mobile: trimmedData.mobile,
+            role: [trimmedData.role],
+            businessId: trimmedData.businessId,
+            officeId: trimmedData.officeId,
+            departmentId: trimmedData.departmentId,
+            teamId: trimmedData.teamId,
           },
         },
       });

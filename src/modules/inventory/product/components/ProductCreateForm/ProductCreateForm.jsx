@@ -51,6 +51,7 @@ export const ProductCreateForm = ({ visible, onHide, onSuccess }) => {
   const handleSubmit = async () => {
     try {
       if (!formData.name || !formData.unitOfMeasure || !formData.categoryId) {
+        console.log("formData", formData);
         throw new Error(
           "Nombre, unidad de medida y categoría son campos requeridos"
         );
