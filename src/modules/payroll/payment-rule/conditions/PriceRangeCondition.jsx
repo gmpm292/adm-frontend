@@ -1,84 +1,86 @@
-import React from 'react';
-import { InputNumber } from 'primereact/inputnumber';
-import { Dropdown } from 'primereact/dropdown';
-import { Button } from 'primereact/button';
+import React from "react";
+import { Button } from "primereact/button";
+import { InputNumber } from "primereact/inputnumber";
+import { Dropdown } from "primereact/dropdown";
 
-const scopedAccessOptions = [
-  { label: 'Business', value: 'BUSINESS' },
-  { label: 'Oficina', value: 'OFFICE' },
-  { label: 'Departamento', value: 'DEPARTMENT' },
-  { label: 'Equipo', value: 'TEAM' },
-  { label: 'Personal', value: 'PERSONAL' }
-];
+export const PriceRangeCondition = React.memo(
+  ({ condition, onChange, onRemove, currencyOptions, index }) => {
+    const handleChange = (field, value) => {
+      onChange({ ...condition, [field]: value });
+    };
 
-export const PriceRangeCondition = ({ condition, onChange, onRemove }) => {
-  const handleChange = (field, value) => {
-    onChange({
-      ...condition,
-      [field]: value
-    });
-  };
+    // Moneda segura con valor por defecto
+    const currency = condition.currency || "USD";
 
-  return (
-    <div className="p-fluid p-grid p-mt-2">
-      <div className="p-col-12 p-md-3">
-        <label>Mínimo*</label>
-        <InputNumber
-          value={condition.min}
-          onValueChange={(e) => handleChange('min', e.value)}
-          mode="currency"
-          currency="USD"
-          locale="en-US"
-          required
-        />
+    return (
+      <div
+        className="p-3 border-round surface-border border-1 mb-3 flex flex-wrap align-items-end gap-3"
+        style={{ backgroundColor: "#f9f9f9" }}
+      >
+        {/* Campo mínimo */}
+        <div className="flex-1 min-w-12rem">
+          <label className="block mb-1 font-medium">Mínimo*</label>
+          <InputNumber
+            value={condition.min ?? 0}
+            onValueChange={(e) => handleChange("min", e.value)}
+            mode="currency"
+            currency={currency}
+            locale="en-US"
+            required
+            className="w-full"
+          />
+        </div>
+
+        {/* Campo máximo */}
+        <div className="flex-1 min-w-12rem">
+          <label className="block mb-1 font-medium">Máximo</label>
+          <InputNumber
+            value={condition.max ?? null}
+            onValueChange={(e) => handleChange("max", e.value)}
+            mode="currency"
+            currency={currency}
+            locale="en-US"
+            className="w-full"
+          />
+        </div>
+
+        {/* Selector de moneda - visible en todos los rangos */}
+        <div className="flex-1 min-w-8rem">
+          <label className="block mb-1 font-medium">Moneda*</label>
+          <Dropdown
+            value={currency}
+            options={currencyOptions}
+            onChange={(e) => handleChange("currency", e.value)}
+            placeholder="Seleccione"
+            className="w-full"
+            disabled={index > 0} // Deshabilitado para rangos que no son el primero
+          />
+        </div>
+
+        {/* Campo monto */}
+        <div className="flex-1 min-w-10rem">
+          <label className="block mb-1 font-medium">Monto*</label>
+          <InputNumber
+            value={condition.amount ?? 0}
+            onValueChange={(e) => handleChange("amount", e.value)}
+            mode="decimal"
+            minFractionDigits={2}
+            maxFractionDigits={2}
+            required
+            className="w-full"
+          />
+        </div>
+
+        {/* Botón eliminar */}
+        <div className="flex align-items-center justify-content-center">
+          <Button
+            icon="pi pi-trash"
+            className="p-button-rounded p-button-danger p-button-outlined"
+            onClick={onRemove}
+            tooltip="Eliminar condición"
+          />
+        </div>
       </div>
-      <div className="p-col-12 p-md-3">
-        <label>Máximo</label>
-        <InputNumber
-          value={condition.max}
-          onValueChange={(e) => handleChange('max', e.value)}
-          mode="currency"
-          currency="USD"
-          locale="en-US"
-        />
-      </div>
-      <div className="p-col-12 p-md-2">
-        <label>Moneda*</label>
-        <InputText
-          value={condition.currency}
-          onChange={(e) => handleChange('currency', e.target.value)}
-          required
-        />
-      </div>
-      <div className="p-col-12 p-md-2">
-        <label>Monto*</label>
-        <InputNumber
-          value={condition.amount}
-          onValueChange={(e) => handleChange('amount', e.value)}
-          mode="currency"
-          currency="USD"
-          locale="en-US"
-          required
-        />
-      </div>
-      <div className="p-col-12 p-md-2">
-        <label>Ámbito*</label>
-        <Dropdown
-          value={condition.scope}
-          options={scopedAccessOptions}
-          onChange={(e) => handleChange('scope', e.value)}
-          placeholder="Seleccione"
-          required
-        />
-      </div>
-      <div className="p-col-12 p-md-2 flex align-items-end">
-        <Button
-          icon="pi pi-trash"
-          className="p-button-danger p-button-text"
-          onClick={onRemove}
-          tooltip="Eliminar condición"
-        />
-      </div>
-    </div>
-  );
-};
+    );
+  }
+);

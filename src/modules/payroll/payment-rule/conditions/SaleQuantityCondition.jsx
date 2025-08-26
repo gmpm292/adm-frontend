@@ -1,64 +1,57 @@
-import React from 'react';
-import { InputNumber } from 'primereact/inputnumber';
-import { Dropdown } from 'primereact/dropdown';
-import { Button } from 'primereact/button';
+import React from "react";
+import { InputNumber } from "primereact/inputnumber";
+import { Button } from "primereact/button";
 
-const scopedAccessOptions = [
-  { label: 'Business', value: 'BUSINESS' },
-  { label: 'Oficina', value: 'OFFICE' },
-  { label: 'Departamento', value: 'DEPARTMENT' },
-  { label: 'Equipo', value: 'TEAM' },
-  { label: 'Personal', value: 'PERSONAL' }
-];
+export const SaleQuantityCondition = React.memo(
+  ({ condition, onChange, onRemove }) => {
+    const handleChange = (field, value) => {
+      onChange({ ...condition, [field]: value });
+    };
 
-export const SaleQuantityCondition = ({ condition, onChange, onRemove }) => {
-  const handleChange = (field, value) => {
-    onChange({
-      ...condition,
-      [field]: value
-    });
-  };
+    return (
+      <div
+        className="p-3 border-round surface-border border-1 mb-3 flex flex-wrap align-items-end gap-3"
+        style={{ backgroundColor: "#f9f9f9" }}
+      >
+        {/* Campo Mínimo de Productos */}
+        <div className="flex-1 min-w-12rem">
+          <label className="block mb-1 font-medium">Mín. Productos*</label>
+          <InputNumber
+            value={condition.minProducts ?? 1}
+            onValueChange={(e) => handleChange("minProducts", e.value)}
+            min={1}
+            required
+            className="w-full"
+          />
+        </div>
 
-  return (
-    <div className="p-fluid p-grid p-mt-2">
-      <div className="p-col-12 p-md-4">
-        <label>Mín. Productos*</label>
-        <InputNumber
-          value={condition.minProducts}
-          onValueChange={(e) => handleChange('minProducts', e.value)}
-          min={1}
-          required
-        />
+        {/* Campo Tasa por Producto */}
+        <div className="flex-1 min-w-12rem">
+          <label className="block mb-1 font-medium">Tasa por Producto*</label>
+          <InputNumber
+            value={condition.ratePerProduct ?? 0}
+            onValueChange={(e) => handleChange("ratePerProduct", e.value)}
+            mode="currency"
+            currency="USD"
+            locale="en-US"
+            required
+            className="w-full"
+          />
+        </div>
+
+        {/* Espaciador para alinear botón */}
+        <div className="flex-1 min-w-12rem"></div>
+
+        {/* Botón eliminar */}
+        <div className="flex align-items-center justify-content-center">
+          <Button
+            icon="pi pi-trash"
+            className="p-button-rounded p-button-danger p-button-outlined"
+            onClick={onRemove}
+            tooltip="Eliminar condición"
+          />
+        </div>
       </div>
-      <div className="p-col-12 p-md-4">
-        <label>Tasa por Producto*</label>
-        <InputNumber
-          value={condition.ratePerProduct}
-          onValueChange={(e) => handleChange('ratePerProduct', e.value)}
-          mode="currency"
-          currency="USD"
-          locale="en-US"
-          required
-        />
-      </div>
-      <div className="p-col-12 p-md-3">
-        <label>Ámbito*</label>
-        <Dropdown
-          value={condition.scope}
-          options={scopedAccessOptions}
-          onChange={(e) => handleChange('scope', e.value)}
-          placeholder="Seleccione"
-          required
-        />
-      </div>
-      <div className="p-col-12 p-md-1 flex align-items-end">
-        <Button
-          icon="pi pi-trash"
-          className="p-button-danger p-button-text"
-          onClick={onRemove}
-          tooltip="Eliminar condición"
-        />
-      </div>
-    </div>
-  );
-};
+    );
+  }
+);

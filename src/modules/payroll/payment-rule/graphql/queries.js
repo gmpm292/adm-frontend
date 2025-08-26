@@ -12,6 +12,7 @@ export const GET_PAYMENT_RULES = gql`
         isActive
         createdAt
         updatedAt
+        deletedAt
       }
     }
   }
@@ -20,6 +21,10 @@ export const GET_PAYMENT_RULES = gql`
 export const GET_PAYMENT_RULE_BY_ID = gql`
   query PaymentRule($id: Int!) {
     paymentRule(id: $id) {
+      createdAt
+      updatedAt
+      deletedAt
+
       id
       name
       description
@@ -28,25 +33,22 @@ export const GET_PAYMENT_RULE_BY_ID = gql`
       isActive
       conditions {
         paymentCurrency
+        scope
         priceRanges {
           min
           max
           currency
           amount
-          scope
         }
         saleQuantity {
           minProducts
           ratePerProduct
-          scope
         }
         fixedAmount {
           amount
-          scope
         }
         percentage {
           percentage
-          scope
         }
       }
       business {

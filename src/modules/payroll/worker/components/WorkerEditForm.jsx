@@ -25,9 +25,17 @@ export const WorkerEditForm = ({ workerId, visible, onHide, onSuccess }) => {
   const [updateWorker] = useMutation(UPDATE_WORKER);
 
   const workerTypes = [
-    { label: "Agente", value: "AGENT" },
     { label: "Publicista", value: "PUBLICIST" },
     { label: "Económico", value: "ECONOMIC" },
+    { label: "Trabajador de servicios", value: "SERVICE" },
+    { label: "Mensajero", value: "COURIER" },
+    { label: "Técnico/Especialista", value: "TECHNICIAN" },
+    { label: "Personal operativo", value: "OPERATIVE" },
+    { label: "Director", value: "PRINCIPAL" },
+    { label: "Administrativo", value: "ADMINISTRATIVE" },
+    { label: "Gerente", value: "MANAGER" },
+    { label: "Supervisor", value: "SUPERVISOR" },
+    { label: "Agente", value: "AGENT" },
     { label: "Otro", value: "OTHER" },
   ];
 
