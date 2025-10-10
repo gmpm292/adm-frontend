@@ -1,10 +1,12 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
+// "homepage": "https://gmpm292.github.io/adm-frontend",
+// (base: "/adm-frontend/",) o si se configura un dominio personalizado se pone (base: "/",)
 export default defineConfig({
   plugins: [react()],
-  base: "/",
+  base: "/adm-frontend/",
   server: {
     port: 3001,
     open: true,
