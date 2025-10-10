@@ -27,8 +27,8 @@ jobs:
       - name: Build app
         run: npm run build
 
-      - name: Add CNAME file
-        run: echo 'adm.joyerialm.com' > dist/CNAME
+      #- name: Add CNAME file
+      #  run: echo 'adm.joyerialm.com' > dist/CNAME
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

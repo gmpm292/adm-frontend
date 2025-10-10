@@ -26,7 +26,7 @@
     "uuid": "^11.1.0",
     "yup": "^1.6.1"
   },
-  "homepage": "https://adm.joyerialm.com",
+  "homepage": "https://gmpm292.github.io/adm-frontend",
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "@types/react": "^19.0.10",
