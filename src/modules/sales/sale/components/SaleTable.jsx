@@ -11,7 +11,19 @@ import { SaleCreateForm } from "./SaleCreateForm";
 import { SaleDetailForm } from "./SaleDetailForm";
 
 const formatCurrency = (value) => {
-  return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  // ✅ Agregar validación para valores nulos o undefined
+  if (value === null || value === undefined) {
+    return "$0.00";
+  }
+
+  // ✅ Asegurar que value sea un número
+  const numericValue =
+    typeof value === "number" ? value : parseFloat(value) || 0;
+
+  return numericValue.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
 };
 
 const formatDate = (dateString) => {
@@ -19,11 +31,13 @@ const formatDate = (dateString) => {
 };
 
 const paymentMethodBodyTemplate = (rowData) => {
-  return (
-    rowData.paymentMethod === 'CASH' ? 'Efectivo' :
-    rowData.paymentMethod === 'CARD' ? 'Tarjeta' :
-    rowData.paymentMethod === 'TRANSFER' ? 'Transferencia' : 'Otro'
-  );
+  return rowData.paymentMethod === "CASH"
+    ? "Efectivo"
+    : rowData.paymentMethod === "CARD"
+    ? "Tarjeta"
+    : rowData.paymentMethod === "TRANSFER"
+    ? "Transferencia"
+    : "";
 };
 
 export function SaleTable() {
@@ -219,7 +233,11 @@ export function SaleTable() {
         totalRecords={data?.sales?.totalCount}
         loading={loading}
         error={error}
-        globalFilterFields={["invoiceNumber", "salesUser.name", "customer.name"]}
+        globalFilterFields={[
+          "invoiceNumber",
+          "salesUser.name",
+          "customer.name",
+        ]}
         emptyMessage="No se encontraron ventas"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} ventas"
         onRefresh={handleRefresh}

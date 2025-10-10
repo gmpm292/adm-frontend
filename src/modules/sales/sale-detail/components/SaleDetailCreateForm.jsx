@@ -7,13 +7,14 @@ import { useMutation, useLazyQuery } from "@apollo/client";
 import { CREATE_SALE_DETAIL } from "../graphql/queries";
 import { Toast } from "primereact/toast";
 import { GET_PRODUCTS } from "../../../inventory/product/graphql/queries";
+import { PublicistSelector } from "./PublicistSelector";
 
 export const SaleDetailCreateForm = ({ saleId, visible, onHide, onSuccess }) => {
   const [formData, setFormData] = useState({
     saleId: saleId,
     productId: null,
     quantity: 1,
-    discountPercentage: 0
+    publicistIds: []
   });
   
   const [products, setProducts] = useState([]);
@@ -34,6 +35,10 @@ export const SaleDetailCreateForm = ({ saleId, visible, onHide, onSuccess }) => 
     }
   }, [visible, getProducts]);
 
+  const handlePublicistsChange = (publicistIds) => {
+    setFormData(prev => ({ ...prev, publicistIds }));
+  };
+
   const handleSubmit = async () => {
     try {
       if (!formData.productId || formData.quantity <= 0) {
@@ -46,7 +51,7 @@ export const SaleDetailCreateForm = ({ saleId, visible, onHide, onSuccess }) => 
             saleId: formData.saleId,
             productId: formData.productId,
             quantity: formData.quantity,
-            discountPercentage: formData.discountPercentage
+            publicistIds: formData.publicistIds
           }
         }
       });
@@ -64,7 +69,7 @@ export const SaleDetailCreateForm = ({ saleId, visible, onHide, onSuccess }) => 
         saleId: saleId,
         productId: null,
         quantity: 1,
-        discountPercentage: 0
+        publicistIds: []
       });
     } catch (err) {
       toast.current.show({
@@ -135,20 +140,10 @@ export const SaleDetailCreateForm = ({ saleId, visible, onHide, onSuccess }) => 
             />
           </div>
 
-          <div className="p-field">
-            <label htmlFor="discountPercentage">Descuento (%)</label>
-            <InputNumber
-              id="discountPercentage"
-              value={formData.discountPercentage}
-              onValueChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                discountPercentage: e.value 
-              }))}
-              min={0}
-              max={100}
-              suffix="%"
-            />
-          </div>
+          <PublicistSelector
+            selectedPublicistIds={formData.publicistIds}
+            onPublicistsChange={handlePublicistsChange}
+          />
         </div>
       </Dialog>
     </>

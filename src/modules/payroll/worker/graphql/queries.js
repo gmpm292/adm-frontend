@@ -11,11 +11,17 @@ export const GET_WORKERS = gql`
         createdAt
         updatedAt
         user {
+          enabled
           id
           name
           lastName
           email
         }
+        tempFirstName
+        tempLastName
+        tempEmail
+        tempPhone
+        tempRole
         business {
           id
           name
@@ -47,11 +53,17 @@ export const GET_WORKER_BY_ID = gql`
       createdAt
       updatedAt
       user {
+        enabled
         id
         name
         lastName
         email
       }
+      tempFirstName
+      tempLastName
+      tempEmail
+      tempPhone
+      tempRole
       business {
         id
         name
@@ -106,6 +118,32 @@ export const RESTORE_WORKERS = gql`
   mutation RestoreWorkers($ids: [Int!]!) {
     restoreWorkers(ids: $ids) {
       id
+    }
+  }
+`;
+
+export const ASSOCIATE_USER_TO_WORKER = gql`
+  mutation AssociateUserToWorker($workerId: Int!, $userId: Int!) {
+    associateUserToWorker(workerId: $workerId, userId: $userId) {
+      id
+      user {
+        id
+        name
+        lastName
+      }
+    }
+  }
+`;
+
+export const CREATE_USER_FROM_WORKER = gql`
+  mutation CreateUserFromWorker($workerId: Int!) {
+    createUserFromWorker(workerId: $workerId) {
+      id
+      user {
+        id
+        name
+        lastName
+      }
     }
   }
 `;

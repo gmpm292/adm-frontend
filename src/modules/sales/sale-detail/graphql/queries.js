@@ -12,7 +12,6 @@ export const GET_SALE_DETAILS = gql`
         discountPercentage
         product {
           name
-          code
         }
         sale {
           id
@@ -32,30 +31,19 @@ export const GET_SALE_DETAIL_BY_ID = gql`
       subtotal
       discountPercentage
       productSnapshot
+      productPaymentOptions
+      reservationId
       product {
         id
         name
-        code
       }
       sale {
         id
-        invoiceNumber
       }
-      business {
+      publicists {
         id
         name
-      }
-      office {
-        id
-        name
-      }
-      department {
-        id
-        name
-      }
-      team {
-        id
-        name
+        email
       }
     }
   }
@@ -69,10 +57,24 @@ export const GET_SALE_DETAILS_BY_SALE = gql`
       unitPrice
       subtotal
       discountPercentage
+      productSnapshot
+      productPaymentOptions
+      reservationId
       product {
         id
         name
-        code
+      }
+      sale {
+        id
+      }
+      publicists {
+        id
+        user {
+          id
+          name
+          email
+          mobile
+        }
       }
     }
   }
@@ -82,6 +84,20 @@ export const CREATE_SALE_DETAIL = gql`
   mutation CreateSaleDetail($saleDetail: CreateSaleDetailInput!) {
     createSaleDetail(createSaleDetailInput: $saleDetail) {
       id
+      quantity
+      product {
+        id
+        name
+      }
+      publicists {
+        id
+        user {
+          id
+          name
+          email
+          mobile
+        }
+      }
     }
   }
 `;
@@ -91,8 +107,15 @@ export const UPDATE_SALE_DETAIL = gql`
     updateSaleDetail(updateSaleDetailInput: $saleDetail) {
       id
       quantity
-      unitPrice
-      subtotal
+      discountPercentage
+      product {
+        id
+        name
+      }
+      publicists {
+        id
+        name
+      }
     }
   }
 `;

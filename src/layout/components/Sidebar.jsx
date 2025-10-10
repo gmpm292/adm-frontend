@@ -47,9 +47,14 @@ export function Sidebar() {
           command: () => navigate("/sales/customers"),
         },
         {
-          label: "Transacciones",
+          label: "Ventas",
           icon: "pi pi-money-bill",
           command: () => navigate("/sales/sales"),
+        },
+        {
+          label: "Detalles de Venta",
+          icon: "pi pi-list",
+          command: () => navigate("/sales/sale-details"),
         },
       ],
     },

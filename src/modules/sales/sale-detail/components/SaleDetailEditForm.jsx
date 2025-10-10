@@ -1,17 +1,23 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { InputNumber } from "primereact/inputnumber";
 import { useMutation, useQuery } from "@apollo/client";
 import { GET_SALE_DETAIL_BY_ID, UPDATE_SALE_DETAIL } from "../graphql/queries";
 import { Toast } from "primereact/toast";
+import { PublicistSelector } from "./PublicistSelector";
 
-export const SaleDetailEditForm = ({ saleDetailId, visible, onHide, onSuccess }) => {
+export const SaleDetailEditForm = ({
+  saleDetailId,
+  visible,
+  onHide,
+  onSuccess,
+}) => {
   const [formData, setFormData] = useState({
     quantity: 1,
-    discountPercentage: 0
+    publicistIds: [],
   });
-  
+
   const toast = useRef(null);
   const [updateSaleDetail] = useMutation(UPDATE_SALE_DETAIL);
 
@@ -22,11 +28,15 @@ export const SaleDetailEditForm = ({ saleDetailId, visible, onHide, onSuccess })
       if (data?.saleDetail) {
         setFormData({
           quantity: data.saleDetail.quantity,
-          discountPercentage: data.saleDetail.discountPercentage || 0
+          publicistIds: data.saleDetail.publicists?.map((p) => p.id) || [],
         });
       }
-    }
+    },
   });
+
+  const handlePublicistsChange = (publicistIds) => {
+    setFormData((prev) => ({ ...prev, publicistIds }));
+  };
 
   const handleSubmit = async () => {
     try {
@@ -39,16 +49,16 @@ export const SaleDetailEditForm = ({ saleDetailId, visible, onHide, onSuccess })
           saleDetail: {
             id: saleDetailId,
             quantity: formData.quantity,
-            discountPercentage: formData.discountPercentage
-          }
-        }
+            publicistIds: formData.publicistIds,
+          },
+        },
       });
 
       toast.current.show({
         severity: "success",
         summary: "Éxito",
         detail: "Detalle de venta actualizado correctamente",
-        life: 3000
+        life: 3000,
       });
 
       onSuccess();
@@ -58,15 +68,25 @@ export const SaleDetailEditForm = ({ saleDetailId, visible, onHide, onSuccess })
         severity: "error",
         summary: "Error",
         detail: err.message,
-        life: 3000
+        life: 3000,
       });
     }
   };
 
   const footer = (
     <div>
-      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} className="p-button-text" />
-      <Button label="Guardar" icon="pi pi-check" onClick={handleSubmit} autoFocus />
+      <Button
+        label="Cancelar"
+        icon="pi pi-times"
+        onClick={onHide}
+        className="p-button-text"
+      />
+      <Button
+        label="Guardar"
+        icon="pi pi-check"
+        onClick={handleSubmit}
+        autoFocus
+      />
     </div>
   );
 
@@ -91,23 +111,18 @@ export const SaleDetailEditForm = ({ saleDetailId, visible, onHide, onSuccess })
               <InputNumber
                 id="quantity"
                 value={formData.quantity}
-                onValueChange={(e) => setFormData(prev => ({ ...prev, quantity: e.value }))}
+                onValueChange={(e) =>
+                  setFormData((prev) => ({ ...prev, quantity: e.value }))
+                }
                 min={1}
                 required
               />
             </div>
 
-            <div className="p-field">
-              <label htmlFor="discountPercentage">Descuento (%)</label>
-              <InputNumber
-                id="discountPercentage"
-                value={formData.discountPercentage}
-                onValueChange={(e) => setFormData(prev => ({ ...prev, discountPercentage: e.value }))}
-                min={0}
-                max={100}
-                suffix="%"
-              />
-            </div>
+            <PublicistSelector
+              selectedPublicistIds={formData.publicistIds}
+              onPublicistsChange={handlePublicistsChange}
+            />
           </div>
         )}
       </Dialog>

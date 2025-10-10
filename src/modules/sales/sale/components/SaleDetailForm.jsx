@@ -5,8 +5,8 @@ import { GET_SALE_BY_ID } from "../graphql/queries";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-
 import { Link } from "react-router-dom";
+import { Button } from "primereact/button"; // Asegurar que Button esté importado
 
 export function SaleDetailForm({ saleId, visible, onHide }) {
   const [getSale, { data, loading }] = useLazyQuery(GET_SALE_BY_ID, {
@@ -24,7 +24,16 @@ export function SaleDetailForm({ saleId, visible, onHide }) {
   const sale = data?.sale;
 
   const formatCurrency = (value) => {
-    return value.toLocaleString("en-US", {
+    // ✅ Agregar validación para valores nulos o undefined
+    if (value === null || value === undefined) {
+      return "$0.00";
+    }
+
+    // ✅ Asegurar que value sea un número
+    const numericValue =
+      typeof value === "number" ? value : parseFloat(value) || 0;
+
+    return numericValue.toLocaleString("en-US", {
       style: "currency",
       currency: "USD",
     });
@@ -84,7 +93,7 @@ export function SaleDetailForm({ saleId, visible, onHide }) {
                 <b>Factura:</b> {sale.invoiceNumber || "N/A"}
               </div>
               <div className="field">
-                <b>Vendedor:</b> {sale.salesUser?.name}
+                <b>Vendedor:</b> {sale.salesUser?.name || "N/A"}
               </div>
               <div className="field">
                 <b>Cliente:</b> {sale.customer?.name || "N/A"}
@@ -92,29 +101,10 @@ export function SaleDetailForm({ saleId, visible, onHide }) {
             </div>
           </div>
 
-          {/* <div className="mt-4">
-            <h5>Detalles de Productos</h5>
-            <DataTable
-              value={sale.details}
-              rows={5}
-              paginator
-              responsiveLayout="scroll"
-            >
-              {detailColumns.map((col, i) => (
-                <Column
-                  key={i}
-                  field={col.field}
-                  header={col.header}
-                  body={col.body}
-                />
-              ))}
-            </DataTable>
-          </div> */}
-
           <div className="mt-4">
             <div className="flex justify-content-between align-items-center">
               <h5>Detalles de Productos</h5>
-              <Link to={`/sales/${sale.id}/details`}>
+              <Link to={`/sales/sales/${sale.id}/details`}>
                 <Button
                   label="Administrar detalles"
                   icon="pi pi-external-link"
@@ -123,10 +113,11 @@ export function SaleDetailForm({ saleId, visible, onHide }) {
               </Link>
             </div>
             <DataTable
-              value={sale.details}
+              value={sale.details || []} // ✅ Asegurar que siempre sea un array
               rows={5}
               paginator
               responsiveLayout="scroll"
+              emptyMessage="No hay detalles de productos"
             >
               {detailColumns.map((col, i) => (
                 <Column

@@ -1,17 +1,12 @@
 import React, { useCallback, useState, useRef } from "react";
-import { useLazyQuery, useMutation } from "@apollo/client";
-import {
-  GET_SALE_DETAILS_BY_SALE,
-  DELETE_SALE_DETAILS,
-} from "../graphql/queries";
+import { useLazyQuery } from "@apollo/client";
+import { GET_SALE_DETAILS } from "../graphql/queries";
 import GenericDataTable from "../../../../components/BaseTable/index";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
-import { SaleDetailEditForm } from "./SaleDetailEditForm";
-import { SaleDetailCreateForm } from "./SaleDetailCreateForm";
 import { Chip } from "primereact/chip";
+import { useNavigate } from "react-router-dom";
 
 const formatCurrency = (value) => {
     // ✅ Agregar validación para valores nulos o undefined
@@ -43,28 +38,23 @@ const publicistsBodyTemplate = (rowData) => {
   );
 };
 
-export function SaleDetailTable({ saleId }) {
+export function SaleDetailGeneralTable() {
   const [getSaleDetails, { loading, data, error }] = useLazyQuery(
-    GET_SALE_DETAILS_BY_SALE,
+    GET_SALE_DETAILS,
     {
-      variables: { saleId },
       fetchPolicy: "network-only",
     }
   );
-  const [deleteSaleDetails] = useMutation(DELETE_SALE_DETAILS);
-  const [selectedSaleDetailId, setSelectedSaleDetailId] = useState(null);
-  const [editDialogVisible, setEditDialogVisible] = useState(false);
-  const [createDialogVisible, setCreateDialogVisible] = useState(false);
   const toast = useRef(null);
+  const navigate = useNavigate();
 
-  // Estado para el tableStateRef como en el ejemplo
+  // Estado para el tableStateRef
   const tableStateRef = useRef({
     filters: {},
     sorts: [],
     pagination: { first: 0, rows: 10 },
   });
 
-  // Función handleFetchData corregida
   const handleFetchData = useCallback(
     async (params) => {
       try {
@@ -79,13 +69,18 @@ export function SaleDetailTable({ saleId }) {
 
         const { data: responseData } = await getSaleDetails({
           variables: {
-            saleId: saleId,
+            options: {
+              skip: params.skip,
+              take: params.take,
+              filters: params.filters,
+              sorts: params.sorts,
+            },
           },
         });
 
         return {
-          data: responseData?.saleDetailsBySale,
-          totalCount: responseData?.saleDetailsBySale?.length || 0,
+          data: responseData?.saleDetails?.data,
+          totalCount: responseData?.saleDetails?.totalCount,
         };
       } catch (err) {
         console.error("Error fetching sale details:", err);
@@ -101,10 +96,10 @@ export function SaleDetailTable({ saleId }) {
         };
       }
     },
-    [getSaleDetails, saleId]
+    [getSaleDetails]
   );
 
-  // Función handleRefresh corregida - IMPORTANTE: pasar todos los parámetros necesarios
+  // Función handleRefresh corregida
   const handleRefresh = useCallback(() => {
     handleFetchData({
       skip: tableStateRef.current.pagination.first,
@@ -114,70 +109,31 @@ export function SaleDetailTable({ saleId }) {
     });
   }, [handleFetchData]);
 
-  const handleEditSuccess = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
-
-  const handleCreateSuccess = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
-
-  const handleEdit = (saleDetailId) => {
-    setSelectedSaleDetailId(saleDetailId);
-    setEditDialogVisible(true);
-  };
-
-  const handleDelete = (saleDetailId) => {
-    confirmDialog({
-      message: "¿Estás seguro de que deseas eliminar este detalle de venta?",
-      header: "Confirmación",
-      icon: "pi pi-exclamation-triangle",
-      accept: async () => {
-        try {
-          await deleteSaleDetails({ variables: { ids: [saleDetailId] } });
-
-          toast.current.show({
-            severity: "success",
-            summary: "Éxito",
-            detail: "Detalle de venta eliminado correctamente",
-            life: 3000,
-          });
-
-          handleRefresh();
-        } catch (err) {
-          toast.current.show({
-            severity: "error",
-            summary: "Error",
-            detail: err.message,
-            life: 3000,
-          });
-        }
-      },
-    });
+  const handleViewSaleDetails = (saleId) => {
+    navigate(`/sales/sales/${saleId}/details`);
   };
 
   const actionBodyTemplate = (rowData) => {
     return (
       <div className="actions-column">
         <Button
-          icon="pi pi-pencil"
+          icon="pi pi-external-link"
           className="p-button-rounded p-button-text"
-          tooltip="Editar detalle"
+          tooltip="Ver Detalles Completos"
           tooltipOptions={{ position: "top" }}
-          onClick={() => handleEdit(rowData.id)}
-        />
-        <Button
-          icon="pi pi-trash"
-          className="p-button-rounded p-button-text p-button-danger"
-          tooltip="Eliminar detalle"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleDelete(rowData.id)}
+          onClick={() => handleViewSaleDetails(rowData.sale.id)}
         />
       </div>
     );
   };
 
   const columns = [
+    {
+      field: "sale.invoiceNumber",
+      header: "Factura",
+      sortable: true,
+      filter: true,
+    },
     {
       field: "product.name",
       header: "Producto",
@@ -218,57 +174,36 @@ export function SaleDetailTable({ saleId }) {
     },
   ];
 
-  const addSaleDetailButton = (
-    <Button
-      icon="pi pi-plus"
-      tooltip="Agregar producto"
-      onClick={() => setCreateDialogVisible(true)}
-    />
-  );
-
   return (
     <>
       <Toast ref={toast} />
-      <ConfirmDialog />
-
       <GenericDataTable
         columns={columns}
-        data={data?.saleDetailsBySale}
-        totalRecords={data?.saleDetailsBySale?.length || 0}
+        data={data?.saleDetails?.data}
+        totalRecords={data?.saleDetails?.totalCount}
         loading={loading}
         error={error}
-        globalFilterFields={["product.name", "product.id"]} // Actualizado
+        globalFilterFields={[
+          "product.name",
+          "product.id",
+          "sale.invoiceNumber",
+        ]}
         emptyMessage="No se encontraron detalles de venta"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} detalles"
-        onRefresh={handleRefresh} // ✅ Pasar la función handleRefresh
+        onRefresh={handleRefresh} // ✅ Pasar handleRefresh
         onFetchData={handleFetchData}
         initialPageSize={10}
-        header={addSaleDetailButton}
         refreshable={true} // ✅ Asegurar que sea refreshable
       >
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "10rem" }}
+          headerStyle={{ width: "8rem" }}
           bodyStyle={{ textAlign: "center" }}
         />
       </GenericDataTable>
-
-      <SaleDetailEditForm
-        saleDetailId={selectedSaleDetailId}
-        visible={editDialogVisible}
-        onHide={() => setEditDialogVisible(false)}
-        onSuccess={handleEditSuccess}
-      />
-
-      <SaleDetailCreateForm
-        saleId={saleId}
-        visible={createDialogVisible}
-        onHide={() => setCreateDialogVisible(false)}
-        onSuccess={handleCreateSuccess}
-      />
     </>
   );
 }
 
-export default SaleDetailTable;
+export default SaleDetailGeneralTable;

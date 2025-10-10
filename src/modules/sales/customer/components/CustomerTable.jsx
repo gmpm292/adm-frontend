@@ -1,6 +1,10 @@
 import React, { useCallback, useState, useRef } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
-import { GET_CUSTOMERS, DELETE_CUSTOMERS } from "../graphql/queries";
+import {
+  GET_CUSTOMERS,
+  DELETE_CUSTOMERS,
+  RESTORE_CUSTOMERS,
+} from "../graphql/queries";
 import GenericDataTable from "../../../../components/BaseTable/index";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
@@ -15,9 +19,11 @@ export function CustomerTable() {
     fetchPolicy: "network-only",
   });
   const [deleteCustomers] = useMutation(DELETE_CUSTOMERS);
+  const [restoreCustomers] = useMutation(RESTORE_CUSTOMERS);
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
   const [editDialogVisible, setEditDialogVisible] = useState(false);
   const [createDialogVisible, setCreateDialogVisible] = useState(false);
+  const [globalFilter, setGlobalFilter] = useState("");
   const [detailDialogVisible, setDetailDialogVisible] = useState(false);
   const toast = useRef(null);
   const tableStateRef = useRef({
@@ -36,6 +42,7 @@ export function CustomerTable() {
             first: params.skip,
             rows: params.take,
           },
+          showDeleted: params.showDeleted,
         };
 
         const { data: responseData } = await getCustomers({
@@ -43,6 +50,7 @@ export function CustomerTable() {
             options: {
               skip: params.skip,
               take: params.take,
+              withDeleted: params.showDeleted,
               filters: params.filters,
               sorts: params.sorts,
             },
@@ -68,6 +76,7 @@ export function CustomerTable() {
     handleFetchData({
       skip: tableStateRef.current.pagination.first,
       take: tableStateRef.current.pagination.rows,
+      showDeleted: tableStateRef.current.showDeleted,
       filters: tableStateRef.current.filters,
       sorts: tableStateRef.current.sorts,
     });
@@ -120,7 +129,50 @@ export function CustomerTable() {
     });
   };
 
+  const handleRestore = (customersId) => {
+    confirmDialog({
+      message: "¿Estás seguro de que deseas restaurar este usuario?",
+      header: "Confirmación",
+      icon: "pi pi-exclamation-triangle",
+      accept: async () => {
+        try {
+          await restoreCustomers({ variables: { ids: [customersId] } });
+
+          toast.current.show({
+            severity: "success",
+            summary: "Éxito",
+            detail: "Usuario restaurado correctamente",
+            life: 3000,
+          });
+
+          handleRefresh();
+        } catch (err) {
+          toast.current.show({
+            severity: "error",
+            summary: "Error",
+            detail: err.message,
+            life: 3000,
+          });
+        }
+      },
+    });
+  };
+
   const actionBodyTemplate = (rowData) => {
+    if (rowData.deletedAt) {
+      return (
+        <div className="actions-column">
+          <Button
+            icon="pi pi-history"
+            className="p-button-rounded p-button-text p-button-success"
+            tooltip="Restaurar usuario"
+            tooltipOptions={{ position: "top" }}
+            onClick={() => handleRestore(rowData.id)}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="actions-column">
         <Button
@@ -200,6 +252,7 @@ export function CustomerTable() {
         totalRecords={data?.customers?.totalCount}
         loading={loading}
         error={error}
+        globalFilter={globalFilter}
         globalFilterFields={["name", "email", "phone"]}
         emptyMessage="No se encontraron clientes"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} clientes"
@@ -207,6 +260,7 @@ export function CustomerTable() {
         onFetchData={handleFetchData}
         initialPageSize={10}
         header={addCustomerButton}
+        showDeleted={true}
       >
         <Column
           body={actionBodyTemplate}

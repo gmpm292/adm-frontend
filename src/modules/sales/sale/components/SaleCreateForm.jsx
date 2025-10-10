@@ -5,12 +5,12 @@ import { InputText } from "primereact/inputtext";
 import { InputNumber } from "primereact/inputnumber";
 import { Dropdown } from "primereact/dropdown";
 import { Calendar } from "primereact/calendar";
-import { useMutation } from "@apollo/client";
+import { useMutation, useLazyQuery } from "@apollo/client";
 import { CREATE_SALE } from "../graphql/queries";
 import { Toast } from "primereact/toast";
 import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
-import { useLazyQuery } from "@apollo/client";
 import { GET_CUSTOMERS } from "../../customer/graphql/queries";
+import { GET_WORKERS } from "../../../payroll/worker/graphql/queries"; // Nueva importación
 
 const paymentMethods = [
   { label: "Efectivo", value: "CASH" },
@@ -21,8 +21,7 @@ const paymentMethods = [
 
 export const SaleCreateForm = ({ visible, onHide, onSuccess }) => {
   const [formData, setFormData] = useState({
-    effectiveDate: new Date(),
-    totalAmount: 0,
+    //effectiveDate: new Date(),
     paymentMethod: null,
     invoiceNumber: "",
     salesWorkerId: null,
@@ -35,6 +34,7 @@ export const SaleCreateForm = ({ visible, onHide, onSuccess }) => {
   });
 
   const [customers, setCustomers] = useState([]);
+  const [workers, setWorkers] = useState([]);
   const toast = useRef(null);
   const [createSale] = useMutation(CREATE_SALE);
   const [getCustomers] = useLazyQuery(GET_CUSTOMERS, {
@@ -48,11 +48,29 @@ export const SaleCreateForm = ({ visible, onHide, onSuccess }) => {
     },
   });
 
+  const [getWorkers] = useLazyQuery(GET_WORKERS, {
+    onCompleted: (data) => {
+      setWorkers(
+        data?.workers?.data?.map((worker) => ({
+          label: `${worker.name} (${worker.email})`,
+          value: worker.id,
+        })) || []
+      );
+    },
+  });
+
   useEffect(() => {
     if (visible) {
       getCustomers();
+      getWorkers({
+        variables: {
+          options: {
+            take: 100, // Obtener suficientes workers
+          },
+        },
+      });
     }
-  }, [visible, getCustomers]);
+  }, [visible, getCustomers, getWorkers]);
 
   const handleSecurityEntitiesChange = (entities) => {
     setFormData((prev) => ({
@@ -70,19 +88,17 @@ export const SaleCreateForm = ({ visible, onHide, onSuccess }) => {
     try {
       if (
         !formData.paymentMethod ||
-        !formData.salesWorkerId ||
-        formData.totalAmount <= 0
+        !formData.salesWorkerId
+        //!formData.totalAmount <= 0
       ) {
-        throw new Error(
-          "Método de pago, vendedor y monto total son requeridos"
-        );
+        throw new Error("Método de pago y vendedor son requeridos");
       }
 
       await createSale({
         variables: {
           sale: {
             ...formData,
-            effectiveDate: formData.effectiveDate.toISOString(),
+            //effectiveDate: formData.effectiveDate.toISOString(),
           },
         },
       });
@@ -97,8 +113,7 @@ export const SaleCreateForm = ({ visible, onHide, onSuccess }) => {
       onSuccess();
       onHide();
       setFormData({
-        effectiveDate: new Date(),
-        totalAmount: 0,
+        //effectiveDate: new Date(),
         paymentMethod: null,
         invoiceNumber: "",
         salesWorkerId: null,
@@ -147,7 +162,7 @@ export const SaleCreateForm = ({ visible, onHide, onSuccess }) => {
         onHide={onHide}
       >
         <div className="p-fluid grid">
-          <div className="field col-12 md:col-6">
+          {/* <div className="field col-12 md:col-6">
             <label htmlFor="effectiveDate">Fecha*</label>
             <Calendar
               id="effectiveDate"
@@ -159,7 +174,7 @@ export const SaleCreateForm = ({ visible, onHide, onSuccess }) => {
               showIcon
               required
             />
-          </div>
+          </div> */}
 
           <div className="field col-12 md:col-6">
             <label htmlFor="paymentMethod">Método de Pago*</label>
@@ -177,16 +192,17 @@ export const SaleCreateForm = ({ visible, onHide, onSuccess }) => {
           </div>
 
           <div className="field col-12 md:col-6">
-            <label htmlFor="totalAmount">Monto Total*</label>
-            <InputNumber
-              id="totalAmount"
-              value={formData.totalAmount}
-              onValueChange={(e) =>
-                setFormData((prev) => ({ ...prev, totalAmount: e.value }))
+            <label htmlFor="salesWorkerId">Vendedor*</label>
+            <Dropdown
+              id="salesWorkerId"
+              value={formData.salesWorkerId}
+              options={workers}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, salesWorkerId: e.value }))
               }
-              mode="currency"
-              currency="USD"
-              locale="en-US"
+              optionLabel="label"
+              placeholder="Seleccione vendedor"
+              filter
               required
             />
           </div>
@@ -218,11 +234,7 @@ export const SaleCreateForm = ({ visible, onHide, onSuccess }) => {
 
           <div className="col-12">
             <SecurityEntitySelector
-              showWorkerSelector
               onSelectionChange={handleSecurityEntitiesChange}
-              onWorkerSelect={(workerId) =>
-                setFormData((prev) => ({ ...prev, salesWorkerId: workerId }))
-              }
             />
           </div>
         </div>

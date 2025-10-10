@@ -1,19 +1,25 @@
-import React, { useCallback, useState, useRef } from 'react';
-import { useLazyQuery, useMutation } from '@apollo/client';
-import { GET_WORKERS, REMOVE_WORKERS, RESTORE_WORKERS } from '../graphql/queries';
-import GenericDataTable from '../../../../components/BaseTable/index';
-import { Column } from 'primereact/column';
-import { Button } from 'primereact/button';
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
-import { Toast } from 'primereact/toast';
-import { WorkerEditForm } from './WorkerEditForm';
-import { WorkerCreateForm } from './WorkerCreateForm';
-import { WorkerDetailForm } from './WorkerDetailForm';
+import React, { useCallback, useState, useRef } from "react";
+import { useLazyQuery, useMutation } from "@apollo/client";
+import {
+  GET_WORKERS,
+  REMOVE_WORKERS,
+  RESTORE_WORKERS,
+} from "../graphql/queries";
+import GenericDataTable from "../../../../components/BaseTable/index";
+import { Column } from "primereact/column";
+import { Button } from "primereact/button";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { Toast } from "primereact/toast";
+import { WorkerEditForm } from "./WorkerEditForm";
+import { WorkerCreateForm } from "./WorkerCreateForm";
+import { WorkerDetailForm } from "./WorkerDetailForm";
 
 const statusBodyTemplate = (rowData) => {
   return (
-    <span className={`badge status-${rowData.isActive ? 'active' : 'inactive'}`}>
-      {rowData.isActive ? 'Activo' : 'Inactivo'}
+    <span
+      className={`badge status-${rowData?.user?.enabled ? "active" : "inactive"}`}
+    >
+      {rowData.user?.enabled ? "Activo" : "Inactivo"}
     </span>
   );
 };
@@ -24,7 +30,7 @@ const userBodyTemplate = (rowData) => {
 
 export function WorkerTable() {
   const [getWorkers, { loading, data, error }] = useLazyQuery(GET_WORKERS, {
-    fetchPolicy: 'network-only',
+    fetchPolicy: "network-only",
   });
   const [removeWorkers] = useMutation(REMOVE_WORKERS);
   const [restoreWorkers] = useMutation(RESTORE_WORKERS);
@@ -61,13 +67,12 @@ export function WorkerTable() {
             },
           },
         });
-
         return {
           data: responseData?.workers?.data,
           totalCount: responseData?.workers?.totalCount,
         };
       } catch (err) {
-        console.error('Error fetching workers:', err);
+        console.error("Error fetching workers:", err);
         return {
           data: [],
           totalCount: 0,
@@ -106,26 +111,30 @@ export function WorkerTable() {
 
   const handleToggleStatus = (workerId, isActive) => {
     confirmDialog({
-      message: `¿Estás seguro de que deseas ${isActive ? 'desactivar' : 'activar'} este trabajador?`,
-      header: 'Confirmación',
-      icon: 'pi pi-exclamation-triangle',
+      message: `¿Estás seguro de que deseas ${
+        isActive ? "desactivar" : "activar"
+      } este trabajador?`,
+      header: "Confirmación",
+      icon: "pi pi-exclamation-triangle",
       accept: async () => {
         try {
           const mutation = isActive ? removeWorkers : restoreWorkers;
           await mutation({ variables: { ids: [workerId] } });
 
           toast.current.show({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: `Trabajador ${isActive ? 'desactivado' : 'activado'} correctamente`,
+            severity: "success",
+            summary: "Éxito",
+            detail: `Trabajador ${
+              isActive ? "desactivado" : "activado"
+            } correctamente`,
             life: 3000,
           });
 
           handleRefresh();
         } catch (err) {
           toast.current.show({
-            severity: 'error',
-            summary: 'Error',
+            severity: "error",
+            summary: "Error",
             detail: err.message,
             life: 3000,
           });
@@ -141,21 +150,23 @@ export function WorkerTable() {
           icon="pi pi-pencil"
           className="p-button-rounded p-button-text"
           tooltip="Editar trabajador"
-          tooltipOptions={{ position: 'top' }}
+          tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
-        <Button
-          icon={rowData.isActive ? 'pi pi-ban' : 'pi pi-check'}
-          className={`p-button-rounded p-button-text ${rowData.isActive ? 'p-button-warning' : 'p-button-success'}`}
-          tooltip={rowData.isActive ? 'Desactivar' : 'Activar'}
-          tooltipOptions={{ position: 'top' }}
+        {/* <Button
+          icon={rowData.isActive ? "pi pi-ban" : "pi pi-check"}
+          className={`p-button-rounded p-button-text ${
+            rowData.isActive ? "p-button-warning" : "p-button-success"
+          }`}
+          tooltip={rowData.isActive ? "Desactivar" : "Activar"}
+          tooltipOptions={{ position: "top" }}
           onClick={() => handleToggleStatus(rowData.id, rowData.isActive)}
-        />
+        /> */}
         <Button
           icon="pi pi-eye"
           className="p-button-rounded p-button-text p-button-info"
           tooltip="Ver detalles"
-          tooltipOptions={{ position: 'top' }}
+          tooltipOptions={{ position: "top" }}
           onClick={() => handleViewDetails(rowData.id)}
         />
       </div>
@@ -164,33 +175,33 @@ export function WorkerTable() {
 
   const columns = [
     {
-      field: 'user.name',
-      header: 'Nombre',
+      field: "user.name",
+      header: "Nombre",
       body: userBodyTemplate,
       sortable: true,
       filter: true,
     },
     {
-      field: 'workerType',
-      header: 'Tipo',
+      field: "workerType",
+      header: "Tipo",
       sortable: true,
       filter: true,
     },
     {
-      field: 'baseSalary',
-      header: 'Salario Base',
+      field: "baseSalary",
+      header: "Salario Base",
       sortable: true,
       filter: true,
     },
     {
-      field: 'business.name',
-      header: 'Business',
+      field: "business.name",
+      header: "Business",
       sortable: true,
       filter: true,
     },
     {
-      field: 'isActive',
-      header: 'Estado',
+      field: "isActive",
+      header: "Estado",
       body: statusBodyTemplate,
       sortable: true,
       filter: true,
@@ -216,7 +227,7 @@ export function WorkerTable() {
         totalRecords={data?.workers?.totalCount}
         loading={loading}
         error={error}
-        globalFilterFields={['user.name', 'workerType']}
+        globalFilterFields={["user.name", "workerType"]}
         emptyMessage="No se encontraron trabajadores"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} trabajadores"
         onRefresh={handleRefresh}
@@ -227,8 +238,8 @@ export function WorkerTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: '10rem' }}
-          bodyStyle={{ textAlign: 'center' }}
+          headerStyle={{ width: "10rem" }}
+          bodyStyle={{ textAlign: "center" }}
         />
       </GenericDataTable>
 

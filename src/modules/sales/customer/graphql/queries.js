@@ -11,9 +11,11 @@ export const GET_CUSTOMERS = gql`
         phone
         loyaltyPoints
         business {
+          id
           name
         }
         office {
+          id
           name
         }
         user {
@@ -82,5 +84,11 @@ export const DELETE_CUSTOMERS = gql`
     removeCustomers(ids: $ids) {
       id
     }
+  }
+`;
+
+export const RESTORE_CUSTOMERS = gql`
+  mutation RestoreCustomers($ids: [Int!]!) {
+    restoreCustomers(ids: $ids)
   }
 `;

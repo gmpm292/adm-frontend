@@ -16,7 +16,7 @@ const paymentMethods = [
   { label: "Efectivo", value: "CASH" },
   { label: "Tarjeta", value: "CARD" },
   { label: "Transferencia", value: "TRANSFER" },
-  { label: "Otro", value: "OTHER" }
+  { label: "Otro", value: "OTHER" },
 ];
 
 export const SaleEditForm = ({ saleId, visible, onHide, onSuccess }) => {
@@ -30,19 +30,21 @@ export const SaleEditForm = ({ saleId, visible, onHide, onSuccess }) => {
     businessId: null,
     officeId: null,
     departmentId: null,
-    teamId: null
+    teamId: null,
   });
-  
+
   const [customers, setCustomers] = useState([]);
   const toast = useRef(null);
   const [updateSale] = useMutation(UPDATE_SALE);
   const [getCustomers] = useLazyQuery(GET_CUSTOMERS, {
     onCompleted: (data) => {
-      setCustomers(data?.customers?.data?.map(c => ({
-        label: c.name,
-        value: c.id
-      })) || []);
-    }
+      setCustomers(
+        data?.customers?.data?.map((c) => ({
+          label: c.name,
+          value: c.id,
+        })) || []
+      );
+    },
   });
 
   const { loading, error } = useQuery(GET_SALE_BY_ID, {
@@ -60,10 +62,10 @@ export const SaleEditForm = ({ saleId, visible, onHide, onSuccess }) => {
           businessId: data.sale.business?.id || null,
           officeId: data.sale.office?.id || null,
           departmentId: data.sale.department?.id || null,
-          teamId: data.sale.team?.id || null
+          teamId: data.sale.team?.id || null,
         });
       }
-    }
+    },
   });
 
   useEffect(() => {
@@ -73,21 +75,27 @@ export const SaleEditForm = ({ saleId, visible, onHide, onSuccess }) => {
   }, [visible, getCustomers]);
 
   const handleSecurityEntitiesChange = (entities) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      ...entities
+      ...entities,
     }));
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async () => {
     try {
-      if (!formData.paymentMethod || !formData.salesWorkerId || formData.totalAmount <= 0) {
-        throw new Error("Método de pago, vendedor y monto total son requeridos");
+      if (
+        !formData.paymentMethod //||
+        //!formData.salesWorkerId ||
+        //formData.totalAmount <= 0
+      ) {
+        throw new Error(
+          "Método de pago, vendedor y monto total son requeridos"
+        );
       }
 
       await updateSale({
@@ -95,16 +103,16 @@ export const SaleEditForm = ({ saleId, visible, onHide, onSuccess }) => {
           sale: {
             id: saleId,
             ...formData,
-            effectiveDate: formData.effectiveDate.toISOString()
-          }
-        }
+            effectiveDate: formData.effectiveDate.toISOString(),
+          },
+        },
       });
 
       toast.current.show({
         severity: "success",
         summary: "Éxito",
         detail: "Venta actualizada correctamente",
-        life: 3000
+        life: 3000,
       });
 
       onSuccess();
@@ -114,15 +122,25 @@ export const SaleEditForm = ({ saleId, visible, onHide, onSuccess }) => {
         severity: "error",
         summary: "Error",
         detail: err.message,
-        life: 3000
+        life: 3000,
       });
     }
   };
 
   const footer = (
     <div>
-      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} className="p-button-text" />
-      <Button label="Guardar" icon="pi pi-check" onClick={handleSubmit} autoFocus />
+      <Button
+        label="Cancelar"
+        icon="pi pi-times"
+        onClick={onHide}
+        className="p-button-text"
+      />
+      <Button
+        label="Guardar"
+        icon="pi pi-check"
+        onClick={handleSubmit}
+        autoFocus
+      />
     </div>
   );
 
@@ -147,7 +165,9 @@ export const SaleEditForm = ({ saleId, visible, onHide, onSuccess }) => {
               <Calendar
                 id="effectiveDate"
                 value={formData.effectiveDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, effectiveDate: e.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, effectiveDate: e.value }))
+                }
                 dateFormat="dd/mm/yy"
                 showIcon
                 required
@@ -160,7 +180,9 @@ export const SaleEditForm = ({ saleId, visible, onHide, onSuccess }) => {
                 id="paymentMethod"
                 value={formData.paymentMethod}
                 options={paymentMethods}
-                onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, paymentMethod: e.value }))
+                }
                 optionLabel="label"
                 placeholder="Seleccione método"
                 required
@@ -171,8 +193,13 @@ export const SaleEditForm = ({ saleId, visible, onHide, onSuccess }) => {
               <label htmlFor="totalAmount">Monto Total*</label>
               <InputNumber
                 id="totalAmount"
-                value={formData.totalAmount}
-                onValueChange={(e) => setFormData(prev => ({ ...prev, totalAmount: e.value }))}
+                value={formData.totalAmount || 0} // ✅ Valor por defecto
+                onValueChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    totalAmount: e.value || 0,
+                  }))
+                }
                 mode="currency"
                 currency="USD"
                 locale="en-US"
@@ -196,7 +223,9 @@ export const SaleEditForm = ({ saleId, visible, onHide, onSuccess }) => {
                 id="customerId"
                 value={formData.customerId}
                 options={customers}
-                onChange={(e) => setFormData(prev => ({ ...prev, customerId: e.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, customerId: e.value }))
+                }
                 optionLabel="label"
                 placeholder="Seleccione cliente"
                 filter
@@ -209,13 +238,13 @@ export const SaleEditForm = ({ saleId, visible, onHide, onSuccess }) => {
                   businessId: formData.businessId,
                   officeId: formData.officeId,
                   departmentId: formData.departmentId,
-                  teamId: formData.teamId
+                  teamId: formData.teamId,
                 }}
                 showWorkerSelector
                 initialWorkerId={formData.salesWorkerId}
                 onSelectionChange={handleSecurityEntitiesChange}
-                onWorkerSelect={(workerId) => 
-                  setFormData(prev => ({ ...prev, salesWorkerId: workerId }))
+                onWorkerSelect={(workerId) =>
+                  setFormData((prev) => ({ ...prev, salesWorkerId: workerId }))
                 }
               />
             </div>

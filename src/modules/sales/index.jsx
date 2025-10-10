@@ -9,6 +9,7 @@ export function SalesModule() {
     <Routes>
       <Route path="customers" element={<CustomerListPage />} />
       <Route path="sales" element={<SaleListPage />} />
+      <Route path="sale-details" element={<SaleDetailListPage />} />
       <Route path="sales/:saleId/details" element={<SaleDetailListPage />} />
     </Routes>
   );
