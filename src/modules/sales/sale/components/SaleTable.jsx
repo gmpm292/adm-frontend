@@ -27,7 +27,15 @@ const formatCurrency = (value) => {
 };
 
 const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString();
+  if (!dateString) return "-"; // o "Sin fecha", "No especificado", etc.
+
+  const date = new Date(dateString);
+
+  if (isNaN(date.getTime()) || date.getTime() === 0) {
+    return "-";
+  }
+
+  return date.toLocaleDateString();
 };
 
 const paymentMethodBodyTemplate = (rowData) => {

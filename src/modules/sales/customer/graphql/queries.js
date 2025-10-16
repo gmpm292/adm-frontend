@@ -10,6 +10,9 @@ export const GET_CUSTOMERS = gql`
         email
         phone
         loyaltyPoints
+        createdAt
+        updatedAt
+        deletedAt
         business {
           id
           name
@@ -35,6 +38,23 @@ export const GET_CUSTOMER_BY_ID = gql`
       phone
       loyaltyPoints
       additionalInfo
+
+      createdAt
+      updatedAt
+      deletedAt
+      createdBy {
+        id
+        name
+      }
+      updatedBy {
+        id
+        name
+      }
+      deletedBy {
+        id
+        name
+      }
+
       business {
         id
         name

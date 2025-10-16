@@ -42,8 +42,8 @@ export const CustomerCreateForm = ({ visible, onHide, onSuccess }) => {
         variables: {
           customer: {
             name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
+            email: formData.email || null,
+            phone: formData.phone || null,
             businessId: formData.businessId,
             officeId: formData.officeId,
             departmentId: formData.departmentId,

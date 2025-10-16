@@ -38,6 +38,8 @@ import "./styles/ButtonStyles.css";
 import "./styles/dialogs.css";
 import "./components/BaseTable/styles.css";
 
+import { QZTrayLoader } from "./modules/printing/components/QZTrayLoader";
+
 // Importar locale español
 import { PrimeReactProvider } from "primereact/api";
 import { setupLocales } from "./locales/i18n";
@@ -69,6 +71,7 @@ function App() {
     <ApolloProvider client={client}>
       <PrimeReactProvider>
         <BrowserRouter>
+          <QZTrayLoader />
           <AuthProvider>
             <Routes>
               <Route path="/login" element={<LoginPage />} />

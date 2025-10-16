@@ -5,6 +5,7 @@ import logo from "../../assets/images/logo.png";
 import { LOGOUT } from "../../modules/auth/graphql/queries";
 import "../styles/TopBar.css";
 import useLogout from "../../hooks/useLogout";
+import { PrintButton } from "../../modules/printing/printing.module";
 
 export function TopBar() {
   const logout = useLogout();
@@ -12,6 +13,28 @@ export function TopBar() {
 
   const handleLogout = async () => {
     await logout();
+  };
+
+  const ticketData = {
+    type: 'TICKET',
+    content: [
+      "********************************\n",
+      "         TIENDA XYZ\n",
+      "********************************\n",
+      "Fecha: 2024-01-15 14:30\n",
+      "Vendedor: Juan Pérez\n",
+      "--------------------------------\n",
+      "Producto      Cant.   Precio\n",
+      "--------------------------------\n",
+      "Café Negro    2       $20.00\n",
+      "Azúcar        1       $5.00\n",
+      "--------------------------------\n",
+      "TOTAL: $25.00\n",
+      "********************************\n"
+    ],
+    config: {
+      cutAfterPrint: true
+    }
   };
 
   return (
@@ -41,6 +64,15 @@ export function TopBar() {
             className="p-button-text"
             onClick={() => alert("Cambiar idioma")}
           />
+
+          <PrintButton
+            printData={ticketData}
+            label="Imprimir Ticket"
+            className="p-button-success"
+            onSuccess={() => console.log("Ticket impreso")}
+            onError={(error) => console.error("Error:", error)}
+          />
+
           <Button
             label="Cerrar Sesión"
             icon="pi pi-sign-out"
