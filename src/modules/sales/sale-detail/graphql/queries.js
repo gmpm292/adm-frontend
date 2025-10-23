@@ -10,6 +10,8 @@ export const GET_SALE_DETAILS = gql`
         unitPrice
         subtotal
         discountPercentage
+        reservationId
+        isConfirmed
         product {
           name
         }
@@ -33,6 +35,7 @@ export const GET_SALE_DETAIL_BY_ID = gql`
       productSnapshot
       productPaymentOptions
       reservationId
+      isConfirmed
       product {
         id
         name
@@ -60,6 +63,7 @@ export const GET_SALE_DETAILS_BY_SALE = gql`
       productSnapshot
       productPaymentOptions
       reservationId
+      isConfirmed
       product {
         id
         name

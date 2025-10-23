@@ -7,6 +7,7 @@ export const GET_SALES = gql`
       data {
         id
         effectiveDate
+        isConfirmed
         totalAmount
         paymentMethod
         invoiceNumber
@@ -26,6 +27,7 @@ export const GET_SALE_BY_ID = gql`
     sale(id: $id) {
       id
       effectiveDate
+      isConfirmed
       totalAmount
       paymentMethod
       invoiceNumber
@@ -110,6 +112,7 @@ export const MAKE_SALE = gql`
     makeSale(makeSaleInput: $makeSaleInput) {
       id
       effectiveDate
+      isConfirmed
       totalAmount
       paymentMethod
       invoiceNumber
