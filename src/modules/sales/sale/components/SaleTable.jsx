@@ -9,17 +9,15 @@ import { Toast } from "primereact/toast";
 import { SaleEditForm } from "./SaleEditForm";
 import { SaleCreateForm } from "./SaleCreateForm";
 import { SaleDetailForm } from "./SaleDetailForm";
+import { MakeSaleComponent } from "./MakeSaleComponent"; // ✅ Nueva importación
+import { ValidatePaymentButton } from "./ValidatePaymentButton"; // ✅ Nueva importación
 
 const formatCurrency = (value) => {
-  // ✅ Agregar validación para valores nulos o undefined
   if (value === null || value === undefined) {
     return "$0.00";
   }
-
-  // ✅ Asegurar que value sea un número
   const numericValue =
     typeof value === "number" ? value : parseFloat(value) || 0;
-
   return numericValue.toLocaleString("en-US", {
     style: "currency",
     currency: "USD",
@@ -27,14 +25,11 @@ const formatCurrency = (value) => {
 };
 
 const formatDate = (dateString) => {
-  if (!dateString) return "-"; // o "Sin fecha", "No especificado", etc.
-
+  if (!dateString) return "-";
   const date = new Date(dateString);
-
   if (isNaN(date.getTime()) || date.getTime() === 0) {
     return "-";
   }
-
   return date.toLocaleDateString();
 };
 
@@ -48,6 +43,29 @@ const paymentMethodBodyTemplate = (rowData) => {
     : "";
 };
 
+// ✅ Nueva función para determinar si una venta puede ser procesada
+const canProcessSale = (sale) => {
+  // Una venta puede ser procesada si no tiene fecha efectiva (no está finalizada)
+  return !sale.effectiveDate;
+};
+
+// ✅ Nueva función para el template del estado de la venta
+const saleStatusBodyTemplate = (rowData) => {
+  const isProcessed = !!rowData.effectiveDate;
+  return (
+    <div className="flex align-items-center gap-2">
+      <i
+        className={`pi ${
+          isProcessed
+            ? "pi-check-circle text-green-500"
+            : "pi-clock text-orange-500"
+        }`}
+      ></i>
+      <span>{isProcessed ? "Completada" : "Pendiente"}</span>
+    </div>
+  );
+};
+
 export function SaleTable() {
   const [getSales, { loading, data, error }] = useLazyQuery(GET_SALES, {
     fetchPolicy: "network-only",
@@ -57,6 +75,7 @@ export function SaleTable() {
   const [editDialogVisible, setEditDialogVisible] = useState(false);
   const [createDialogVisible, setCreateDialogVisible] = useState(false);
   const [detailDialogVisible, setDetailDialogVisible] = useState(false);
+  const [makeSaleDialogVisible, setMakeSaleDialogVisible] = useState(false); // ✅ Nuevo estado
   const toast = useRef(null);
   const tableStateRef = useRef({
     filters: {},
@@ -119,6 +138,20 @@ export function SaleTable() {
     handleRefresh();
   }, [handleRefresh]);
 
+  // ✅ Nueva función para manejar el éxito de realizar venta
+  const handleMakeSaleSuccess = useCallback(
+    (sale) => {
+      toast.current.show({
+        severity: "success",
+        summary: "Venta Realizada",
+        detail: `La venta #${sale.id} ha sido procesada exitosamente`,
+        life: 3000,
+      });
+      handleRefresh();
+    },
+    [handleRefresh]
+  );
+
   const handleEdit = (saleId) => {
     setSelectedSaleId(saleId);
     setEditDialogVisible(true);
@@ -127,6 +160,26 @@ export function SaleTable() {
   const handleViewDetails = (saleId) => {
     setSelectedSaleId(saleId);
     setDetailDialogVisible(true);
+  };
+
+  // ✅ Nueva función para manejar realizar venta
+  const handleMakeSale = (saleId) => {
+    setSelectedSaleId(saleId);
+    setMakeSaleDialogVisible(true);
+  };
+
+  // ✅ Nueva función para manejar validación exitosa
+  const handleValidationSuccess = (result, payments, saleId) => {
+    if (result.valid) {
+      toast.current.show({
+        severity: "success",
+        summary: "Pagos Válidos",
+        detail: `Los pagos son válidos. Total: ${result.totalInBaseCurrency.toFixed(
+          2
+        )}`,
+        life: 3000,
+      });
+    }
   };
 
   const handleDelete = (saleId) => {
@@ -159,8 +212,37 @@ export function SaleTable() {
   };
 
   const actionBodyTemplate = (rowData) => {
+    const canProcess = canProcessSale(rowData);
+
     return (
       <div className="actions-column">
+        {/* Botón Realizar Venta - Solo muestra si la venta está pendiente */}
+        {canProcess && (
+          <Button
+            icon="pi pi-shopping-cart"
+            className="p-button-rounded p-button-text p-button-success"
+            tooltip="Realizar venta"
+            tooltipOptions={{ position: "top" }}
+            onClick={() => handleMakeSale(rowData.id)}
+          />
+        )}
+
+        {/* Botón Validar Pago - Solo muestra si la venta está pendiente */}
+        {canProcess && (
+          <ValidatePaymentButton
+            saleId={rowData.id}
+            onValidationSuccess={(result, payments) =>
+              handleValidationSuccess(result, payments, rowData.id)
+            }
+            label=""
+            icon="pi pi-check-circle"
+            size="small"
+            variant="text"
+            tooltip="Validar pagos"
+          />
+        )}
+
+        {/* Botón Editar */}
         <Button
           icon="pi pi-pencil"
           className="p-button-rounded p-button-text"
@@ -168,13 +250,8 @@ export function SaleTable() {
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
-        <Button
-          icon="pi pi-trash"
-          className="p-button-rounded p-button-text p-button-danger"
-          tooltip="Eliminar venta"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleDelete(rowData.id)}
-        />
+
+        {/* Botón Ver Detalles */}
         <Button
           icon="pi pi-eye"
           className="p-button-rounded p-button-text p-button-info"
@@ -182,11 +259,34 @@ export function SaleTable() {
           tooltipOptions={{ position: "top" }}
           onClick={() => handleViewDetails(rowData.id)}
         />
+
+        {/* Botón Eliminar */}
+        <Button
+          icon="pi pi-trash"
+          className="p-button-rounded p-button-text p-button-danger"
+          tooltip="Eliminar venta"
+          tooltipOptions={{ position: "top" }}
+          onClick={() => handleDelete(rowData.id)}
+        />
       </div>
     );
   };
 
   const columns = [
+    // ✅ Nueva columna para el estado
+    {
+      field: "effectiveDate",
+      header: "Estado",
+      body: saleStatusBodyTemplate,
+      sortable: true,
+      filter: true,
+    },
+    {
+      field: "id",
+      header: "ID",
+      sortable: true,
+      filter: true,
+    },
     {
       field: "effectiveDate",
       header: "Fecha",
@@ -242,6 +342,7 @@ export function SaleTable() {
         loading={loading}
         error={error}
         globalFilterFields={[
+          "id",
           "invoiceNumber",
           "salesUser.name",
           "customer.name",
@@ -256,7 +357,7 @@ export function SaleTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "10rem" }}
+          headerStyle={{ width: "14rem" }} // ✅ Aumentado para más botones
           bodyStyle={{ textAlign: "center" }}
         />
       </GenericDataTable>
@@ -278,6 +379,14 @@ export function SaleTable() {
         saleId={selectedSaleId}
         visible={detailDialogVisible}
         onHide={() => setDetailDialogVisible(false)}
+      />
+
+      {/* ✅ Nuevo diálogo para realizar venta */}
+      <MakeSaleComponent
+        saleId={selectedSaleId}
+        visible={makeSaleDialogVisible}
+        onHide={() => setMakeSaleDialogVisible(false)}
+        onSuccess={handleMakeSaleSuccess}
       />
     </>
   );

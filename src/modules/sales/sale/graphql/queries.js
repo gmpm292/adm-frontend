@@ -104,3 +104,48 @@ export const GET_PAYMENT_METHODS = gql`
     }
   }
 `;
+
+export const MAKE_SALE = gql`
+  mutation MakeSale($makeSaleInput: MakeSaleInput!) {
+    makeSale(makeSaleInput: $makeSaleInput) {
+      id
+      effectiveDate
+      totalAmount
+      paymentMethod
+      invoiceNumber
+      paymentDetails
+      salesUser {
+        id
+        name
+      }
+      customer {
+        id
+        name
+      }
+      details {
+        id
+        quantity
+        unitPrice
+        subtotal
+        product {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+
+export const VALIDATE_SALE_PAYMENTS = gql`
+  mutation ValidateSalePayments(
+    $validateSalePaymentsInput: ValidateSalePaymentsInput!
+  ) {
+    validateSalePayments(
+      validateSalePaymentsInput: $validateSalePaymentsInput
+    ) {
+      valid
+      message
+      totalInBaseCurrency
+    }
+  }
+`;

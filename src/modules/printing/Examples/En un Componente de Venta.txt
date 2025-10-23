@@ -1,0 +1,47 @@
+import React from 'react';
+import { PrintButton } from '../printing';
+import { Card } from 'primereact/card';
+
+export const VentaComponent: React.FC = () => {
+  const handleVentaSuccess = (ventaData: any) => {
+    // Lógica para guardar la venta...
+  };
+
+  const ticketData = {
+    type: 'TICKET' as const,
+    content: [
+      "********************************\n",
+      "         TIENDA XYZ\n",
+      "********************************\n",
+      "Fecha: 2024-01-15 14:30\n",
+      "Vendedor: Juan Pérez\n",
+      "--------------------------------\n",
+      "Producto      Cant.   Precio\n",
+      "--------------------------------\n",
+      "Café Negro    2       $20.00\n",
+      "Azúcar        1       $5.00\n",
+      "--------------------------------\n",
+      "TOTAL: $25.00\n",
+      "********************************\n"
+    ],
+    config: {
+      cutAfterPrint: true
+    }
+  };
+
+  return (
+    <Card title="Registrar Venta">
+      {/* Formulario de venta... */}
+      
+      <div className="mt-4">
+        <PrintButton
+          printData={ticketData}
+          label="Imprimir Ticket"
+          className="p-button-success"
+          onSuccess={() => console.log('Ticket impreso')}
+          onError={(error) => console.error('Error:', error)}
+        />
+      </div>
+    </Card>
+  );
+};

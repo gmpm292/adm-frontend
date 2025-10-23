@@ -42,6 +42,7 @@ import "./components/BaseTable/styles.css";
 import { PrimeReactProvider } from "primereact/api";
 import { setupLocales } from "./locales/i18n";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
+import { QzTrayPage } from "./modules/printing/printing.module";
 
 function App() {
   // Inicializar locales
@@ -156,6 +157,14 @@ function App() {
                   element={
                     <MainLayout>
                       <EmailSettingsPage />
+                    </MainLayout>
+                  }
+                />
+                <Route
+                  path="/system/printing"
+                  element={
+                    <MainLayout>
+                      <QzTrayPage />
                     </MainLayout>
                   }
                 />

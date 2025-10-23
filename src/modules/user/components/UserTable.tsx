@@ -127,7 +127,9 @@ export function UserTable() {
   ];
 
   const tableStateRef = useRef({
-    filters: { ...defaultFilters },
+    filters: {
+      /*...defaultFilters*/
+    },
     sorts: [...defaultSorts],
     pagination: { first: 0, rows: 10 },
     showDeleted: false,

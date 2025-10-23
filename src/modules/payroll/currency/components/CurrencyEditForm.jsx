@@ -11,6 +11,7 @@ import SecurityEntitySelector from '../../../../components/SecurityEntitySelecto
 
 export const CurrencyEditForm = ({ currencyCode, visible, onHide, onSuccess }) => {
   const [formData, setFormData] = useState({
+    id: null,
     code: '',
     name: '',
     symbol: '',
@@ -30,6 +31,7 @@ export const CurrencyEditForm = ({ currencyCode, visible, onHide, onSuccess }) =
     onCompleted: (data) => {
       if (data?.currency) {
         setFormData({
+          id: data.currency.id,
           code: data.currency.code,
           name: data.currency.name,
           symbol: data.currency.symbol,

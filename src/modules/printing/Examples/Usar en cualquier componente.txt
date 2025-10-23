@@ -1,0 +1,22 @@
+// components/VentaForm.tsx
+import { PrintButton } from '../printing';
+
+export function VentaForm() {
+  const handleVentaCompletada = (ventaData) => {
+    // Lógica de venta...
+  };
+
+  return (
+    <div>
+      {/* Formulario de venta */}
+      <PrintButton 
+        printData={{
+          type: 'TICKET',
+          content: [/* líneas del ticket */],
+          config: { cutAfterPrint: true }
+        }}
+        onSuccess={() => alert('✅ Venta completada e impresa')}
+      />
+    </div>
+  );
+}

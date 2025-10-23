@@ -31,7 +31,7 @@ export const PrintButton: React.FC<PrintButtonProps> = ({
         severity: "error",
         summary: "Error de Impresión",
         detail: error,
-        life: 5000,
+        life: 2000,
       });
       onError?.(error);
       clearError();
@@ -45,7 +45,7 @@ export const PrintButton: React.FC<PrintButtonProps> = ({
         severity: "success",
         summary: "Éxito",
         detail: "Documento enviado a impresión",
-        life: 3000,
+        life: 2000,
       });
       onSuccess?.();
     }

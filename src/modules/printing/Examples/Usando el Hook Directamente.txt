@@ -1,0 +1,34 @@
+import React from 'react';
+import { Button } from 'primereact/button';
+import { usePrinting } from '../printing';
+
+export const CustomPrintComponent: React.FC = () => {
+  const { isPrinting, printTicket, error } = usePrinting();
+
+  const handlePrint = async () => {
+    const ventaData = {
+      numeroVenta: 'V-001',
+      fecha: new Date().toLocaleString(),
+      productos: [
+        { nombre: 'Laptop HP', cantidad: 1, precio: 1500 },
+        { nombre: 'Mouse', cantidad: 1, precio: 25 }
+      ],
+      total: 1525,
+      vendedor: 'María García'
+    };
+
+    await printTicket(ventaData);
+  };
+
+  return (
+    <div>
+      <Button
+        label="Vender e Imprimir"
+        icon="pi pi-shopping-cart"
+        loading={isPrinting}
+        onClick={handlePrint}
+      />
+      {error && <div className="error-message">{error}</div>}
+    </div>
+  );
+};

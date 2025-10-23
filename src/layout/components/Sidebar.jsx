@@ -171,15 +171,20 @@ export function Sidebar() {
           icon: "pi pi-sliders-h",
           command: () => navigate("/configurations"),
         },
-        {
-          label: "Sistema",
-          icon: "pi pi-desktop",
-          command: () => navigate("/system"),
-        },
+        // {
+        //   label: "Sistema",
+        //   icon: "pi pi-desktop",
+        //   command: () => navigate("/system"),
+        // },
         {
           label: "Correo OAuth2",
           icon: "pi pi-envelope",
           command: () => navigate("/system/email"),
+        },
+        {
+          label: "Impresión Térmica",
+          icon: "pi pi-print",
+          command: () => navigate("/system/printing"),
         },
         {
           label: "Seguridad",

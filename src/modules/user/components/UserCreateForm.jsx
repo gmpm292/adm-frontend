@@ -21,7 +21,7 @@ const roles = [
 export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: "",
-    lastName: "",
+    lastName: null,
     email: "",
     mobile: "",
     role: null,
@@ -30,7 +30,7 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
     departmentId: null,
     teamId: null,
   });
-  
+
   const [showSecurityEntities, setShowSecurityEntities] = useState(false);
   const [entitiesToInclude, setEntitiesToInclude] = useState([]);
   const toast = useRef(null);
@@ -51,29 +51,29 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
   const handleRoleChange = (e) => {
     const selectedRole = e.value;
     setFormData((prev) => ({ ...prev, role: selectedRole }));
-    
+
     // Determinar qué entidades mostrar según el rol
     let entities = [];
-    switch(selectedRole) {
-      case 'PRINCIPAL':
-      case 'USER':
-        entities = ['BUSINESS'];
+    switch (selectedRole) {
+      case "PRINCIPAL":
+      case "USER":
+        entities = ["BUSINESS"];
         break;
-      case 'ADMIN':
-        entities = ['BUSINESS', 'OFFICE'];
+      case "ADMIN":
+        entities = ["BUSINESS", "OFFICE"];
         break;
-      case 'MANAGER':
-        entities = ['BUSINESS', 'OFFICE', 'DEPARTMENT'];
+      case "MANAGER":
+        entities = ["BUSINESS", "OFFICE", "DEPARTMENT"];
         break;
-      case 'SUPERVISOR':
-      case 'AGENT':
-        entities = ['BUSINESS', 'OFFICE', 'DEPARTMENT', 'TEAM'];
+      case "SUPERVISOR":
+      case "AGENT":
+        entities = ["BUSINESS", "OFFICE", "DEPARTMENT", "TEAM"];
         break;
-      case 'SUPER':
+      case "SUPER":
       default:
         entities = [];
     }
-    
+
     setEntitiesToInclude(entities);
     setShowSecurityEntities(entities.length > 0);
   };
@@ -84,7 +84,7 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
       const trimmedData = {
         ...formData,
         name: formData.name.trim(),
-        lastName: formData.lastName.trim(),
+        lastName: formData.lastName?.trim() || null,
         email: formData.email.trim(),
         mobile: formData.mobile.trim(),
       };
@@ -98,7 +98,7 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
           user: {
             email: trimmedData.email,
             name: trimmedData.name,
-            lastName: trimmedData.lastName,
+            lastName: trimmedData.lastName || null,
             mobile: trimmedData.mobile,
             role: [trimmedData.role],
             businessId: trimmedData.businessId,
@@ -120,7 +120,7 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
       onHide();
       setFormData({
         name: "",
-        lastName: "",
+        lastName: null,
         email: "",
         mobile: "",
         role: null,
