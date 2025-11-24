@@ -4,6 +4,7 @@ const CLASSIC_LOGIN = gql`
   query classicLogin($input: ClassicLoginInput!) {
     classicLogin(input: $input) {
       profile {
+        role
         email
         isTwoFactorEnabled
         isTwoFactorConfigured

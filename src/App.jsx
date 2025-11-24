@@ -43,6 +43,8 @@ import { PrimeReactProvider } from "primereact/api";
 import { setupLocales } from "./locales/i18n";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import { QzTrayPage } from "./modules/printing/printing.module";
+import { RoleGuardListPage } from "./modules/role-guard";
+import { ScopedAccessListPage } from "./modules/scoped-access";
 
 function App() {
   // Inicializar locales
@@ -165,6 +167,23 @@ function App() {
                   element={
                     <MainLayout>
                       <QzTrayPage />
+                    </MainLayout>
+                  }
+                />
+
+                <Route
+                  path="/system/security/role-guards"
+                  element={
+                    <MainLayout>
+                      <RoleGuardListPage />
+                    </MainLayout>
+                  }
+                />
+                <Route
+                  path="/system/security/scoped-access"
+                  element={
+                    <MainLayout>
+                      <ScopedAccessListPage />
                     </MainLayout>
                   }
                 />

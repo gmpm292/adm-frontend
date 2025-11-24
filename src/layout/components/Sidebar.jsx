@@ -2,13 +2,24 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "primereact/button";
 import { PanelMenu } from "primereact/panelmenu";
+import { ProgressSpinner } from "primereact/progressspinner";
+import { useFilteredMenu } from "../../hooks/useFilteredMenu";
 import "../styles/Sidebar.css";
 
+/**
+ * Componente Sidebar con menú dinámico filtrado por permisos
+ * Muestra solo las opciones a las que el usuario tiene acceso
+ */
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [expandedKeys, setExpandedKeys] = useState({});
   const navigate = useNavigate();
+  const { filteredMenu, loading } = useFilteredMenu();
 
+  /**
+   * Maneja el toggle de expansión de items del menú
+   * Solo permite un item expandido a la vez
+   */
   const handleToggle = (key) => {
     setExpandedKeys((prevKeys) => {
       const isExpanded = prevKeys[key];
@@ -17,185 +28,112 @@ export function Sidebar() {
     });
   };
 
-  // Claves únicas para cada grupo de menú
-  const menuItems = [
-    {
-      label: "Panel Principal",
-      icon: "pi pi-home",
-      key: "panel",
-      items: [
-        {
-          label: "Análisis",
-          icon: "pi pi-chart-line",
-          command: () => navigate("/statistics/analytics"),
-        },
-        {
-          label: "Ventas",
-          icon: "pi pi-dollar",
-          command: () => navigate("/statistics/sales"),
-        },
-      ],
-    },
-    {
-      label: "Ventas",
-      icon: "pi pi-shopping-cart",
-      key: "sales",
-      items: [
-        {
-          label: "Clientes",
-          icon: "pi pi-users",
-          command: () => navigate("/sales/customers"),
-        },
-        {
-          label: "Ventas",
-          icon: "pi pi-money-bill",
-          command: () => navigate("/sales/sales"),
-        },
-        {
-          label: "Detalles de Venta",
-          icon: "pi pi-list",
-          command: () => navigate("/sales/sale-details"),
-        },
-      ],
-    },
-    {
-      label: "Usuarios",
-      icon: "pi pi-users",
-      key: "users",
-      items: [
-        {
-          label: "Lista de Usuarios",
-          icon: "pi pi-list",
-          command: () => navigate("/users"),
-        },
-      ],
-    },
-    {
-      label: "Empresa",
-      icon: "pi pi-building",
-      key: "company",
-      items: [
-        {
-          label: "Empresas",
-          icon: "pi pi-briefcase",
-          command: () => navigate("/company/business"),
-        },
-        {
-          label: "Oficinas",
-          icon: "pi pi-map-marker",
-          command: () => navigate("/company/office"),
-        },
-        {
-          label: "Departamentos",
-          icon: "pi pi-sitemap",
-          command: () => navigate("/company/department"),
-        },
-        {
-          label: "Equipos",
-          icon: "pi pi-users",
-          command: () => navigate("/company/team"),
-        },
-      ],
-    },
-    {
-      label: "Inventario",
-      icon: "pi pi-box",
-      key: "inventory",
-      items: [
-        {
-          label: "Categorías",
-          icon: "pi pi-tags",
-          command: () => navigate("/inventory/categories"),
-        },
-        {
-          label: "Productos",
-          icon: "pi pi-shopping-bag",
-          command: () => navigate("/inventory/products"),
-        },
-        {
-          label: "Inventarios",
-          icon: "pi pi-database",
-          command: () => navigate("/inventory/inventories"),
-        },
-        {
-          label: "Movimientos",
-          icon: "pi pi-sync",
-          command: () => navigate("/inventory/movements"),
-        },
-      ],
-    },
-    {
-      label: "Nómina",
-      icon: "pi pi-money-bill",
-      key: "payroll",
-      items: [
-        {
-          label: "Monedas",
-          icon: "pi pi-dollar",
-          command: () => navigate("/payroll/currencies"),
-        },
-        {
-          label: "Reglas de Pago",
-          icon: "pi pi-book",
-          command: () => navigate("/payroll/payment-rules"),
-        },
-        {
-          label: "Períodos",
-          icon: "pi pi-calendar",
-          command: () => navigate("/payroll/payroll-periods"),
-        },
-        {
-          label: "Horarios",
-          icon: "pi pi-clock",
-          command: () => navigate("/payroll/work-schedules"),
-        },
-        {
-          label: "Trabajadores",
-          icon: "pi pi-users",
-          command: () => navigate("/payroll/workers"),
-        },
-        {
-          label: "Pagos",
-          icon: "pi pi-wallet",
-          command: () => navigate("/payroll/worker-payments"),
-        },
-      ],
-    },
-    {
-      label: "Configuración",
-      icon: "pi pi-cog",
-      key: "settings",
-      items: [
-        {
-          label: "Configuraciones",
-          icon: "pi pi-sliders-h",
-          command: () => navigate("/configurations"),
-        },
-        // {
-        //   label: "Sistema",
-        //   icon: "pi pi-desktop",
-        //   command: () => navigate("/system"),
-        // },
-        {
-          label: "Correo OAuth2",
-          icon: "pi pi-envelope",
-          command: () => navigate("/system/email"),
-        },
-        {
-          label: "Impresión Térmica",
-          icon: "pi pi-print",
-          command: () => navigate("/system/printing"),
-        },
-        {
-          label: "Seguridad",
-          icon: "pi pi-shield",
-        },
-      ],
-    },
-  ].map((item) => ({
-    ...item,
-    command: () => handleToggle(item.key),
-  }));
+  /**
+   * Convierte el menú filtrado al formato que espera PanelMenu
+   * Agrega los comandos de navegación y estructura recursiva
+   */
+  const convertMenuToPanelMenuFormat = (menuItems) => {
+    return menuItems.map((item) => {
+      const menuItem = {
+        label: item.label,
+        icon: item.icon,
+        key: item.key,
+        command: () => handleToggle(item.key),
+      };
+
+      // Procesar items hijos recursivamente
+      if (item.items && item.items.length > 0) {
+        menuItem.items = item.items.map((subItem) => {
+          const subMenuItem = {
+            label: subItem.label,
+            icon: subItem.icon,
+            key: subItem.key,
+          };
+
+          // Si el subitem tiene path, agregar comando de navegación
+          if (subItem.path) {
+            subMenuItem.command = () => {
+              console.log(`🔄 Navegando a: ${subItem.path}`);
+              navigate(subItem.path);
+            };
+          }
+
+          // Procesar items anidados (tercer nivel)
+          if (subItem.items && subItem.items.length > 0) {
+            subMenuItem.items = subItem.items.map((nestedItem) => ({
+              label: nestedItem.label,
+              icon: nestedItem.icon,
+              key: nestedItem.key,
+              command: nestedItem.path
+                ? () => {
+                    console.log(`🔄 Navegando a: ${nestedItem.path}`);
+                    navigate(nestedItem.path);
+                  }
+                : undefined,
+            }));
+          }
+
+          return subMenuItem;
+        });
+      } else if (item.path) {
+        // Si es un item terminal sin hijos, agregar comando directo
+        menuItem.command = () => {
+          console.log(`🔄 Navegando a: ${item.path}`);
+          navigate(item.path);
+        };
+      }
+
+      return menuItem;
+    });
+  };
+
+  const menuItems = convertMenuToPanelMenuFormat(filteredMenu);
+
+  // Estado de carga
+  if (loading) {
+    return (
+      <div className={`sidebar ${collapsed ? "collapsed" : ""}`}>
+        <div className="sidebar-header">
+          <Button
+            icon={collapsed ? "pi pi-angle-right" : "pi pi-angle-left"}
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-button-text"
+            disabled={loading}
+          />
+        </div>
+        <div className="sidebar-content flex justify-content-center align-items-center">
+          <ProgressSpinner style={{ width: "40px", height: "40px" }} />
+          <span className="ml-2">Cargando menú...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Menú vacío (usuario sin permisos para nada)
+  if (menuItems.length === 0) {
+    return (
+      <div className={`sidebar ${collapsed ? "collapsed" : ""}`}>
+        <div className="sidebar-header">
+          <Button
+            icon={collapsed ? "pi pi-angle-right" : "pi pi-angle-left"}
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-button-text"
+          />
+        </div>
+        <div className="sidebar-content flex justify-content-center align-items-center p-4">
+          <div className="text-center">
+            <i
+              className="pi pi-lock"
+              style={{ fontSize: "2rem", color: "#6c757d" }}
+            ></i>
+            <p className="mt-2 text-color-secondary">
+              No tienes acceso a ninguna opción
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`sidebar ${collapsed ? "collapsed" : ""}`}>
@@ -204,6 +142,8 @@ export function Sidebar() {
           icon={collapsed ? "pi pi-angle-right" : "pi pi-angle-left"}
           onClick={() => setCollapsed(!collapsed)}
           className="p-button-text"
+          tooltip={collapsed ? "Expandir menú" : "Colapsar menú"}
+          tooltipOptions={{ position: "right" }}
         />
       </div>
       <div className="sidebar-content">
@@ -211,7 +151,10 @@ export function Sidebar() {
           model={menuItems}
           expandedKeys={expandedKeys}
           onPanelMenuItemClick={(e) => {
-            if (e.item.key) handleToggle(e.item.key);
+            // Manejar clicks en items que no son enlaces (solo grupos)
+            if (e.item.key && !e.item.path) {
+              handleToggle(e.item.key);
+            }
           }}
           className={`sidebar-menu ${collapsed ? "icons-only" : ""}`}
         />

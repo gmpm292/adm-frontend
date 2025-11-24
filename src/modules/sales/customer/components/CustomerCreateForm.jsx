@@ -15,21 +15,21 @@ export const CustomerCreateForm = ({ visible, onHide, onSuccess }) => {
     businessId: null,
     officeId: null,
     departmentId: null,
-    teamId: null
+    teamId: null,
   });
   const toast = useRef(null);
   const [createCustomer] = useMutation(CREATE_CUSTOMER);
 
   const handleSecurityEntitiesChange = (entities) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      ...entities
+      ...entities,
     }));
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async () => {
@@ -47,16 +47,16 @@ export const CustomerCreateForm = ({ visible, onHide, onSuccess }) => {
             businessId: formData.businessId,
             officeId: formData.officeId,
             departmentId: formData.departmentId,
-            teamId: formData.teamId
-          }
-        }
+            teamId: formData.teamId,
+          },
+        },
       });
 
       toast.current.show({
         severity: "success",
         summary: "Éxito",
         detail: "Cliente creado correctamente",
-        life: 3000
+        life: 3000,
       });
 
       onSuccess();
@@ -68,22 +68,32 @@ export const CustomerCreateForm = ({ visible, onHide, onSuccess }) => {
         businessId: null,
         officeId: null,
         departmentId: null,
-        teamId: null
+        teamId: null,
       });
     } catch (err) {
       toast.current.show({
         severity: "error",
         summary: "Error",
         detail: err.message,
-        life: 3000
+        life: 3000,
       });
     }
   };
 
   const footer = (
     <div>
-      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} className="p-button-text" />
-      <Button label="Crear" icon="pi pi-check" onClick={handleSubmit} autoFocus />
+      <Button
+        label="Cancelar"
+        icon="pi pi-times"
+        onClick={onHide}
+        className="p-button-text"
+      />
+      <Button
+        label="Crear"
+        icon="pi pi-check"
+        onClick={handleSubmit}
+        autoFocus
+      />
     </div>
   );
 

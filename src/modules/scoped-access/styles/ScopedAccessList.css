@@ -1,0 +1,21 @@
+.scoped-access-list-page {
+  padding: 0rem;
+}
+
+.scoped-access-list-page .p-card {
+  height: 100%;
+}
+
+.scoped-access-list-page .p-card-body {
+  padding: 1rem;
+}
+
+.scoped-access-list-page .p-card-content {
+  padding: 0;
+}
+
+.actions-column {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}

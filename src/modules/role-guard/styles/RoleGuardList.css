@@ -1,0 +1,26 @@
+.role-guard-list-page {
+  padding: 0rem;
+}
+
+.role-guard-list-page .p-card {
+  height: 100%;
+}
+
+.role-guard-list-page .p-card-body {
+  padding: 1rem;
+}
+
+.role-guard-list-page .p-card-content {
+  padding: 0;
+}
+
+.actions-column {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Estilos para las pestañas de tipos */
+.role-type-tabs .p-button {
+  min-width: 120px;
+}

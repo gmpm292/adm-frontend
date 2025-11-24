@@ -16,6 +16,7 @@ export const GET_WORKERS = gql`
           name
           lastName
           email
+          role
         }
         tempFirstName
         tempLastName

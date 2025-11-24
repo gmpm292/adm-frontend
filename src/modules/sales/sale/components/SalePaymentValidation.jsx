@@ -248,7 +248,7 @@ export const SalePaymentValidation = ({
                       handleCurrencyChange(index, currencyCode, currencyData)
                     }
                     placeholder="Ingrese el monto"
-                    showCurrencyDetails={true}
+                    showCurrencyDetails={false}
                     required
                     className="mb-2"
                   />

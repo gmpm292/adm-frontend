@@ -1,0 +1,259 @@
+.integrated-sale-page {
+  padding: 1rem;
+}
+
+.sale-management-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.sale-process {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.step-content {
+  animation: fadeIn 0.3s ease-in;
+}
+
+.step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.step-header h3 {
+  margin: 0;
+  color: #495057;
+}
+
+.product-management {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .product-management {
+    grid-template-columns: 1fr;
+  }
+}
+
+.navigation-buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.final-summary {
+  margin-top: 1.5rem;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.customer-section .section-header {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.customer-section .section-header h3 {
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.customer-section .section-header p {
+  color: #6c757d;
+  margin: 0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.product-list {
+  border-top: 1px solid #e9ecef;
+  padding-top: 1rem;
+}
+
+.total-section {
+  border: 1px solid #dee2e6;
+}
+
+.info-section {
+  border: 1px solid #ced4da;
+}
+
+/* Estados vacíos */
+.no-sale-selected,
+.no-pending-sales {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+.empty-state {
+  text-align: center;
+  color: #6c757d;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  color: #dee2e6;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  margin-bottom: 1.5rem;
+}
+
+/* Pestañas */
+.p-tabview .p-tabview-nav {
+  margin-bottom: 1.5rem;
+}
+
+/* Tabla de ventas pendientes */
+.actions-column {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.pending-sales-manager .p-card {
+  border: 1px solid #e9ecef;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .integrated-sale-page {
+    padding: 0.5rem;
+  }
+
+  .step-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .step-header h3 {
+    order: -1;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions .p-button {
+    width: 100%;
+  }
+}
+
+/* Selector de modo cliente */
+.customer-mode-selector {
+  margin-bottom: 2rem;
+}
+
+.mode-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.mode-buttons .p-button {
+  min-width: 200px;
+}
+
+/* Navegación de pasos mejorada */
+.step-navigation {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.customer-badge {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: #e8f5e8;
+  border: 1px solid #c8e6c9;
+  border-radius: 4px;
+  color: #2e7d32;
+  font-size: 0.875rem;
+}
+
+/* Sección de búsqueda de clientes */
+.search-bar {
+  margin-bottom: 1.5rem;
+}
+
+.search-results {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.search-actions {
+  border-top: 1px solid #e9ecef;
+  padding-top: 1rem;
+}
+
+.selected-customer-info {
+  display: flex;
+  align-items: center;
+}
+
+/* Estados de cliente */
+.customer-step {
+  animation: fadeIn 0.3s ease-in;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mode-buttons {
+    flex-direction: column;
+  }
+
+  .mode-buttons .p-button {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .step-navigation {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}

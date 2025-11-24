@@ -7,6 +7,9 @@ export const GET_CUSTOMERS = gql`
       data {
         id
         name
+        lastName
+        fullName
+        ci
         email
         phone
         loyaltyPoints
@@ -34,6 +37,9 @@ export const GET_CUSTOMER_BY_ID = gql`
     customer(id: $id) {
       id
       name
+      lastName
+      fullName
+      ci
       email
       phone
       loyaltyPoints
