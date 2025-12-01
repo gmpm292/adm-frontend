@@ -26,6 +26,7 @@ export const PendingSalesManager = ({
       1: "Datos Cliente",
       2: "Agregar Productos",
       3: "Asignar Personal",
+      4: "Procesar Pago", // Nuevo paso
     };
     return steps[step] || "Paso " + step;
   };
@@ -39,6 +40,8 @@ export const PendingSalesManager = ({
 
   const actionBodyTemplate = (rowData) => {
     const isCurrent = rowData.id === currentSaleId;
+
+    console.log("Cargando venta:", rowData); // Para debug
 
     return (
       <div className="actions-column">
@@ -107,6 +110,8 @@ export const PendingSalesManager = ({
         return "info";
       case 3:
         return "success";
+      case 4:
+        return "help"; // Nuevo color para el paso de pago
       default:
         return "secondary";
     }

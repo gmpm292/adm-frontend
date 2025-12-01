@@ -13,12 +13,16 @@ import { CustomerSearchSection } from "../components/CustomerSearchSection";
 import { ProductSection } from "../components/ProductSection";
 import { SaleSummary } from "../components/SaleSummary";
 import { PublicistSection } from "../components/PublicistSection";
-import { CREATE_SALE } from "../../sale/graphql/queries";
+import { PaymentSection } from "../components/PaymentSection";
+import { CREATE_SALE, UPDATE_SALE } from "../../sale/graphql/queries";
 import { CREATE_CUSTOMER } from "../../customer/graphql/queries";
 import { PendingSalesManager } from "../components/PendingSalesManager";
 import { useAuthContext } from "../../../auth/components/AuthContext";
 import PermissionGuard from "../../../../components/PermissionGuard";
 import { GET_WORKERS } from "../../../payroll/worker/graphql/queries";
+
+// Clave única para localStorage
+const PENDING_SALES_STORAGE_KEY = "integrated_sales_pending_sales";
 
 export function IntegratedSalePage() {
   const { user } = useAuthContext();
@@ -27,11 +31,15 @@ export function IntegratedSalePage() {
   const [activeTab, setActiveTab] = useState(0);
   const [customerSearchMode, setCustomerSearchMode] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("CASH");
+  const [createdSaleId, setCreatedSaleId] = useState(null);
   const [sellers, setSellers] = useState([]);
+  const [isInitialized, setIsInitialized] = useState(false);
   const toast = useRef(null);
 
   const [createCustomer] = useMutation(CREATE_CUSTOMER);
   const [createSale] = useMutation(CREATE_SALE);
+  const [updateSale] = useMutation(UPDATE_SALE);
+
   const [getWorkers] = useLazyQuery(GET_WORKERS, {
     onCompleted: (data) => {
       const workerOptions =
@@ -55,16 +63,31 @@ export function IntegratedSalePage() {
     currentUserRoles.includes(role)
   );
 
-  // Cargar ventas pendientes del localStorage al iniciar
+  // Cargar ventas pendientes del localStorage SOLO al iniciar - UNA VEZ
   useEffect(() => {
-    const savedSales = localStorage.getItem("pendingSales");
-    if (savedSales) {
+    const loadPendingSales = () => {
       try {
-        setPendingSales(JSON.parse(savedSales));
+        const savedSales = localStorage.getItem(PENDING_SALES_STORAGE_KEY);
+        console.log(
+          "Cargando ventas pendientes desde localStorage:",
+          savedSales
+        );
+
+        if (savedSales) {
+          const parsedSales = JSON.parse(savedSales);
+          setPendingSales(Array.isArray(parsedSales) ? parsedSales : []);
+        } else {
+          setPendingSales([]);
+        }
       } catch (error) {
         console.error("Error loading pending sales:", error);
+        setPendingSales([]);
+      } finally {
+        setIsInitialized(true);
       }
-    }
+    };
+
+    loadPendingSales();
   }, []);
 
   // Cargar vendedores AL INICIAR - SIEMPRE se cargan
@@ -78,10 +101,224 @@ export function IntegratedSalePage() {
     });
   }, [getWorkers]);
 
-  // Guardar ventas pendientes en localStorage cuando cambien
+  // Guardar ventas pendientes en localStorage SOLO cuando realmente cambien
   useEffect(() => {
-    localStorage.setItem("pendingSales", JSON.stringify(pendingSales));
-  }, [pendingSales]);
+    if (!isInitialized) return;
+
+    console.log("Guardando ventas pendientes en localStorage:", pendingSales);
+
+    try {
+      localStorage.setItem(
+        PENDING_SALES_STORAGE_KEY,
+        JSON.stringify(pendingSales)
+      );
+    } catch (error) {
+      console.error("Error saving pending sales:", error);
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: "No se pudieron guardar las ventas pendientes",
+        life: 3000,
+      });
+    }
+  }, [pendingSales, isInitialized]);
+
+  // Función para actualizar una venta existente
+  const handleUpdateSale = async () => {
+    try {
+      if (!currentSale.customerData) {
+        throw new Error("Debe seleccionar o crear un cliente primero");
+      }
+
+      if (currentSale.saleDetails.length === 0) {
+        throw new Error("Debe agregar al menos un producto");
+      }
+
+      // Determinar businessId y officeId según el tipo de usuario
+      let businessId, officeId, salesWorkerId;
+
+      if (isAdministrativeUser && currentSale.selectedSeller) {
+        const selectedSeller = getSelectedSellerInfo();
+        businessId = selectedSeller?.businessId || currentUserBusinessId;
+        officeId = selectedSeller?.officeId || currentUserOfficeId;
+        salesWorkerId = parseInt(currentSale.selectedSeller);
+      } else {
+        businessId = currentUserBusinessId;
+        officeId = currentUserOfficeId;
+        salesWorkerId = null;
+      }
+
+      if (!businessId || !officeId) {
+        throw new Error(
+          "No se pudo determinar la empresa y oficina para la venta"
+        );
+      }
+
+      // Calcular el nuevo total
+      const newTotalAmount = currentSale.saleDetails.reduce(
+        (sum, detail) => sum + detail.quantity * (detail.unitPrice || 0),
+        0
+      );
+
+      const updateInput = {
+        id: parseInt(createdSaleId || currentSale.createdSaleId),
+        businessId: parseInt(businessId),
+        officeId: parseInt(officeId),
+        departmentId: currentSale.customerData.departmentId
+          ? parseInt(currentSale.customerData.departmentId)
+          : null,
+        teamId: currentSale.customerData.teamId
+          ? parseInt(currentSale.customerData.teamId)
+          : null,
+        salesWorkerId: salesWorkerId,
+        customerId: parseInt(currentSale.customerData.id),
+        totalAmount: newTotalAmount,
+        paymentMethod: paymentMethod,
+        paymentDetails: null,
+        invoiceNumber: currentSale.invoiceNumber || `INV-${Date.now()}`,
+      };
+
+      console.log("Actualizando venta:", updateInput);
+
+      const { data } = await updateSale({
+        variables: {
+          updateSaleInput: updateInput,
+        },
+      });
+
+      toast.current.show({
+        severity: "success",
+        summary: "Venta actualizada",
+        detail: `Venta #${data.updateSale.id} actualizada correctamente`,
+        life: 5000,
+      });
+
+      // Avanzar al paso 4 (pago)
+      setCurrentSale((prev) => ({
+        ...prev,
+        currentStep: 4,
+      }));
+    } catch (error) {
+      console.error("Error updating sale:", error);
+      toast.current.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Error al actualizar la venta: " + error.message,
+        life: 5000,
+      });
+    }
+  };
+
+  // Función para crear una nueva venta
+  const handleCreateSale = async () => {
+    try {
+      if (!currentSale.customerData) {
+        throw new Error("Debe seleccionar o crear un cliente primero");
+      }
+
+      if (currentSale.saleDetails.length === 0) {
+        throw new Error("Debe agregar al menos un producto");
+      }
+
+      // Determinar businessId y officeId según el tipo de usuario
+      let businessId, officeId, salesWorkerId;
+
+      if (isAdministrativeUser && currentSale.selectedSeller) {
+        const selectedSeller = getSelectedSellerInfo();
+        businessId = selectedSeller?.businessId || currentUserBusinessId;
+        officeId = selectedSeller?.officeId || currentUserOfficeId;
+        salesWorkerId = parseInt(currentSale.selectedSeller);
+      } else {
+        businessId = currentUserBusinessId;
+        officeId = currentUserOfficeId;
+        salesWorkerId = null;
+      }
+
+      if (!businessId || !officeId) {
+        throw new Error(
+          "No se pudo determinar la empresa y oficina para la venta"
+        );
+      }
+
+      // Preparar los detalles de la venta con publicistIds en cada detalle
+      const saleDetails = currentSale.saleDetails.map((detail) => ({
+        productId: parseInt(detail.productId),
+        quantity: parseFloat(detail.quantity),
+        publicistIds: currentSale.selectedPublicists || [],
+      }));
+
+      const saleInput = {
+        businessId: parseInt(businessId),
+        officeId: parseInt(officeId),
+        departmentId: currentSale.customerData.departmentId
+          ? parseInt(currentSale.customerData.departmentId)
+          : null,
+        teamId: currentSale.customerData.teamId
+          ? parseInt(currentSale.customerData.teamId)
+          : null,
+        salesWorkerId: salesWorkerId,
+        customerId: parseInt(currentSale.customerData.id),
+        paymentMethod: paymentMethod,
+        paymentDetails: null,
+        invoiceNumber: `INV-${Date.now()}`,
+        details: saleDetails,
+      };
+
+      console.log("Enviando venta:", saleInput);
+
+      const { data } = await createSale({
+        variables: {
+          sale: saleInput,
+        },
+      });
+
+      // Guardar el ID de la venta creada para el paso de pago
+      const newSaleId = data.createSale.id;
+      setCreatedSaleId(newSaleId);
+
+      // Avanzar al paso 4 (pago) y guardar el saleId en el currentSale
+      setCurrentSale((prev) => ({
+        ...prev,
+        currentStep: 4,
+        createdSaleId: newSaleId,
+        invoiceNumber: saleInput.invoiceNumber,
+      }));
+
+      // Eliminar de pendientes si existe
+      const updatedPendingSales = pendingSales.filter(
+        (sale) => sale.id !== currentSale.id
+      );
+      setPendingSales(updatedPendingSales);
+
+      toast.current.show({
+        severity: "success",
+        summary: "Venta creada",
+        detail: `Venta #${newSaleId} creada. Proceda al pago.`,
+        life: 5000,
+      });
+    } catch (error) {
+      console.error("Error creating sale:", error);
+      toast.current.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Error al crear la venta: " + error.message,
+        life: 5000,
+      });
+    }
+  };
+
+  // Función unificada para crear o actualizar venta
+  const handleSaveSale = async () => {
+    const saleId = createdSaleId || currentSale?.createdSaleId;
+
+    if (saleId) {
+      // Si ya existe una venta, actualizar
+      await handleUpdateSale();
+    } else {
+      // Si no existe, crear nueva
+      await handleCreateSale();
+    }
+  };
 
   // Nueva venta
   const handleNewSale = () => {
@@ -95,6 +332,7 @@ export function IntegratedSalePage() {
       createdAt: new Date().toISOString(),
     };
     setCurrentSale(newSale);
+    setCreatedSaleId(null);
     setCustomerSearchMode(false);
     setActiveTab(0);
   };
@@ -102,6 +340,12 @@ export function IntegratedSalePage() {
   // Cargar venta pendiente
   const handleLoadPendingSale = (sale) => {
     setCurrentSale(sale);
+    // Si la venta está en el paso 4, restaurar el createdSaleId
+    if (sale.currentStep === 4 && sale.createdSaleId) {
+      setCreatedSaleId(sale.createdSaleId);
+    } else {
+      setCreatedSaleId(null);
+    }
     setCustomerSearchMode(false);
     setActiveTab(0);
   };
@@ -118,6 +362,7 @@ export function IntegratedSalePage() {
 
         if (currentSale && currentSale.id === saleId) {
           setCurrentSale(null);
+          setCreatedSaleId(null);
         }
 
         toast.current.show({
@@ -134,6 +379,11 @@ export function IntegratedSalePage() {
   const handleSaveAsPending = () => {
     if (!currentSale) return;
 
+    const saleToSave = {
+      ...currentSale,
+      createdSaleId: createdSaleId || currentSale.createdSaleId,
+    };
+
     const existingIndex = pendingSales.findIndex(
       (sale) => sale.id === currentSale.id
     );
@@ -141,9 +391,9 @@ export function IntegratedSalePage() {
 
     if (existingIndex >= 0) {
       updatedSales = [...pendingSales];
-      updatedSales[existingIndex] = currentSale;
+      updatedSales[existingIndex] = saleToSave;
     } else {
-      updatedSales = [...pendingSales, currentSale];
+      updatedSales = [...pendingSales, saleToSave];
     }
 
     setPendingSales(updatedSales);
@@ -152,6 +402,24 @@ export function IntegratedSalePage() {
       severity: "success",
       summary: "Venta guardada",
       detail: "Venta guardada como pendiente correctamente",
+      life: 3000,
+    });
+  };
+
+  // Atender otro cliente - Guarda la venta actual y crea una nueva
+  const handleAttendAnotherCustomer = () => {
+    if (!currentSale) return;
+
+    // Guardar venta actual como pendiente
+    handleSaveAsPending();
+
+    // Crear nueva venta
+    handleNewSale();
+
+    toast.current.show({
+      severity: "info",
+      summary: "Nueva venta iniciada",
+      detail: "Venta anterior guardada como pendiente",
       life: 3000,
     });
   };
@@ -302,96 +570,29 @@ export function IntegratedSalePage() {
     return seller;
   };
 
-  // Crear venta final
-  const handleCreateSale = async () => {
-    try {
-      if (!currentSale.customerData) {
-        throw new Error("Debe seleccionar o crear un cliente primero");
-      }
-
-      if (currentSale.saleDetails.length === 0) {
-        throw new Error("Debe agregar al menos un producto");
-      }
-
-      // Determinar businessId y officeId según el tipo de usuario
-      let businessId, officeId, salesWorkerId;
-
-      if (isAdministrativeUser && currentSale.selectedSeller) {
-        // Usuario administrative que seleccionó un vendedor específico
-        const selectedSeller = getSelectedSellerInfo();
-        businessId = selectedSeller?.businessId || currentUserBusinessId;
-        officeId = selectedSeller?.officeId || currentUserOfficeId;
-        salesWorkerId = parseInt(currentSale.selectedSeller);
-      } else {
-        // Usuario no administrative o administrative sin vendedor seleccionado - usar sus propios datos
-        businessId = currentUserBusinessId;
-        officeId = currentUserOfficeId;
-        salesWorkerId = null;
-      }
-
-      if (!businessId || !officeId) {
-        throw new Error(
-          "No se pudo determinar la empresa y oficina para la venta"
-        );
-      }
-
-      // Preparar los detalles de la venta con publicistIds en cada detalle
-      const saleDetails = currentSale.saleDetails.map((detail) => ({
-        productId: parseInt(detail.productId),
-        quantity: parseFloat(detail.quantity),
-        publicistIds: currentSale.selectedPublicists || [],
-      }));
-
-      const saleInput = {
-        businessId: parseInt(businessId),
-        officeId: parseInt(officeId),
-        departmentId: currentSale.customerData.departmentId
-          ? parseInt(currentSale.customerData.departmentId)
-          : null,
-        teamId: currentSale.customerData.teamId
-          ? parseInt(currentSale.customerData.teamId)
-          : null,
-        salesWorkerId: salesWorkerId,
-        customerId: parseInt(currentSale.customerData.id),
-        paymentMethod: paymentMethod,
-        paymentDetails: null,
-        invoiceNumber: `INV-${Date.now()}`,
-        details: saleDetails,
-      };
-
-      console.log("Enviando venta:", saleInput);
-
-      const { data } = await createSale({
-        variables: {
-          sale: saleInput,
-        },
-      });
-
-      // Eliminar de pendientes si existe
-      const updatedPendingSales = pendingSales.filter(
-        (sale) => sale.id !== currentSale.id
-      );
-      setPendingSales(updatedPendingSales);
-
+  // Manejar validación exitosa del pago
+  const handlePaymentValidated = (result, payments, newSale = false) => {
+    if (newSale) {
+      // Iniciar nueva venta
+      handleNewSale();
+    } else if (result && result.valid) {
       toast.current.show({
         severity: "success",
-        summary: "Venta creada",
-        detail: `Venta #${data.createSale.id} creada exitosamente`,
-        life: 5000,
-      });
-
-      // Resetear venta actual
-      setCurrentSale(null);
-      setCustomerSearchMode(false);
-    } catch (error) {
-      console.error("Error creating sale:", error);
-      toast.current.show({
-        severity: "error",
-        summary: "Error",
-        detail: "Error al crear la venta: " + error.message,
+        summary: "Pago Procesado",
+        detail: `Venta #${createdSaleId} completada exitosamente. Total: ${result.totalInBaseCurrency.toFixed(
+          2
+        )}`,
         life: 5000,
       });
     }
+  };
+
+  // Volver al paso 3 desde el paso 4
+  const handleBackToStep3 = () => {
+    setCurrentSale((prev) => ({
+      ...prev,
+      currentStep: 3,
+    }));
   };
 
   const totalAmount =
@@ -401,6 +602,9 @@ export function IntegratedSalePage() {
     ) || 0;
 
   const selectedSellerInfo = getSelectedSellerInfo();
+
+  // Determinar si estamos editando una venta existente
+  const isEditingExistingSale = createdSaleId || currentSale?.createdSaleId;
 
   return (
     <div className="integrated-sale-page">
@@ -423,6 +627,14 @@ export function IntegratedSalePage() {
               onClick={handleSaveAsPending}
               disabled={!currentSale}
             />
+            <Button
+              label="Atender Otro Cliente"
+              icon="pi pi-users"
+              className="p-button-warning"
+              onClick={handleAttendAnotherCustomer}
+              disabled={!currentSale}
+              tooltip="Guarda la venta actual y comienza una nueva"
+            />
           </div>
         </div>
 
@@ -439,6 +651,12 @@ export function IntegratedSalePage() {
                   <div className="customer-step">
                     <div className="step-header">
                       <h3>Paso 1: Selección del Cliente</h3>
+                      {isEditingExistingSale && (
+                        <div className="edit-badge">
+                          <i className="pi pi-pencil text-blue-500 mr-2"></i>
+                          <span>Editando venta existente</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Selector de modo cliente */}
@@ -500,6 +718,15 @@ export function IntegratedSalePage() {
                             <span>Cliente existente</span>
                           </div>
                         )}
+                        {isEditingExistingSale && (
+                          <div className="edit-badge">
+                            <i className="pi pi-pencil text-blue-500 mr-2"></i>
+                            <span>
+                              Editando venta #
+                              {createdSaleId || currentSale.createdSaleId}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <h3>Paso 2: Agregar Productos</h3>
                     </div>
@@ -547,6 +774,15 @@ export function IntegratedSalePage() {
                             <span>Cliente existente</span>
                           </div>
                         )}
+                        {isEditingExistingSale && (
+                          <div className="edit-badge">
+                            <i className="pi pi-pencil text-blue-500 mr-2"></i>
+                            <span>
+                              Editando venta #
+                              {createdSaleId || currentSale.createdSaleId}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <h3>Paso 3: Asignación de Publicistas y Vendedor</h3>
                     </div>
@@ -588,6 +824,16 @@ export function IntegratedSalePage() {
                                       Empresa: {currentUserBusinessId}
                                       <br />
                                       Oficina: {currentUserOfficeId}
+                                      {isEditingExistingSale && (
+                                        <>
+                                          <br />
+                                          <strong>
+                                            Venta existente: #
+                                            {createdSaleId ||
+                                              currentSale.createdSaleId}
+                                          </strong>
+                                        </>
+                                      )}
                                     </p>
                                   </div>
                                 </div>
@@ -619,6 +865,16 @@ export function IntegratedSalePage() {
                                     selectedSellerInfo
                                       ? selectedSellerInfo.officeId
                                       : currentUserOfficeId}
+                                    {isEditingExistingSale && (
+                                      <>
+                                        <br />
+                                        <strong>
+                                          Venta existente: #
+                                          {createdSaleId ||
+                                            currentSale.createdSaleId}
+                                        </strong>
+                                      </>
+                                    )}
                                   </p>
                                 </div>
                               </div>
@@ -630,15 +886,61 @@ export function IntegratedSalePage() {
                       <div className="action-buttons">
                         <div className="flex justify-content-end">
                           <Button
-                            label="Crear Venta"
-                            icon="pi pi-check"
-                            className="p-button-success"
-                            onClick={handleCreateSale}
+                            label={
+                              isEditingExistingSale
+                                ? "Actualizar Venta y Proceder al Pago"
+                                : "Crear Venta y Proceder al Pago"
+                            }
+                            icon={
+                              isEditingExistingSale
+                                ? "pi pi-refresh"
+                                : "pi pi-credit-card"
+                            }
+                            className={
+                              isEditingExistingSale
+                                ? "p-button-warning"
+                                : "p-button-success"
+                            }
+                            onClick={handleSaveSale}
                             size="normal"
                           />
                         </div>
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {/* PASO 4: Procesar Pago */}
+                {currentSale.currentStep === 4 && (
+                  <div className="step-content">
+                    <div className="step-header">
+                      <div className="step-navigation">
+                        <Button
+                          icon="pi pi-arrow-left"
+                          className="p-button-text"
+                          onClick={handleBackToStep3}
+                          label="Modificar venta"
+                        />
+                        {isEditingExistingSale && (
+                          <div className="edit-badge">
+                            <i className="pi pi-pencil text-blue-500 mr-2"></i>
+                            <span>
+                              Editando venta #
+                              {createdSaleId || currentSale.createdSaleId}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <h3>Paso 4: Procesar Pago</h3>
+                    </div>
+
+                    <PaymentSection
+                      saleId={createdSaleId || currentSale.createdSaleId}
+                      totalAmount={totalAmount}
+                      baseCurrency="USD"
+                      onPaymentValidated={handlePaymentValidated}
+                      onBack={handleBackToStep3}
+                    />
                   </div>
                 )}
               </div>
