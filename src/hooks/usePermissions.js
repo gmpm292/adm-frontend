@@ -27,10 +27,14 @@ export const usePermissions = () => {
       if (user.roles?.includes("SUPER")) return true;
 
       try {
-        const { data } = await checkPermissionsQuery({
-          variables: { operationName },
-        });
-        return data?.checkPermissions?.allowed || false;
+        const result = await Promise.race([
+          checkPermissionsQuery({ variables: { operationName } }),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Timeout permisos")), 5000)
+          ),
+        ]);
+
+        return result?.data?.checkPermissions?.allowed || false;
       } catch (error) {
         console.error("Error verificando permisos:", error);
         return false;

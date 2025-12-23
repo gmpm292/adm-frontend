@@ -11,8 +11,7 @@ import { usePermissions } from "../../../hooks/usePermissions";
  * Verifica tanto autenticación como permisos de roles y operaciones GraphQL
  */
 const ProtectedRoute = () => {
-  const { isAuthenticated, loading, authFailed, ready } =
-    useAuthContext();
+  const { isAuthenticated, loading, authFailed, ready } = useAuthContext();
   const { hasAnyPermission, hasRole } = usePermissions();
   const location = useLocation();
 
@@ -24,13 +23,22 @@ const ProtectedRoute = () => {
   const lastCheckedPath = useRef("");
 
   useEffect(() => {
+    setPermissionChecked(false);
+    setHasAccess(false);
+    lastCheckedPath.current = "";
+  }, [location.pathname]);
+
+  useEffect(() => {
     /**
      * Verifica los permisos para la ruta actual
      * Se ejecuta solo cuando cambia la ruta o el estado de autenticación
      */
     const checkPermissions = async () => {
       // Solo verificar si está autenticado y listo
-      if (!isAuthenticated || !ready) return;
+      if (!isAuthenticated || !ready) {
+        setPermissionChecked(false);
+        return;
+      }
 
       const currentPath = location.pathname;
 
@@ -83,6 +91,9 @@ const ProtectedRoute = () => {
         } catch (error) {
           console.error("Error en verificación de permisos:", error);
           access = false;
+        } finally {
+          setHasAccess(access);
+          setPermissionChecked(true);
         }
       }
 

@@ -14,6 +14,14 @@ export const GET_TEAMS = gql`
           id
           name
         }
+        office {
+          id
+          name
+        }
+        business {
+          id
+          name
+        }
       }
     }
   }

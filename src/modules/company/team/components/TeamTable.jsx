@@ -155,6 +155,12 @@ export function TeamTable() {
       filter: true,
     },
     {
+      field: "description",
+      header: "Descripción",
+      sortable: true,
+      filter: true,
+    },
+    {
       field: "teamType",
       header: "Tipo",
       body: teamTypeBodyTemplate,
@@ -166,6 +172,19 @@ export function TeamTable() {
       header: "Departamento",
       sortable: true,
       filter: true,
+    },
+    {
+      field: "office.name",
+      header: "Oficina",
+      sortable: true,
+      filter: true,
+    },
+    {
+      field: "business.name",
+      header: "Negocio",
+      sortable: true,
+      filter: true,
+      visible: false,
     },
   ];
 

@@ -50,6 +50,8 @@ export const GET_TEAMS = gql`
     teams(options: $options) {
       data {
         id
+        name
+        description
         teamType
         department {
           id

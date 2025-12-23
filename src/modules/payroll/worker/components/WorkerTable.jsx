@@ -17,15 +17,13 @@ import { WorkerDetailForm } from "./WorkerDetailForm";
 const statusBodyTemplate = (rowData) => {
   return (
     <span
-      className={`badge status-${rowData?.user?.enabled ? "active" : "inactive"}`}
+      className={`badge status-${
+        rowData?.user?.enabled ? "active" : "inactive"
+      }`}
     >
       {rowData.user?.enabled ? "Activo" : "Inactivo"}
     </span>
   );
-};
-
-const userBodyTemplate = (rowData) => {
-  return `${rowData.user?.name} ${rowData.user?.lastName}`;
 };
 
 export function WorkerTable() {
@@ -177,7 +175,12 @@ export function WorkerTable() {
     {
       field: "user.name",
       header: "Nombre",
-      body: userBodyTemplate,
+      sortable: true,
+      filter: true,
+    },
+    {
+      field: "user.lastName",
+      header: "Apellidos",
       sortable: true,
       filter: true,
     },
@@ -190,6 +193,26 @@ export function WorkerTable() {
     {
       field: "baseSalary",
       header: "Salario Base",
+      sortable: true,
+      filter: true,
+    },
+    {
+      field: "team.name",
+      header: "Equipo",
+      sortable: true,
+      filter: true,
+      visible: false,
+    },
+    {
+      field: "department.name",
+      header: "Departamento",
+      sortable: true,
+      filter: true,
+      visible: false,
+    },
+    {
+      field: "office.name",
+      header: "Oficina",
       sortable: true,
       filter: true,
     },
