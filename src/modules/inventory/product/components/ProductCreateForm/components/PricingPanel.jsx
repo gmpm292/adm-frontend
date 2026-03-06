@@ -53,7 +53,7 @@ export const PricingPanel = ({
         <CurrencyInput
           id="basePrice"
           name="basePrice"
-          label="Precio Base*"
+          label="Precio Venta*"
           value={formData.basePrice}
           currency={formData.baseCurrency}
           onValueChange={(e) => handleNumberChange(e, "basePrice")}

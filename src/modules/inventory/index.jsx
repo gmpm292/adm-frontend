@@ -4,6 +4,7 @@ import { CategoryListPage } from "./category/pages/CategoryListPage";
 import { InventoryListPage } from "./inventory/pages/InventoryListPage";
 import { InventoryMovementListPage } from "./inventory-movement/pages/InventoryMovementListPage";
 import { ProductListPage } from "./product/pages/ProductListPage";
+import UnitOfMeasureListPage from "./unit-of-measure/pages/UnitOfMeasureListPage";
 
 export function InventoryModule() {
   return (
@@ -12,6 +13,7 @@ export function InventoryModule() {
       <Route path="inventories" element={<InventoryListPage />} />
       <Route path="movements" element={<InventoryMovementListPage />} />
       <Route path="products" element={<ProductListPage />} />
+      <Route path="units-of-measure" element={<UnitOfMeasureListPage />} />
     </Routes>
   );
 }

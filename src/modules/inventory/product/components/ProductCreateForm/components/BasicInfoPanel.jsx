@@ -69,6 +69,12 @@ export const BasicInfoPanel = ({
     console.log("BasicInfoPanel", category.id);
     handleCategorySelect(category.id);
     handleSecurityEntitiesChange(securityEntities);
+
+    // Auto-completar el campo "Nombre" con el nombre de la categoría seleccionada
+    // Solo si el campo "Nombre" está vacío
+    if (!formData.name) {
+      handleChange({ target: { name: "name", value: category.name } });
+    }
   };
 
   return (
@@ -79,6 +85,15 @@ export const BasicInfoPanel = ({
       onToggle={handleToggle}
     >
       <div className="p-grid p-fluid">
+        <div className="p-col-12 p-md-6">
+          <div className="p-field">
+            <label htmlFor="categoryId">Categoría*</label>
+            <CategorySelector
+              onCategorySelect={handleCategorySelection}
+              selectedCategoryId={formData.categoryId}
+            />
+          </div>
+        </div>
         <div className="p-col-12 p-md-6">
           <div className="p-field">
             <label htmlFor="name">Nombre*</label>
@@ -100,15 +115,6 @@ export const BasicInfoPanel = ({
               value={formData.unitOfMeasure}
               onChange={handleChange}
               required
-            />
-          </div>
-        </div>
-        <div className="p-col-12 p-md-6">
-          <div className="p-field">
-            <label htmlFor="categoryId">Categoría*</label>
-            <CategorySelector
-              onCategorySelect={handleCategorySelection}
-              selectedCategoryId={formData.categoryId}
             />
           </div>
         </div>

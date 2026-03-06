@@ -62,7 +62,7 @@ export const ProductCreateForm = ({ visible, onHide, onSuccess }) => {
       }
 
       if (!formData.basePrice || !formData.baseCurrency) {
-        throw new Error("Precio base y moneda son requeridos");
+        throw new Error("Precio Venta y moneda son requeridos");
       }
 
       if (formData.acceptedCurrencies.length === 0) {

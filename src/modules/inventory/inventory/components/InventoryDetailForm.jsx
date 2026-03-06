@@ -116,7 +116,7 @@ export function InventoryDetailForm({ inventoryId, visible, onHide }) {
         </div>
         <div className="p-col-12 p-md-6">
           <div className="field">
-            <b>Precio Base:</b>{" "}
+            <b>Precio Venta:</b>{" "}
             {formatCurrency(product.basePrice, product.baseCurrency)}
           </div>
         </div>

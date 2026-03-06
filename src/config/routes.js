@@ -26,7 +26,7 @@ export const routePermissions = {
   },
   "/company/business": {
     permissions: [],
-    requiredRoles: ["SUPER", "PRINCIPAL"],
+    requiredRoles: ["SUPER"],
     title: "Empresas",
   },
   "/company/office": {
@@ -63,6 +63,16 @@ export const routePermissions = {
     permissions: [],
     requiredRoles: [],
     title: "Movimientos",
+  },
+  "/inventory/units-of-measure": {
+    permissions: [],
+    requiredRoles: [],
+    title: "Unidades de Medida",
+  },
+  "/payroll/attendance": {
+    permissions: [],
+    requiredRoles: [],
+    title: "Monedas",
   },
   "/payroll/currencies": {
     permissions: [],

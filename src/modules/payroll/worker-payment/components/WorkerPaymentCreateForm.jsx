@@ -99,7 +99,7 @@ export const WorkerPaymentCreateForm = ({ visible, onHide, onSuccess }) => {
         !formData.paymentType
       ) {
         throw new Error(
-          "Trabajador, período, método y tipo de pago son campos requeridos"
+          "Trabajador, período, método y tipo de pago son campos requeridos",
         );
       }
 
@@ -158,7 +158,7 @@ export const WorkerPaymentCreateForm = ({ visible, onHide, onSuccess }) => {
 
   const workerOptions =
     workersData?.workers?.data?.map((worker) => ({
-      label: `${worker.user.name} ${worker.user.lastName}`,
+      label: `${worker?.user?.name ?? ""} ${worker?.user?.lastName ?? ""}`,
       value: worker.id,
     })) || [];
 

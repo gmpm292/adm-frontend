@@ -121,7 +121,7 @@ export function UserTable() {
     },
   };
 
-  // Ejemplo para pasar ordenamientos iniciales o por defecto.
+  // Ejemplo para pasar ordenamientos iniciales o por defecto. Pasar a la lista base(initialSorts={defaultSorts})
   const defaultSorts: PrimeReactSortMeta[] = [
     { field: "createdAt", order: -1 },
   ];

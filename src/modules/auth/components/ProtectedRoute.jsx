@@ -131,7 +131,7 @@ const ProtectedRoute = () => {
         style={{ height: "100vh" }}
       >
         <ProgressSpinner />
-        <span className="ml-2">Cargando...</span>
+        <span className="ml-2">Cargando.....</span>
       </div>
     );
   }

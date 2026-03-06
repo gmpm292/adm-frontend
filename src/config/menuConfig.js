@@ -159,6 +159,15 @@ export const menuConfig = [
         requiredRoles:
           routePermissions["/inventory/movements"]?.requiredRoles || [],
       },
+      {
+        label: "Unidades de Medida",
+        icon: "pi pi-ruler",
+        path: "/inventory/units-of-measure",
+        permissions:
+          routePermissions["/inventory/units-of-measure"]?.permissions || [],
+        requiredRoles:
+          routePermissions["/inventory/units-of-measure"]?.requiredRoles || [],
+      },
     ],
   },
   {
@@ -166,6 +175,14 @@ export const menuConfig = [
     icon: "pi pi-money-bill",
     key: "payroll",
     items: [
+      {
+        label: "Asistencia",
+        icon: "pi pi-calendar-times", // "pi pi-clock" o "pi pi-calendar" también es bueno
+        path: "/payroll/attendance",
+        permissions: routePermissions["/payroll/attendance"]?.permissions || [],
+        requiredRoles:
+          routePermissions["/payroll/attendance"]?.requiredRoles || [],
+      },
       {
         label: "Monedas",
         icon: "pi pi-dollar",

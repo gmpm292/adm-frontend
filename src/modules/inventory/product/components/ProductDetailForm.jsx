@@ -92,7 +92,7 @@ export function ProductDetailForm({ productId, visible, onHide }) {
         </div>
         <div className="p-col-12 p-md-6">
           <div className="field">
-            <b>Precio Base:</b> {formatCurrency(product.basePrice, product.baseCurrency)}
+            <b>Precio Venta:</b> {formatCurrency(product.basePrice, product.baseCurrency)}
           </div>
         </div>
         <div className="p-col-12 p-md-6">

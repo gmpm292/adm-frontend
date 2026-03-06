@@ -6,6 +6,7 @@ import { PayrollPeriodListPage } from "./payroll-period/pages/PayrollPeriodListP
 import { WorkScheduleListPage } from "./work-schedule/pages/WorkScheduleListPage";
 import { WorkerPaymentListPage } from "./worker-payment/pages/WorkerPaymentListPage";
 import { WorkerListPage } from "./worker/pages/WorkerListPage";
+import { AttendanceListPage } from "./attendance";
 
 export function PayrollModule() {
   return (
@@ -16,6 +17,7 @@ export function PayrollModule() {
       <Route path="work-schedules" element={<WorkScheduleListPage />} />
       <Route path="workers" element={<WorkerListPage />} />
       <Route path="worker-payments" element={<WorkerPaymentListPage />} />
+      <Route path="attendance" element={<AttendanceListPage />} />
     </Routes>
   );
 }

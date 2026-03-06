@@ -14,6 +14,7 @@ import { PercentageCondition } from "../conditions/PercentageCondition";
 import { PriceRangeCondition } from "../conditions/PriceRangeCondition";
 import { SaleQuantityCondition } from "../conditions/SaleQuantityCondition";
 import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
+import { deepClean } from "../../../../utils/deepClean";
 
 const paymentTypes = [
   { label: "Rango de precios", value: "PRICE_RANGE" },
@@ -58,10 +59,15 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
     description: "",
     paymentType: null,
     workerType: null,
+    otherType: "",
     isActive: true,
+    distributeProfits: false,
+    paymentCurrency: "USD",
+    scope: "BUSINESS",
+    specificWorkersIds: [],
+    productId: null,
+    categoryId: null,
     conditions: {
-      paymentCurrency: "USD",
-      scope: "BUSINESS",
       priceRanges: [],
       saleQuantity: [],
       fixedAmount: null,
@@ -84,6 +90,9 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
   const handleStatusChange = (e) =>
     setFormData((prev) => ({ ...prev, isActive: e.value }));
 
+  const handleDistributeProfitsChange = (e) =>
+    setFormData((prev) => ({ ...prev, distributeProfits: e.value }));
+
   const handleSecurityEntitiesChange = (entities) =>
     setFormData((prev) => ({ ...prev, ...entities }));
 
@@ -92,7 +101,6 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
       ...prev,
       paymentType: e.value,
       conditions: {
-        ...prev.conditions,
         priceRanges: [],
         saleQuantity: [],
         fixedAmount: null,
@@ -101,23 +109,25 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
     }));
   };
 
+  const handleWorkerTypeChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      workerType: e.value,
+      otherType: e.value === "OTHER" ? prev.otherType : "",
+    }));
+  };
+
   const handleCurrencyChange = (e) => {
     setFormData((prev) => ({
       ...prev,
-      conditions: {
-        ...prev.conditions,
-        paymentCurrency: e.value,
-      },
+      paymentCurrency: e.value,
     }));
   };
 
   const handleScopeChange = (e) => {
     setFormData((prev) => ({
       ...prev,
-      conditions: {
-        ...prev.conditions,
-        scope: e.value,
-      },
+      scope: e.value,
     }));
   };
 
@@ -126,7 +136,7 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
       // Obtener la moneda del primer rango si existe, sino usar paymentCurrency
       const mainCurrency =
         prev.conditions.priceRanges[0]?.currency ||
-        prev.conditions.paymentCurrency ||
+        prev.paymentCurrency ||
         "USD";
 
       return {
@@ -139,7 +149,8 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
               min: 0,
               max: null,
               currency: mainCurrency, // Usar la moneda principal
-              amount: 0,
+              amount: null,
+              percentage: null,
             },
           ],
         },
@@ -184,7 +195,7 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
         ...prev.conditions,
         saleQuantity: [
           ...prev.conditions.saleQuantity,
-          { minProducts: 1, ratePerProduct: 0 },
+          { minProducts: 1, ratePerProduct: null, percentagePerProduct: null },
         ],
       },
     }));
@@ -207,7 +218,7 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
       conditions: {
         ...prev.conditions,
         saleQuantity: prev.conditions.saleQuantity.filter(
-          (_, i) => i !== index
+          (_, i) => i !== index,
         ),
       },
     }));
@@ -227,75 +238,96 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
 
   const handleSubmit = async () => {
     try {
-      const { name, paymentType, workerType, conditions } = formData;
+      const { name, paymentType, workerType, paymentCurrency, scope } =
+        formData;
 
       // Validaciones básicas
-      if (!name || !paymentType || !workerType) {
+      if (!name || !paymentType || !workerType || !paymentCurrency || !scope) {
         throw new Error(
-          "Nombre, tipo de pago y tipo de trabajador son requeridos."
+          "Nombre, tipo de pago, tipo de trabajador, moneda y ámbito son requeridos.",
+        );
+      }
+
+      // Validación para OTHER workerType
+      if (workerType === "OTHER" && !formData.otherType.trim()) {
+        throw new Error(
+          "Debe especificar el tipo de trabajador cuando selecciona 'Otro'.",
         );
       }
 
       // Validaciones específicas por tipo de pago
       switch (paymentType) {
         case "PRICE_RANGE":
-          validatePriceRanges(conditions.priceRanges);
+          validatePriceRanges(formData.conditions.priceRanges);
           break;
         case "SALE_QUANTITY":
-          if (conditions.saleQuantity.length === 0) {
+          if (formData.conditions.saleQuantity.length === 0) {
             throw new Error(
-              "Debe agregar al menos una condición de cantidad de ventas."
+              "Debe agregar al menos una condición de cantidad de ventas.",
             );
           }
           break;
         case "FIXED_AMOUNT":
-          if (!conditions.fixedAmount) {
+          if (!formData.conditions.fixedAmount) {
             throw new Error("Debe configurar el monto fijo.");
           }
           break;
         case "PERCENTAGE":
-          if (!conditions.percentage) {
+          if (!formData.conditions.percentage) {
             throw new Error("Debe configurar el porcentaje.");
           }
           break;
       }
 
-      const conditionsInput = {
-        paymentCurrency: conditions.paymentCurrency,
-        scope: conditions.scope,
+      // Preparar el input para la mutación
+      const createPaymentRuleInput = {
+        name: formData.name,
+        description: formData.description,
+        paymentType: formData.paymentType,
+        workerType: formData.workerType,
+        isActive: formData.isActive,
+        distributeProfits: formData.distributeProfits,
+        paymentCurrency: formData.paymentCurrency,
+        scope: formData.scope,
+        conditions: {},
+        ...(formData.workerType === "OTHER" && {
+          otherType: formData.otherType,
+        }),
+        ...(formData.businessId && { businessId: formData.businessId }),
+        ...(formData.officeId && { officeId: formData.officeId }),
+        ...(formData.departmentId && { departmentId: formData.departmentId }),
+        ...(formData.teamId && { teamId: formData.teamId }),
+        ...(formData.productId && { productId: formData.productId }),
+        ...(formData.categoryId && { categoryId: formData.categoryId }),
+        ...(formData.specificWorkersIds &&
+          formData.specificWorkersIds.length > 0 && {
+            specificWorkersIds: formData.specificWorkersIds,
+          }),
       };
 
+      // Agregar condiciones según el tipo de pago
       switch (paymentType) {
         case "PRICE_RANGE":
-          if (!conditions.priceRanges.length)
-            throw new Error("Debe agregar al menos un rango de precios.");
-          conditionsInput.priceRanges = conditions.priceRanges;
+          createPaymentRuleInput.conditions.priceRanges =
+            formData.conditions.priceRanges;
           break;
-
         case "SALE_QUANTITY":
-          if (!conditions.saleQuantity.length)
-            throw new Error(
-              "Debe agregar al menos una condición de cantidad de ventas."
-            );
-          conditionsInput.saleQuantity = conditions.saleQuantity;
+          createPaymentRuleInput.conditions.saleQuantity =
+            formData.conditions.saleQuantity;
           break;
-
         case "FIXED_AMOUNT":
-          if (!conditions.fixedAmount)
-            throw new Error("Debe configurar el monto fijo.");
-          conditionsInput.fixedAmount = conditions.fixedAmount;
+          createPaymentRuleInput.conditions.fixedAmount =
+            formData.conditions.fixedAmount;
           break;
-
         case "PERCENTAGE":
-          if (!conditions.percentage)
-            throw new Error("Debe configurar el porcentaje.");
-          conditionsInput.percentage = conditions.percentage;
+          createPaymentRuleInput.conditions.percentage =
+            formData.conditions.percentage;
           break;
       }
 
       await createPaymentRule({
         variables: {
-          createPaymentRuleInput: { ...formData, conditions: conditionsInput },
+          createPaymentRuleInput: deepClean(createPaymentRuleInput),
         },
       });
 
@@ -332,8 +364,14 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
         throw new Error(`El mínimo del rango ${i + 1} es requerido`);
       }
 
-      if (range.amount === null || range.amount === undefined) {
-        throw new Error(`El monto del rango ${i + 1} es requerido`);
+      // Validar que tenga al menos amount o percentage (no ambos null)
+      if (
+        (range.amount === null || range.amount === undefined) &&
+        (range.percentage === null || range.percentage === undefined)
+      ) {
+        throw new Error(
+          `El rango ${i + 1} debe tener al menos un monto o un porcentaje`,
+        );
       }
 
       // Solo validar máximo si no es el último rango
@@ -344,7 +382,27 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
         throw new Error(
           `El máximo del rango ${
             i + 1
-          } es requerido (excepto para el último rango)`
+          } es requerido (excepto para el último rango)`,
+        );
+      }
+
+      // Validar que amount sea positivo si está presente
+      if (
+        range.amount !== null &&
+        range.amount !== undefined &&
+        range.amount < 0
+      ) {
+        throw new Error(`El monto del rango ${i + 1} debe ser positivo`);
+      }
+
+      // Validar que percentage esté entre 0 y 100 si está presente
+      if (
+        range.percentage !== null &&
+        range.percentage !== undefined &&
+        (range.percentage < 0 || range.percentage > 100)
+      ) {
+        throw new Error(
+          `El porcentaje del rango ${i + 1} debe estar entre 0 y 100`,
         );
       }
     }
@@ -362,19 +420,12 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
         throw new Error(
           `El mínimo del rango ${
             i + 1
-          } debe ser mayor o igual al máximo del rango anterior`
+          } debe ser mayor o igual al máximo del rango anterior`,
         );
       }
     }
 
-    // 4. Validar que los montos sean positivos
-    for (let i = 0; i < ranges.length; i++) {
-      if (ranges[i].amount < 0) {
-        throw new Error(`El monto del rango ${i + 1} debe ser positivo`);
-      }
-    }
-
-    // 5. Validar que la moneda sea la misma en todos los rangos
+    // 4. Validar que la moneda sea la misma en todos los rangos
     const firstCurrency = ranges[0]?.currency;
     for (let i = 1; i < ranges.length; i++) {
       if (ranges[i].currency !== firstCurrency) {
@@ -389,7 +440,7 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
       <Dialog
         header="Crear Nueva Regla de Pago"
         visible={visible}
-        style={{ width: "60vw" }}
+        style={{ width: "70vw" }}
         onHide={onHide}
         footer={
           <div className="flex justify-content-end gap-2">
@@ -446,22 +497,67 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
                   id="workerType"
                   value={formData.workerType}
                   options={workerTypes}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, workerType: e.value }))
-                  }
+                  onChange={handleWorkerTypeChange}
+                  optionLabel="label"
+                  placeholder="Seleccione"
+                />
+              </div>
+              {formData.workerType === "OTHER" && (
+                <div className="col-12 md:col-4">
+                  <label htmlFor="otherType">Especificar Tipo*</label>
+                  <InputText
+                    id="otherType"
+                    name="otherType"
+                    value={formData.otherType}
+                    onChange={handleChange}
+                    placeholder="Especifique el tipo de trabajador"
+                  />
+                </div>
+              )}
+              {formData.workerType !== "OTHER" && (
+                <div className="col-12 md:col-4">
+                  <label htmlFor="isActive">Estado</label>
+                  <div className="flex align-items-center gap-2">
+                    <InputSwitch
+                      id="isActive"
+                      checked={formData.isActive}
+                      onChange={handleStatusChange}
+                    />
+                    <span>{formData.isActive ? "Activo" : "Inactivo"}</span>
+                  </div>
+                </div>
+              )}
+              <div className="col-12 md:col-4">
+                <label htmlFor="paymentCurrency">Moneda de Pago*</label>
+                <Dropdown
+                  id="paymentCurrency"
+                  value={formData.paymentCurrency}
+                  options={currencyOptions}
+                  onChange={handleCurrencyChange}
                   optionLabel="label"
                   placeholder="Seleccione"
                 />
               </div>
               <div className="col-12 md:col-4">
-                <label htmlFor="isActive">Estado</label>
+                <label htmlFor="scope">Ámbito*</label>
+                <Dropdown
+                  id="scope"
+                  value={formData.scope}
+                  options={scopedAccessOptions}
+                  onChange={handleScopeChange}
+                  optionLabel="label"
+                  placeholder="Seleccione"
+                />
+              </div>
+              <div className="col-12 md:col-4">
+                <label htmlFor="distributeProfits">Distribuir Beneficios</label>
                 <div className="flex align-items-center gap-2">
                   <InputSwitch
-                    id="isActive"
-                    checked={formData.isActive}
-                    onChange={handleStatusChange}
+                    id="distributeProfits"
+                    checked={formData.distributeProfits}
+                    onChange={handleDistributeProfitsChange}
                   />
-                  <span>{formData.isActive ? "Activo" : "Inactivo"}</span>
+                  <span>{formData.distributeProfits ? "Sí" : "No"}</span>
                 </div>
               </div>
             </div>
@@ -474,33 +570,6 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
           </Fieldset>
 
           <Fieldset legend="Condiciones de Pago">
-            <div className="grid">
-              <div className="col-12 md:col-6">
-                <label htmlFor="paymentCurrency">Moneda de Pago*</label>
-                <Dropdown
-                  id="paymentCurrency"
-                  value={formData.conditions.paymentCurrency}
-                  options={currencyOptions}
-                  onChange={handleCurrencyChange}
-                  optionLabel="label"
-                  placeholder="Seleccione"
-                  className="w-full"
-                />
-              </div>
-              <div className="col-12 md:col-6">
-                <label htmlFor="scope">Ámbito*</label>
-                <Dropdown
-                  id="scope"
-                  value={formData.conditions.scope}
-                  options={scopedAccessOptions}
-                  onChange={handleScopeChange}
-                  placeholder="Seleccione"
-                  required
-                  className="w-full"
-                />
-              </div>
-            </div>
-
             {formData.paymentType === "PRICE_RANGE" && (
               <div>
                 <div className="flex justify-content-between align-items-center mb-2">
@@ -520,7 +589,7 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
                     onChange={(c) => handlePriceRangeChange(i, c)}
                     onRemove={() => handleRemovePriceRange(i)}
                     currencyOptions={currencyOptions}
-                    mainCurrency={formData.conditions.paymentCurrency}
+                    mainCurrency={formData.paymentCurrency}
                     isFirst={i === 0}
                   />
                 ))}

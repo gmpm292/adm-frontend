@@ -9,10 +9,14 @@ export const GET_PAYMENT_RULES = gql`
         name
         paymentType
         workerType
+        otherType
         isActive
         createdAt
         updatedAt
         deletedAt
+        paymentCurrency
+        scope
+        distributeProfits
       }
     }
   }
@@ -30,19 +34,24 @@ export const GET_PAYMENT_RULE_BY_ID = gql`
       description
       paymentType
       workerType
+      otherType
       isActive
+      paymentCurrency
+      scope
+      distributeProfits
+      specificWorkersIds
       conditions {
-        paymentCurrency
-        scope
         priceRanges {
           min
           max
           currency
           amount
+          percentage
         }
         saleQuantity {
           minProducts
           ratePerProduct
+          percentagePerProduct
         }
         fixedAmount {
           amount
@@ -67,6 +76,14 @@ export const GET_PAYMENT_RULE_BY_ID = gql`
         id
         name
       }
+      product {
+        id
+        name
+      }
+      category {
+        id
+        name
+      }
     }
   }
 `;
@@ -76,6 +93,13 @@ export const CREATE_PAYMENT_RULE = gql`
     createPaymentRule(createPaymentRuleInput: $createPaymentRuleInput) {
       id
       name
+      paymentType
+      workerType
+      otherType
+      isActive
+      paymentCurrency
+      scope
+      distributeProfits
     }
   }
 `;
@@ -87,7 +111,11 @@ export const UPDATE_PAYMENT_RULE = gql`
       name
       paymentType
       workerType
+      otherType
       isActive
+      paymentCurrency
+      scope
+      distributeProfits
     }
   }
 `;

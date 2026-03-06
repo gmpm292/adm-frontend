@@ -38,6 +38,21 @@ const workerTypes = [
   { label: "Otro", value: "OTHER" },
 ];
 
+const scopedAccessOptions = [
+  { label: "Business", value: "BUSINESS" },
+  { label: "Oficina", value: "OFFICE" },
+  { label: "Departamento", value: "DEPARTMENT" },
+  { label: "Equipo", value: "TEAM" },
+  { label: "Personal", value: "PERSONAL" },
+  { label: "Relacionado", value: "RELATED" },
+];
+
+const currencyOptions = [
+  { label: "USD", value: "USD" },
+  { label: "CUP", value: "CUP" },
+  { label: "MLC", value: "MLC" },
+];
+
 export const PaymentRuleEditForm = ({
   paymentRuleId,
   visible,
@@ -49,9 +64,12 @@ export const PaymentRuleEditForm = ({
     description: "",
     paymentType: null,
     workerType: null,
+    otherType: "",
     isActive: true,
+    distributeProfits: false,
+    paymentCurrency: "USD",
+    scope: "BUSINESS",
     conditions: {
-      paymentCurrency: "USD",
       priceRanges: [],
       saleQuantity: [],
       fixedAmount: null,
@@ -77,9 +95,12 @@ export const PaymentRuleEditForm = ({
           description: rule.description || "",
           paymentType: rule.paymentType,
           workerType: rule.workerType,
+          otherType: rule.otherType || "",
           isActive: rule.isActive,
+          distributeProfits: rule.distributeProfits || false,
+          paymentCurrency: rule.paymentCurrency || "USD",
+          scope: rule.scope || "BUSINESS",
           conditions: {
-            paymentCurrency: rule.conditions?.paymentCurrency || "USD",
             priceRanges: rule.conditions?.priceRanges || [],
             saleQuantity: rule.conditions?.saleQuantity || [],
             fixedAmount: rule.conditions?.fixedAmount || null,
@@ -103,6 +124,10 @@ export const PaymentRuleEditForm = ({
     setFormData((prev) => ({ ...prev, isActive: e.value }));
   };
 
+  const handleDistributeProfitsChange = (e) => {
+    setFormData((prev) => ({ ...prev, distributeProfits: e.value }));
+  };
+
   const handleSecurityEntitiesChange = (entities) => {
     setFormData((prev) => ({ ...prev, ...entities }));
   };
@@ -121,6 +146,22 @@ export const PaymentRuleEditForm = ({
     }));
   };
 
+  const handleWorkerTypeChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      workerType: e.value,
+      otherType: e.value === "OTHER" ? prev.otherType : "",
+    }));
+  };
+
+  const handleCurrencyChange = (e) => {
+    setFormData((prev) => ({ ...prev, paymentCurrency: e.value }));
+  };
+
+  const handleScopeChange = (e) => {
+    setFormData((prev) => ({ ...prev, scope: e.value }));
+  };
+
   const handleAddPriceRange = () => {
     setFormData((prev) => ({
       ...prev,
@@ -128,7 +169,13 @@ export const PaymentRuleEditForm = ({
         ...prev.conditions,
         priceRanges: [
           ...prev.conditions.priceRanges,
-          { min: 0, max: null, currency: "USD", amount: 0, scope: "BUSINESS" },
+          {
+            min: 0,
+            max: null,
+            currency: prev.paymentCurrency || "USD",
+            amount: null,
+            percentage: null,
+          },
         ],
       },
     }));
@@ -163,7 +210,7 @@ export const PaymentRuleEditForm = ({
         ...prev.conditions,
         saleQuantity: [
           ...prev.conditions.saleQuantity,
-          { minProducts: 1, ratePerProduct: 0, scope: "BUSINESS" },
+          { minProducts: 1, ratePerProduct: null, percentagePerProduct: null },
         ],
       },
     }));
@@ -187,7 +234,7 @@ export const PaymentRuleEditForm = ({
       conditions: {
         ...prev.conditions,
         saleQuantity: prev.conditions.saleQuantity.filter(
-          (_, i) => i !== index
+          (_, i) => i !== index,
         ),
       },
     }));
@@ -213,27 +260,24 @@ export const PaymentRuleEditForm = ({
     }));
   };
 
-  const handleCurrencyChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      conditions: {
-        ...prev.conditions,
-        paymentCurrency: e.target.value,
-      },
-    }));
-  };
-
   const handleSubmit = async () => {
     try {
-      if (!formData.name || !formData.paymentType || !formData.workerType) {
+      const { name, paymentType, workerType, paymentCurrency, scope } =
+        formData;
+
+      if (!name || !paymentType || !workerType || !paymentCurrency || !scope) {
         throw new Error(
-          "Nombre, tipo de pago y tipo de trabajador son campos requeridos"
+          "Nombre, tipo de pago, tipo de trabajador, moneda y ámbito son campos requeridos",
         );
       }
 
-      const conditionsInput = {
-        paymentCurrency: formData.conditions.paymentCurrency,
-      };
+      if (workerType === "OTHER" && !formData.otherType.trim()) {
+        throw new Error(
+          "Debe especificar el tipo de trabajador cuando selecciona 'Otro'.",
+        );
+      }
+
+      const conditionsInput = {};
 
       if (
         formData.paymentType === "PRICE_RANGE" &&
@@ -247,7 +291,7 @@ export const PaymentRuleEditForm = ({
         formData.conditions.saleQuantity.length === 0
       ) {
         throw new Error(
-          "Debe agregar al menos una condición de cantidad de ventas"
+          "Debe agregar al menos una condición de cantidad de ventas",
         );
       }
 
@@ -284,11 +328,17 @@ export const PaymentRuleEditForm = ({
             paymentType: formData.paymentType,
             workerType: formData.workerType,
             isActive: formData.isActive,
+            distributeProfits: formData.distributeProfits,
+            paymentCurrency: formData.paymentCurrency,
+            scope: formData.scope,
             conditions: conditionsInput,
             businessId: formData.businessId,
             officeId: formData.officeId,
             departmentId: formData.departmentId,
             teamId: formData.teamId,
+            ...(formData.workerType === "OTHER" && {
+              otherType: formData.otherType,
+            }),
           },
         },
       });
@@ -388,9 +438,53 @@ export const PaymentRuleEditForm = ({
                     id="workerType"
                     value={formData.workerType}
                     options={workerTypes}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, workerType: e.value }))
-                    }
+                    onChange={handleWorkerTypeChange}
+                    optionLabel="label"
+                    placeholder="Seleccione"
+                    required
+                  />
+                </div>
+              </div>
+              {formData.workerType === "OTHER" && (
+                <div className="p-col-12 p-md-4">
+                  <div className="p-field">
+                    <label htmlFor="otherType">Especificar Tipo*</label>
+                    <InputText
+                      id="otherType"
+                      name="otherType"
+                      value={formData.otherType}
+                      onChange={handleChange}
+                      placeholder="Especifique el tipo de trabajador"
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+              {formData.workerType !== "OTHER" && (
+                <div className="p-col-12 p-md-4">
+                  <div className="p-field">
+                    <label htmlFor="isActive">Estado</label>
+                    <div className="flex align-items-center">
+                      <InputSwitch
+                        id="isActive"
+                        checked={formData.isActive}
+                        onChange={handleStatusChange}
+                      />
+                      <span className="ml-2">
+                        {formData.isActive ? "Activo" : "Inactivo"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className="p-col-12 p-md-4">
+                <div className="p-field">
+                  <label htmlFor="paymentCurrency">Moneda de Pago*</label>
+                  <Dropdown
+                    id="paymentCurrency"
+                    value={formData.paymentCurrency}
+                    options={currencyOptions}
+                    onChange={handleCurrencyChange}
                     optionLabel="label"
                     placeholder="Seleccione"
                     required
@@ -399,15 +493,31 @@ export const PaymentRuleEditForm = ({
               </div>
               <div className="p-col-12 p-md-4">
                 <div className="p-field">
-                  <label htmlFor="isActive">Estado</label>
+                  <label htmlFor="scope">Ámbito*</label>
+                  <Dropdown
+                    id="scope"
+                    value={formData.scope}
+                    options={scopedAccessOptions}
+                    onChange={handleScopeChange}
+                    optionLabel="label"
+                    placeholder="Seleccione"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="p-col-12 p-md-4">
+                <div className="p-field">
+                  <label htmlFor="distributeProfits">
+                    Distribuir Beneficios
+                  </label>
                   <div className="flex align-items-center">
                     <InputSwitch
-                      id="isActive"
-                      checked={formData.isActive}
-                      onChange={handleStatusChange}
+                      id="distributeProfits"
+                      checked={formData.distributeProfits}
+                      onChange={handleDistributeProfitsChange}
                     />
                     <span className="ml-2">
-                      {formData.isActive ? "Activo" : "Inactivo"}
+                      {formData.distributeProfits ? "Sí" : "No"}
                     </span>
                   </div>
                 </div>
@@ -424,16 +534,6 @@ export const PaymentRuleEditForm = ({
               }}
             />
 
-            <div className="p-field">
-              <label htmlFor="paymentCurrency">Moneda de Pago*</label>
-              <InputText
-                id="paymentCurrency"
-                value={formData.conditions.paymentCurrency}
-                onChange={handleCurrencyChange}
-                required
-              />
-            </div>
-
             {formData.paymentType === "PRICE_RANGE" && (
               <div className="p-field">
                 <div className="flex justify-content-between align-items-center">
@@ -448,11 +548,15 @@ export const PaymentRuleEditForm = ({
                 {formData.conditions.priceRanges.map((range, index) => (
                   <PriceRangeCondition
                     key={index}
+                    index={index}
                     condition={range}
                     onChange={(condition) =>
                       handlePriceRangeChange(index, condition)
                     }
                     onRemove={() => handleRemovePriceRange(index)}
+                    currencyOptions={currencyOptions}
+                    mainCurrency={formData.paymentCurrency}
+                    isFirst={index === 0}
                   />
                 ))}
               </div>
@@ -487,7 +591,6 @@ export const PaymentRuleEditForm = ({
                   condition={
                     formData.conditions.fixedAmount || {
                       amount: 0,
-                      scope: "BUSINESS",
                     }
                   }
                   onChange={handleFixedAmountChange}
@@ -502,7 +605,6 @@ export const PaymentRuleEditForm = ({
                   condition={
                     formData.conditions.percentage || {
                       percentage: 0,
-                      scope: "BUSINESS",
                     }
                   }
                   onChange={handlePercentageChange}

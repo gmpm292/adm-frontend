@@ -1,47 +1,101 @@
-import React, { useCallback, useState, useRef } from 'react';
-import { useLazyQuery, useMutation } from '@apollo/client';
-import { GET_PAYMENT_RULES, REMOVE_PAYMENT_RULES } from '../graphql/queries';
-import GenericDataTable from '../../../../components/BaseTable/index';
-import { Column } from 'primereact/column';
-import { Button } from 'primereact/button';
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
-import { Toast } from 'primereact/toast';
-import { PaymentRuleEditForm } from './PaymentRuleEditForm';
-import { PaymentRuleCreateForm } from './PaymentRuleCreateForm';
-import { PaymentRuleDetailForm } from './PaymentRuleDetailForm';
+import React, { useCallback, useState, useRef } from "react";
+import { useLazyQuery, useMutation } from "@apollo/client";
+import { GET_PAYMENT_RULES, REMOVE_PAYMENT_RULES } from "../graphql/queries";
+import GenericDataTable from "../../../../components/BaseTable/index";
+import { Column } from "primereact/column";
+import { Button } from "primereact/button";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { Toast } from "primereact/toast";
+import { PaymentRuleEditForm } from "./PaymentRuleEditForm";
+import { PaymentRuleCreateForm } from "./PaymentRuleCreateForm";
+import { PaymentRuleDetailForm } from "./PaymentRuleDetailForm";
 
 const statusBodyTemplate = (rowData) => {
   return (
-    <span className={`badge status-${rowData.isActive ? 'active' : 'inactive'}`}>
-      {rowData.isActive ? 'Activo' : 'Inactivo'}
+    <span
+      className={`badge status-${rowData.isActive ? "active" : "inactive"}`}
+    >
+      {rowData.isActive ? "Activo" : "Inactivo"}
     </span>
   );
 };
 
 const paymentTypeBodyTemplate = (rowData) => {
   const types = {
-    PRICE_RANGE: 'Rango de Precios',
-    SALE_QUANTITY: 'Cantidad Ventas',
-    FIXED_AMOUNT: 'Monto Fijo',
-    PERCENTAGE: 'Porcentaje'
+    PRICE_RANGE: "Rango de Precios",
+    SALE_QUANTITY: "Cantidad Ventas",
+    FIXED_AMOUNT: "Monto Fijo",
+    PERCENTAGE: "Porcentaje",
   };
   return types[rowData.paymentType] || rowData.paymentType;
 };
 
 const workerTypeBodyTemplate = (rowData) => {
   const types = {
-    AGENT: 'Agente',
-    PUBLICIST: 'Publicista',
-    ECONOMIC: 'Económico',
-    OTHER: 'Otro'
+    PUBLICIST: "Publicista",
+    ECONOMIC: "Económico",
+    SERVICE: "Servicios",
+    COURIER: "Mensajero",
+    TECHNICIAN: "Técnico",
+    OPERATIVE: "Operativo",
+    PRINCIPAL: "Director",
+    ADMINISTRATIVE: "Administrativo",
+    MANAGER: "Gerente",
+    SUPERVISOR: "Supervisor",
+    AGENT: "Agente",
+    OTHER: rowData.otherType || "Otro",
   };
   return types[rowData.workerType] || rowData.workerType;
 };
 
-export function PaymentRuleTable() {
-  const [getPaymentRules, { loading, data, error }] = useLazyQuery(GET_PAYMENT_RULES, {
-    fetchPolicy: 'network-only',
+const scopeBodyTemplate = (rowData) => {
+  const scopes = {
+    BUSINESS: "Business",
+    OFFICE: "Oficina",
+    DEPARTMENT: "Departamento",
+    TEAM: "Equipo",
+    PERSONAL: "Personal",
+    RELATED: "Relacionado",
+  };
+  return scopes[rowData.scope] || rowData.scope;
+};
+
+const currencyBodyTemplate = (rowData) => {
+  const currencies = {
+    USD: "USD",
+    CUP: "CUP",
+    MLC: "MLC",
+  };
+  return currencies[rowData.paymentCurrency] || rowData.paymentCurrency;
+};
+
+const distributeProfitsBodyTemplate = (rowData) => {
+  return (
+    <span
+      className={`badge status-${rowData.distributeProfits ? "active" : "inactive"}`}
+    >
+      {rowData.distributeProfits ? "Sí" : "No"}
+    </span>
+  );
+};
+
+const dateBodyTemplate = (rowData, field) => {
+  if (!rowData[field]) return "N/A";
+  const date = new Date(rowData[field]);
+  return date.toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
+};
+
+export function PaymentRuleTable() {
+  const [getPaymentRules, { loading, data, error }] = useLazyQuery(
+    GET_PAYMENT_RULES,
+    {
+      fetchPolicy: "network-only",
+    },
+  );
   const [removePaymentRules] = useMutation(REMOVE_PAYMENT_RULES);
   const [selectedPaymentRuleId, setSelectedPaymentRuleId] = useState(null);
   const [editDialogVisible, setEditDialogVisible] = useState(false);
@@ -82,14 +136,14 @@ export function PaymentRuleTable() {
           totalCount: responseData?.paymentRules?.totalCount,
         };
       } catch (err) {
-        console.error('Error fetching payment rules:', err);
+        console.error("Error fetching payment rules:", err);
         return {
           data: [],
           totalCount: 0,
         };
       }
     },
-    [getPaymentRules]
+    [getPaymentRules],
   );
 
   const handleRefresh = useCallback(() => {
@@ -121,25 +175,25 @@ export function PaymentRuleTable() {
 
   const handleDelete = (id) => {
     confirmDialog({
-      message: '¿Estás seguro de que deseas eliminar esta regla de pago?',
-      header: 'Confirmación',
-      icon: 'pi pi-exclamation-triangle',
+      message: "¿Estás seguro de que deseas eliminar esta regla de pago?",
+      header: "Confirmación",
+      icon: "pi pi-exclamation-triangle",
       accept: async () => {
         try {
           await removePaymentRules({ variables: { ids: [id] } });
 
           toast.current.show({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Regla de pago eliminada correctamente',
+            severity: "success",
+            summary: "Éxito",
+            detail: "Regla de pago eliminada correctamente",
             life: 3000,
           });
 
           handleRefresh();
         } catch (err) {
           toast.current.show({
-            severity: 'error',
-            summary: 'Error',
+            severity: "error",
+            summary: "Error",
             detail: err.message,
             life: 3000,
           });
@@ -155,21 +209,21 @@ export function PaymentRuleTable() {
           icon="pi pi-pencil"
           className="p-button-rounded p-button-text"
           tooltip="Editar"
-          tooltipOptions={{ position: 'top' }}
+          tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
         <Button
           icon="pi pi-trash"
           className="p-button-rounded p-button-text p-button-danger"
           tooltip="Eliminar"
-          tooltipOptions={{ position: 'top' }}
+          tooltipOptions={{ position: "top" }}
           onClick={() => handleDelete(rowData.id)}
         />
         <Button
           icon="pi pi-eye"
           className="p-button-rounded p-button-text p-button-info"
           tooltip="Ver detalles"
-          tooltipOptions={{ position: 'top' }}
+          tooltipOptions={{ position: "top" }}
           onClick={() => handleViewDetails(rowData.id)}
         />
       </div>
@@ -178,29 +232,57 @@ export function PaymentRuleTable() {
 
   const columns = [
     {
-      field: 'name',
-      header: 'Nombre',
+      field: "name",
+      header: "Nombre",
       sortable: true,
       filter: true,
     },
     {
-      field: 'paymentType',
-      header: 'Tipo de Pago',
+      field: "paymentType",
+      header: "Tipo de Pago",
       body: paymentTypeBodyTemplate,
       sortable: true,
       filter: true,
     },
     {
-      field: 'workerType',
-      header: 'Tipo Trabajador',
+      field: "workerType",
+      header: "Tipo Trabajador",
       body: workerTypeBodyTemplate,
       sortable: true,
       filter: true,
     },
     {
-      field: 'isActive',
-      header: 'Estado',
+      field: "paymentCurrency",
+      header: "Moneda",
+      body: currencyBodyTemplate,
+      sortable: true,
+      filter: true,
+    },
+    {
+      field: "scope",
+      header: "Ámbito",
+      body: scopeBodyTemplate,
+      sortable: true,
+      filter: true,
+    },
+    {
+      field: "distributeProfits",
+      header: "Dist. Beneficios",
+      body: distributeProfitsBodyTemplate,
+      sortable: true,
+      filter: true,
+    },
+    {
+      field: "isActive",
+      header: "Estado",
       body: statusBodyTemplate,
+      sortable: true,
+      filter: true,
+    },
+    {
+      field: "createdAt",
+      header: "Creado",
+      body: (rowData) => dateBodyTemplate(rowData, "createdAt"),
       sortable: true,
       filter: true,
     },
@@ -225,7 +307,7 @@ export function PaymentRuleTable() {
         totalRecords={data?.paymentRules?.totalCount}
         loading={loading}
         error={error}
-        globalFilterFields={['name', 'paymentType']}
+        globalFilterFields={["name", "paymentType", "workerType", "scope"]}
         emptyMessage="No se encontraron reglas de pago"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} reglas"
         onRefresh={handleRefresh}
@@ -236,8 +318,8 @@ export function PaymentRuleTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: '10rem' }}
-          bodyStyle={{ textAlign: 'center' }}
+          headerStyle={{ width: "10rem" }}
+          bodyStyle={{ textAlign: "center" }}
         />
       </GenericDataTable>
 
