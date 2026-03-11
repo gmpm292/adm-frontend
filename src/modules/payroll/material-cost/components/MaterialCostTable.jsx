@@ -1,30 +1,69 @@
 import React, { useCallback, useState, useRef } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
-import { GET_PRODUCTS, DELETE_PRODUCTS } from "../graphql/queries";
+import {
+  GET_MATERIAL_COSTS,
+  TOGGLE_MATERIAL_COST_ACTIVE,
+  REMOVE_MATERIAL_COSTS,
+  RESTORE_MATERIAL_COSTS,
+} from "../graphql/queries";
 import GenericDataTable from "../../../../components/BaseTable/index";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
-//import { ProductEditForm } from "./ProductEditForm";
-import { ProductEditForm } from "./ProductEditForm/ProductEditForm";
-// import { ProductCreateForm } from "./ProductCreateForm";
-import { ProductCreateForm } from "./ProductCreateForm/ProductCreateForm";
-import { ProductDetailForm } from "./ProductDetailForm";
-import { formatDate } from "../../../../utils/dateUtils";
-import { formatCurrency } from "../../../../utils/numberUtils";
 
-export function ProductTable() {
-  const [getProducts, { loading, data, error }] = useLazyQuery(GET_PRODUCTS, {
-    fetchPolicy: "network-only",
-  });
-  const [deleteProducts] = useMutation(DELETE_PRODUCTS);
-  const [selectedProductId, setSelectedProductId] = useState(null);
+import { Tag } from "primereact/tag";
+import { MaterialCostCreateForm } from "./MaterialCostCreateForm";
+import { MaterialCostDetailForm } from "./MaterialCostDetailForm";
+import { MaterialCostEditForm } from "./MaterialCostEditForm";
+
+const statusBodyTemplate = (rowData) => {
+  return (
+    <span
+      className={`badge status-${rowData.isActive ? "active" : "inactive"}`}
+    >
+      {rowData.isActive ? "Activo" : "Inactivo"}
+    </span>
+  );
+};
+
+const priceBodyTemplate = (rowData) => {
+  return (
+    <span className="font-mono">
+      {rowData.currency?.symbol || rowData.currency?.code}{" "}
+      {rowData.costPrice?.toLocaleString("es-ES", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}
+    </span>
+  );
+};
+
+const unitBodyTemplate = (rowData) => {
+  return (
+    <span>
+      {rowData.unitOfMeasure?.name} ({rowData.unitOfMeasure?.symbol})
+    </span>
+  );
+};
+
+export const MaterialCostTable = () => {
+  const [getMaterials, { loading, data, error }] = useLazyQuery(
+    GET_MATERIAL_COSTS,
+    {
+      fetchPolicy: "network-only",
+    },
+  );
+  const [toggleActive] = useMutation(TOGGLE_MATERIAL_COST_ACTIVE);
+  const [removeMaterials] = useMutation(REMOVE_MATERIAL_COSTS);
+  const [restoreMaterials] = useMutation(RESTORE_MATERIAL_COSTS);
+
+  const [selectedMaterialId, setSelectedMaterialId] = useState(null);
   const [editDialogVisible, setEditDialogVisible] = useState(false);
   const [createDialogVisible, setCreateDialogVisible] = useState(false);
   const [detailDialogVisible, setDetailDialogVisible] = useState(false);
-  const toast = useRef(null);
 
+  const toast = useRef(null);
   const tableStateRef = useRef({
     filters: {},
     sorts: [],
@@ -43,7 +82,7 @@ export function ProductTable() {
           },
         };
 
-        const { data: responseData } = await getProducts({
+        const { data: responseData } = await getMaterials({
           variables: {
             options: {
               skip: params.skip,
@@ -55,18 +94,18 @@ export function ProductTable() {
         });
 
         return {
-          data: responseData?.products?.data,
-          totalCount: responseData?.products?.totalCount,
+          data: responseData?.materialCosts?.data,
+          totalCount: responseData?.materialCosts?.totalCount,
         };
       } catch (err) {
-        console.error("Error fetching products:", err);
+        console.error("Error fetching material costs:", err);
         return {
           data: [],
           totalCount: 0,
         };
       }
     },
-    [getProducts],
+    [getMaterials],
   );
 
   const handleRefresh = useCallback(() => {
@@ -86,29 +125,29 @@ export function ProductTable() {
     handleRefresh();
   }, [handleRefresh]);
 
-  const handleEdit = (productId) => {
-    setSelectedProductId(productId);
+  const handleEdit = (materialId) => {
+    setSelectedMaterialId(materialId);
     setEditDialogVisible(true);
   };
 
-  const handleViewDetails = (productId) => {
-    setSelectedProductId(productId);
+  const handleViewDetails = (materialId) => {
+    setSelectedMaterialId(materialId);
     setDetailDialogVisible(true);
   };
 
-  const handleDelete = (productId) => {
+  const handleToggleStatus = (materialId, isActive) => {
     confirmDialog({
-      message: "¿Estás seguro de que deseas eliminar este producto?",
+      message: `¿Estás seguro de que deseas ${isActive ? "desactivar" : "activar"} este material?`,
       header: "Confirmación",
       icon: "pi pi-exclamation-triangle",
       accept: async () => {
         try {
-          await deleteProducts({ variables: { ids: [productId] } });
+          await toggleActive({ variables: { id: materialId } });
 
           toast.current.show({
             severity: "success",
             summary: "Éxito",
-            detail: "Producto eliminado correctamente",
+            detail: `Material ${isActive ? "desactivado" : "activado"} correctamente`,
             life: 3000,
           });
 
@@ -125,40 +164,22 @@ export function ProductTable() {
     });
   };
 
-  const dateBodyTemplate = (rowData, field) => {
-    return formatDate(rowData[field]);
-  };
-
-  const priceBodyTemplate = (rowData, field) => {
-    return formatCurrency(rowData[field]);
-  };
-
-  const categoryBodyTemplate = (rowData) => {
-    return rowData.category?.name || "N/A";
-  };
-
-  const unitOfMeasureBodyTemplate = (rowData) => {
-    return rowData.unitOfMeasure
-      ? `${rowData.unitOfMeasure.name} (${rowData.unitOfMeasure.symbol})`
-      : "N/A";
-  };
-
   const actionBodyTemplate = (rowData) => {
     return (
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
           className="p-button-rounded p-button-text"
-          tooltip="Editar producto"
+          tooltip="Editar material"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
         <Button
-          icon="pi pi-trash"
-          className="p-button-rounded p-button-text p-button-danger"
-          tooltip="Eliminar producto"
+          icon={rowData.isActive ? "pi pi-ban" : "pi pi-check"}
+          className={`p-button-rounded p-button-text ${rowData.isActive ? "p-button-warning" : "p-button-success"}`}
+          tooltip={rowData.isActive ? "Desactivar" : "Activar"}
           tooltipOptions={{ position: "top" }}
-          onClick={() => handleDelete(rowData.id)}
+          onClick={() => handleToggleStatus(rowData.id, rowData.isActive)}
         />
         <Button
           icon="pi pi-eye"
@@ -179,46 +200,41 @@ export function ProductTable() {
       filter: true,
     },
     {
-      field: "category.name",
-      header: "Categoría",
-      body: categoryBodyTemplate,
-      sortable: true,
-      filter: true,
-    },
-    {
       field: "unitOfMeasure",
       header: "Unidad de Medida",
-      body: unitOfMeasureBodyTemplate,
+      body: unitBodyTemplate,
       sortable: true,
       filter: true,
+      filterField: "unitOfMeasure.name",
     },
     {
       field: "costPrice",
-      header: "Precio Costo",
-      body: (rowData) => priceBodyTemplate(rowData, "costPrice"),
+      header: "Precio de Costo",
+      body: priceBodyTemplate,
       sortable: true,
+      filter: true,
+      filterPlaceholder: "Precio",
     },
     {
-      field: "basePrice",
-      header: "Precio Venta",
-      body: (rowData) => priceBodyTemplate(rowData, "basePrice"),
+      field: "isActive",
+      header: "Estado",
+      body: statusBodyTemplate,
       sortable: true,
-    },
-    {
-      field: "createdAt",
-      header: "Fecha de Creación",
-      body: (rowData) => dateBodyTemplate(rowData, "createdAt"),
-      sortable: true,
+      filter: true,
     },
   ];
 
-  const addProductButton = (
-    <Button
-      icon="pi pi-plus"
-      tooltip="Crear Nuevo Producto"
-      onClick={() => setCreateDialogVisible(true)}
-    />
-  );
+  const renderHeader = () => {
+    return (
+      <div className="flex justify-content-between align-items-center">
+        <Button
+          icon="pi pi-plus"
+          label="Nuevo Material"
+          onClick={() => setCreateDialogVisible(true)}
+        />
+      </div>
+    );
+  };
 
   return (
     <>
@@ -227,17 +243,17 @@ export function ProductTable() {
 
       <GenericDataTable
         columns={columns}
-        data={data?.products?.data}
-        totalRecords={data?.products?.totalCount}
+        data={data?.materialCosts?.data}
+        totalRecords={data?.materialCosts?.totalCount}
         loading={loading}
         error={error}
-        globalFilterFields={["name", "category.name", "unitOfMeasure"]}
-        emptyMessage="No se encontraron productos"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} productos"
+        globalFilterFields={["name", "unitOfMeasure.name", "costPrice"]}
+        emptyMessage="No se encontraron materiales"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} materiales"
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        header={addProductButton}
+        header={renderHeader()}
       >
         <Column
           body={actionBodyTemplate}
@@ -247,26 +263,26 @@ export function ProductTable() {
         />
       </GenericDataTable>
 
-      <ProductEditForm
-        productId={selectedProductId}
+      <MaterialCostEditForm
+        materialId={selectedMaterialId}
         visible={editDialogVisible}
         onHide={() => setEditDialogVisible(false)}
         onSuccess={handleEditSuccess}
       />
 
-      <ProductCreateForm
+      <MaterialCostCreateForm
         visible={createDialogVisible}
         onHide={() => setCreateDialogVisible(false)}
         onSuccess={handleCreateSuccess}
       />
 
-      <ProductDetailForm
-        productId={selectedProductId}
+      <MaterialCostDetailForm
+        materialId={selectedMaterialId}
         visible={detailDialogVisible}
         onHide={() => setDetailDialogVisible(false)}
       />
     </>
   );
-}
+};
 
-export default ProductTable;
+export default MaterialCostTable;

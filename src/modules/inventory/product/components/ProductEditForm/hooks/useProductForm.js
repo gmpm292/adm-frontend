@@ -7,7 +7,8 @@ import { ConditionalOperator } from "../../../../../../enums/conditional-operati
 export const useProductForm = (productId, visible) => {
   const [formData, setFormData] = useState({
     name: "",
-    unitOfMeasure: "",
+    unitOfMeasureId: null,
+    materialCostId: null,
     costPrice: null,
     costCurrency: "",
     basePrice: null,
@@ -51,10 +52,12 @@ export const useProductForm = (productId, visible) => {
     fetchPolicy: "network-only",
     variables: {
       options: {
-        filters: {
-          property: "isActive",
-          operator: ConditionalOperator.IS_NOT_NULL,
-        },
+        filters: [
+          {
+            property: "isActive",
+            operator: ConditionalOperator.IS_NOT_NULL,
+          },
+        ],
       },
     },
     skip: !visible,
@@ -69,7 +72,8 @@ export const useProductForm = (productId, visible) => {
         const product = data.product;
         setFormData({
           name: product.name || "",
-          unitOfMeasure: product.unitOfMeasure || "",
+          unitOfMeasureId: product.unitOfMeasure?.id || null, // 👈 Cambiado
+          materialCostId: product.materialCost?.id || null, // 👈 Nuevo
           costPrice: product.costPrice || null,
           costCurrency: product.costCurrency || "",
           basePrice: product.basePrice || null,
@@ -80,10 +84,10 @@ export const useProductForm = (productId, visible) => {
           exchangeRateMargin: product.pricingConfig?.exchangeRateMargin || 0,
           decimalPlaces: product.pricingConfig?.decimalPlaces || 2,
           fixedPrices: product.pricingConfig?.fixedPrices || [],
-          businessId: product.businessId || null,
-          officeId: product.officeId || null,
-          departmentId: product.departmentId || null,
-          teamId: product.teamId || null,
+          businessId: product.business?.id || null,
+          officeId: product.office?.id || null,
+          departmentId: product.department?.id || null,
+          teamId: product.team?.id || null,
           attributes: product.attributes || {},
           saleRules: {
             minQuantity: product.saleRules?.minQuantity || null,
@@ -104,7 +108,7 @@ export const useProductForm = (productId, visible) => {
   const availableFixedPriceCurrencies = currencyOptions.filter(
     (currency) =>
       currency.value !== formData.baseCurrency &&
-      !formData.fixedPrices.some((fp) => fp.currency === currency.value)
+      !formData.fixedPrices.some((fp) => fp.currency === currency.value),
   );
 
   useEffect(() => {
@@ -135,6 +139,14 @@ export const useProductForm = (productId, visible) => {
 
   const handleCategorySelect = (categoryId) => {
     setFormData((prev) => ({ ...prev, categoryId }));
+  };
+
+  const handleUnitOfMeasureChange = (e) => {
+    setFormData((prev) => ({ ...prev, unitOfMeasureId: e.value }));
+  };
+
+  const handleMaterialCostChange = (e) => {
+    setFormData((prev) => ({ ...prev, materialCostId: e.value }));
   };
 
   const handleAddAttribute = () => {
@@ -231,7 +243,8 @@ export const useProductForm = (productId, visible) => {
   const resetForm = () => {
     setFormData({
       name: "",
-      unitOfMeasure: "",
+      unitOfMeasureId: null,
+      materialCostId: null,
       costPrice: null,
       costCurrency: "",
       basePrice: null,
@@ -285,6 +298,8 @@ export const useProductForm = (productId, visible) => {
     handleChange,
     handleNumberChange,
     handleCategorySelect,
+    handleUnitOfMeasureChange,
+    handleMaterialCostChange,
     handleAddAttribute,
     handleRemoveAttribute,
     handleAddBulkDiscount,

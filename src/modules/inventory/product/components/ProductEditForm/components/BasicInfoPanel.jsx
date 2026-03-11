@@ -5,6 +5,8 @@ import { InputNumber } from "primereact/inputnumber";
 import { Dropdown } from "primereact/dropdown";
 import { Checkbox } from "primereact/checkbox";
 import { CategorySelector } from "../../../../category/components/CategorySelector";
+import MaterialCostDropdown from "../../../../../payroll/material-cost/components/MaterialCostDropdown";
+import UnitOfMeasureDropdown from "../../../../unit-of-measure/components/UnitOfMeasureDropdown";
 
 export const BasicInfoPanel = ({
   formData,
@@ -12,6 +14,8 @@ export const BasicInfoPanel = ({
   handleToggle,
   handleChange,
   handleCategorySelect,
+  handleUnitOfMeasureChange,
+  handleMaterialCostChange,
   handleSecurityEntitiesChange,
 }) => {
   const [hasWarranty, setHasWarranty] = React.useState(() => {
@@ -54,9 +58,8 @@ export const BasicInfoPanel = ({
     }
   };
 
-  // Manejar selección de categoría y actualizar entidades de seguridad
+  // Manejar selección de categoría y extraer las entidades de seguridad
   const handleCategorySelection = (category) => {
-    // Extraer las entidades de seguridad de la categoría
     const securityEntities = {
       businessId: category?.business?.id || null,
       officeId: category?.office?.id || null,
@@ -64,48 +67,13 @@ export const BasicInfoPanel = ({
       teamId: category?.team?.id || null,
     };
 
-    // 1. Actualizar la categoría en el formData
-    handleChange({
-      target: {
-        name: "categoryId",
-        value: category.id,
-      },
-    });
+    handleCategorySelect(category.id);
+    handleSecurityEntitiesChange(securityEntities);
 
-    // 2. Llamar al handler de categoría (si es necesario)
-    if (handleCategorySelect) {
-      handleCategorySelect(category.id);
-    }
-
-    // 3. Actualizar las entidades de seguridad en el formData
-    handleChange({
-      target: {
-        name: "businessId",
-        value: securityEntities.businessId,
-      },
-    });
-    handleChange({
-      target: {
-        name: "officeId",
-        value: securityEntities.officeId,
-      },
-    });
-    handleChange({
-      target: {
-        name: "departmentId",
-        value: securityEntities.departmentId,
-      },
-    });
-    handleChange({
-      target: {
-        name: "teamId",
-        value: securityEntities.teamId,
-      },
-    });
-
-    // 4. Notificar el cambio de entidades de seguridad
-    if (handleSecurityEntitiesChange) {
-      handleSecurityEntitiesChange(securityEntities);
+    // Auto-completar el campo "Nombre" con el nombre de la categoría seleccionada
+    // Solo si el campo "Nombre" está vacío
+    if (!formData.name) {
+      handleChange({ target: { name: "name", value: category.name } });
     }
   };
 
@@ -117,6 +85,15 @@ export const BasicInfoPanel = ({
       onToggle={handleToggle}
     >
       <div className="p-grid p-fluid">
+        <div className="p-col-12 p-md-6">
+          <div className="p-field">
+            <label htmlFor="categoryId">Categoría*</label>
+            <CategorySelector
+              onCategorySelect={handleCategorySelection}
+              selectedCategoryId={formData.categoryId}
+            />
+          </div>
+        </div>
         <div className="p-col-12 p-md-6">
           <div className="p-field">
             <label htmlFor="name">Nombre*</label>
@@ -131,22 +108,23 @@ export const BasicInfoPanel = ({
         </div>
         <div className="p-col-12 p-md-6">
           <div className="p-field">
-            <label htmlFor="unitOfMeasure">Unidad de Medida*</label>
-            <InputText
-              id="unitOfMeasure"
-              name="unitOfMeasure"
-              value={formData.unitOfMeasure}
-              onChange={handleChange}
+            <label htmlFor="unitOfMeasureId">Unidad de Medida*</label>
+            <UnitOfMeasureDropdown
+              value={formData.unitOfMeasureId}
+              onChange={handleUnitOfMeasureChange}
+              placeholder="Seleccione unidad de medida"
               required
             />
           </div>
         </div>
         <div className="p-col-12 p-md-6">
           <div className="p-field">
-            <label htmlFor="categoryId">Categoría*</label>
-            <CategorySelector
-              onCategorySelect={handleCategorySelection}
-              selectedCategoryId={formData.categoryId}
+            <label htmlFor="materialCostId">Material (Costo)</label>
+            <MaterialCostDropdown
+              value={formData.materialCostId}
+              onChange={handleMaterialCostChange}
+              placeholder="Seleccione material (opcional)"
+              showClear
             />
           </div>
         </div>
@@ -183,7 +161,6 @@ export const BasicInfoPanel = ({
                   options={unidades}
                   onChange={(e) => {
                     setWarrantyUnit(e.value);
-                    // Resetear valor si excede el nuevo máximo
                     if (warrantyValue > getMaxValue()) {
                       setWarrantyValue(1);
                     }

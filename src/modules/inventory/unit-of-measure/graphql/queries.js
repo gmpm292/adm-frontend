@@ -1,7 +1,7 @@
 import { gql } from "@apollo/client";
 
 export const GET_UNITS_OF_MEASURE = gql`
-  query UnitsOfMeasure($options: ListOptions) {
+  query UnitOfMeasures($options: ListOptions) {
     unitOfMeasures(options: $options) {
       totalCount
       data {

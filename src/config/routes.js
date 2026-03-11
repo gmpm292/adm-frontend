@@ -104,6 +104,11 @@ export const routePermissions = {
     requiredRoles: [],
     title: "Pagos",
   },
+  "/payroll/material-costs": {
+    permissions: [],
+    requiredRoles: [],
+    title: "Costos de Materiales",
+  },
   "/sales/integrated-sale": {
     permissions: [],
     requiredRoles: [],

@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Panel } from "primereact/panel";
 import { InputText } from "primereact/inputtext";
 import { InputNumber } from "primereact/inputnumber";
 import { Dropdown } from "primereact/dropdown";
 import { Checkbox } from "primereact/checkbox";
 import { CategorySelector } from "../../../../category/components/CategorySelector";
+import MaterialCostDropdown from "../../../../../payroll/material-cost/components/MaterialCostDropdown";
+import UnitOfMeasureDropdown from "../../../../unit-of-measure/components/UnitOfMeasureDropdown";
 
 export const BasicInfoPanel = ({
   formData,
@@ -12,21 +14,30 @@ export const BasicInfoPanel = ({
   handleToggle,
   handleChange,
   handleCategorySelect,
+  handleUnitOfMeasureChange,
+  handleMaterialCostChange,
   handleSecurityEntitiesChange,
+  handleMaterialCostSelect,
+  setFormData,
 }) => {
-  const [hasWarranty, setHasWarranty] = React.useState(() => {
-    return !!formData.warranty;
+  // Garantía: por defecto true y 30 días
+  const [hasWarranty, setHasWarranty] = useState(() => {
+    // Si ya hay warranty en formData, lo respetamos
+    return formData.warranty ? true : true; // Por defecto true
   });
 
-  const [warrantyValue, setWarrantyValue] = React.useState(() => {
-    const parts = formData.warranty?.split(" ") ?? ["1", "días"];
-    return parseInt(parts[0]) || 1;
+  const [warrantyValue, setWarrantyValue] = useState(() => {
+    const parts = formData.warranty?.split(" ") ?? ["30", "días"];
+    return parseInt(parts[0]) || 30;
   });
 
-  const [warrantyUnit, setWarrantyUnit] = React.useState(() => {
-    const parts = formData.warranty?.split(" ") ?? ["1", "días"];
+  const [warrantyUnit, setWarrantyUnit] = useState(() => {
+    const parts = formData.warranty?.split(" ") ?? ["30", "días"];
     return parts[1] || "días";
   });
+
+  // Cantidad del producto
+  const [quantity, setQuantity] = useState(formData.quantity || 1);
 
   const unidades = [
     { label: "Días", value: "días" },
@@ -35,10 +46,15 @@ export const BasicInfoPanel = ({
   ];
 
   // Actualizar el valor de warranty en formData
-  React.useEffect(() => {
+  useEffect(() => {
     const nuevaGarantia = hasWarranty ? `${warrantyValue} ${warrantyUnit}` : "";
     handleChange({ target: { name: "warranty", value: nuevaGarantia } });
   }, [hasWarranty, warrantyValue, warrantyUnit]);
+
+  // Actualizar cantidad en formData
+  useEffect(() => {
+    handleChange({ target: { name: "quantity", value: quantity } });
+  }, [quantity]);
 
   // Calcular máximo según unidad seleccionada
   const getMaxValue = () => {
@@ -56,8 +72,6 @@ export const BasicInfoPanel = ({
 
   // Manejar selección de categoría y extraer las entidades de seguridad
   const handleCategorySelection = (category) => {
-    console.log("BasicInfoPanel", category);
-    // Extraer las entidades de seguridad de la categoría
     const securityEntities = {
       businessId: category?.business?.id || null,
       officeId: category?.office?.id || null,
@@ -65,8 +79,6 @@ export const BasicInfoPanel = ({
       teamId: category?.team?.id || null,
     };
 
-    // Llamar a ambos handlers
-    console.log("BasicInfoPanel", category.id);
     handleCategorySelect(category.id);
     handleSecurityEntitiesChange(securityEntities);
 
@@ -74,6 +86,14 @@ export const BasicInfoPanel = ({
     // Solo si el campo "Nombre" está vacío
     if (!formData.name) {
       handleChange({ target: { name: "name", value: category.name } });
+    }
+  };
+
+  // Manejar selección de material cost
+  const handleMaterialCostSelection = (e) => {
+    handleMaterialCostChange(e);
+    if (e.value && handleMaterialCostSelect) {
+      handleMaterialCostSelect(e.value);
     }
   };
 
@@ -108,13 +128,42 @@ export const BasicInfoPanel = ({
         </div>
         <div className="p-col-12 p-md-6">
           <div className="p-field">
-            <label htmlFor="unitOfMeasure">Unidad de Medida*</label>
-            <InputText
-              id="unitOfMeasure"
-              name="unitOfMeasure"
-              value={formData.unitOfMeasure}
-              onChange={handleChange}
+            <label htmlFor="materialCostId">Material (Costo)</label>
+            <MaterialCostDropdown
+              value={formData.materialCostId}
+              onChange={handleMaterialCostSelection}
+              placeholder="Seleccione material (opcional)"
+              showClear
+            />
+          </div>
+        </div>
+        <div className="p-col-12 p-md-6">
+          <div className="p-field">
+            <label htmlFor="unitOfMeasureId">Unidad de Medida*</label>
+            <UnitOfMeasureDropdown
+              value={formData.unitOfMeasureId}
+              onChange={handleUnitOfMeasureChange}
+              placeholder="Seleccione unidad de medida"
               required
+              disabled={!!formData.materialCostId} // Se inhabilita si hay material seleccionado
+            />
+          </div>
+        </div>
+        <div className="p-col-12 p-md-6">
+          <div className="p-field">
+            <label htmlFor="quantity">Cantidad</label>
+            <InputNumber
+              id="quantity"
+              value={quantity}
+              onValueChange={(e) => setQuantity(e.value || 1)}
+              min={1}
+              max={999999}
+              showButtons
+              buttonLayout="horizontal"
+              incrementButtonIcon="pi pi-plus"
+              decrementButtonIcon="pi pi-minus"
+              mode="decimal"
+              className="w-full"
             />
           </div>
         </div>
@@ -151,7 +200,6 @@ export const BasicInfoPanel = ({
                   options={unidades}
                   onChange={(e) => {
                     setWarrantyUnit(e.value);
-                    // Resetear valor si excede el nuevo máximo
                     if (warrantyValue > getMaxValue()) {
                       setWarrantyValue(1);
                     }

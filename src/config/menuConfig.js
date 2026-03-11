@@ -235,6 +235,15 @@ export const menuConfig = [
         requiredRoles:
           routePermissions["/payroll/worker-payments"]?.requiredRoles || [],
       },
+      {
+        label: "Costos de Materiales",
+        icon: "pi pi-dollar",
+        path: "/payroll/material-costs",
+        permissions:
+          routePermissions["/payroll/material-costs"]?.permissions || [],
+        requiredRoles:
+          routePermissions["/payroll/material-costs"]?.requiredRoles || [],
+      },
     ],
   },
   {

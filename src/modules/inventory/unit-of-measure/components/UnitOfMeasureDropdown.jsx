@@ -17,7 +17,7 @@ const categoryLabels = {
   temperatura: "Temperatura",
 };
 
-export const UnitOfMeasureDropdown = ({
+const UnitOfMeasureDropdown = ({
   value,
   onChange,
   placeholder = "Seleccione una unidad",

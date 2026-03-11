@@ -1,19 +1,24 @@
-import { useState, useEffect } from "react";
-import { useQuery } from "@apollo/client";
+// En product/components/ProductCreateForm/hooks/useProductForm.js
 
-// import { ConditionalOperator } from "../../../../enums/conditional-operation.enum";
+import { useState, useEffect } from "react";
+import { useLazyQuery, useQuery } from "@apollo/client";
 import { GET_CURRENCIES } from "../../../../../payroll/currency/graphql/queries";
 import { ConditionalOperator } from "../../../../../../enums/conditional-operation.enum";
+
+import { calculateTotalPrice } from "../../../../../../utils/priceCalculations";
+import { GET_MATERIAL_COST_BY_ID } from "../../../graphql/queries";
+import { GET_MATERIAL_COST } from "../../../../../payroll/material-cost/graphql/queries";
 
 export const useProductForm = (visible) => {
   const [formData, setFormData] = useState({
     name: "",
-    unitOfMeasure: "",
+    unitOfMeasureId: null,
+    materialCostId: null,
     costPrice: null,
     costCurrency: "",
     basePrice: null,
     baseCurrency: "",
-    warranty: "",
+    warranty: "30 días", // Valor por defecto
     categoryId: null,
     acceptedCurrencies: [],
     exchangeRateMargin: 0,
@@ -24,11 +29,14 @@ export const useProductForm = (visible) => {
     departmentId: null,
     teamId: null,
     attributes: {},
+    quantity: 1, // Nuevo campo
     saleRules: {
       minQuantity: null,
       maxQuantity: null,
       bulkDiscounts: [],
     },
+    createInventory: false,
+    selectedOffices: [],
   });
 
   const [attributeKey, setAttributeKey] = useState("");
@@ -42,7 +50,9 @@ export const useProductForm = (visible) => {
     currency: "",
     amount: null,
   });
+  const [selectedMaterial, setSelectedMaterial] = useState(null);
 
+  // Query para obtener las monedas
   const {
     data: currenciesData,
     loading: currenciesLoading,
@@ -51,14 +61,64 @@ export const useProductForm = (visible) => {
     fetchPolicy: "network-only",
     variables: {
       options: {
-        filters: {
-          property: "isActive",
-          operator: ConditionalOperator.IS_NOT_NULL,
-        },
+        filters: [
+          {
+            property: "isActive",
+            operator: ConditionalOperator.IS_NOT_NULL,
+          },
+        ],
       },
     },
     skip: !visible,
   });
+
+  const [getMaterialDetails, { data: materialData }] = useLazyQuery(
+    GET_MATERIAL_COST_BY_ID,
+    {
+      fetchPolicy: "network-only",
+      skip: true,
+    },
+  );
+
+  // Efecto para cargar detalles del material cuando se selecciona
+  useEffect(() => {
+    const loadMaterialDetails = async () => {
+      if (formData.materialCostId) {
+        try {
+          const { data } = await getMaterialDetails({
+            variables: { id: formData.materialCostId },
+          });
+          if (data?.materialCost) {
+            setSelectedMaterial(data.materialCost);
+
+            // Calcular precio total basado en cantidad
+            const totalCost = calculateTotalPrice(
+              formData.quantity || 1,
+              data.materialCost.costPrice,
+            );
+
+            // Actualizar formData con los valores del material
+            setFormData((prev) => ({
+              ...prev,
+              costPrice: totalCost,
+              costCurrency:
+                data.materialCost.currency?.code || prev.costCurrency,
+              baseCurrency:
+                data.materialCost.currency?.code || prev.baseCurrency,
+              unitOfMeasureId:
+                data.materialCost.unitOfMeasure?.id || prev.unitOfMeasureId,
+            }));
+          }
+        } catch (error) {
+          console.error("Error loading material details:", error);
+        }
+      } else {
+        setSelectedMaterial(null);
+      }
+    };
+
+    loadMaterialDetails();
+  }, [formData.materialCostId, formData.quantity]);
 
   const currencyOptions =
     currenciesData?.currencies?.data?.map((currency) => ({
@@ -69,7 +129,7 @@ export const useProductForm = (visible) => {
   const availableFixedPriceCurrencies = currencyOptions.filter(
     (currency) =>
       currency.value !== formData.baseCurrency &&
-      !formData.fixedPrices.some((fp) => fp.currency === currency.value)
+      !formData.fixedPrices.some((fp) => fp.currency === currency.value),
   );
 
   useEffect(() => {
@@ -100,6 +160,14 @@ export const useProductForm = (visible) => {
 
   const handleCategorySelect = (categoryId) => {
     setFormData((prev) => ({ ...prev, categoryId }));
+  };
+
+  const handleUnitOfMeasureChange = (e) => {
+    setFormData((prev) => ({ ...prev, unitOfMeasureId: e.value }));
+  };
+
+  const handleMaterialCostChange = (e) => {
+    setFormData((prev) => ({ ...prev, materialCostId: e.value }));
   };
 
   const handleAddAttribute = () => {
@@ -196,12 +264,13 @@ export const useProductForm = (visible) => {
   const resetForm = () => {
     setFormData({
       name: "",
-      unitOfMeasure: "",
+      unitOfMeasureId: null,
+      materialCostId: null,
       costPrice: null,
       costCurrency: "",
       basePrice: null,
       baseCurrency: "",
-      warranty: "",
+      warranty: "30 días",
       categoryId: null,
       acceptedCurrencies: [],
       exchangeRateMargin: 0,
@@ -212,11 +281,14 @@ export const useProductForm = (visible) => {
       departmentId: null,
       teamId: null,
       attributes: {},
+      quantity: 1,
       saleRules: {
         minQuantity: null,
         maxQuantity: null,
         bulkDiscounts: [],
       },
+      createInventory: false,
+      selectedOffices: [],
     });
     setAttributeKey("");
     setAttributeValue("");
@@ -229,6 +301,7 @@ export const useProductForm = (visible) => {
       currency: "",
       amount: null,
     });
+    setSelectedMaterial(null);
   };
 
   return {
@@ -250,6 +323,8 @@ export const useProductForm = (visible) => {
     handleChange,
     handleNumberChange,
     handleCategorySelect,
+    handleUnitOfMeasureChange,
+    handleMaterialCostChange,
     handleAddAttribute,
     handleRemoveAttribute,
     handleAddBulkDiscount,
@@ -257,5 +332,6 @@ export const useProductForm = (visible) => {
     handleAddFixedPrice,
     handleRemoveFixedPrice,
     resetForm,
+    selectedMaterial,
   };
 };

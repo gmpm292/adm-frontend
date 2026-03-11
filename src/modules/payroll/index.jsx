@@ -7,17 +7,20 @@ import { WorkScheduleListPage } from "./work-schedule/pages/WorkScheduleListPage
 import { WorkerPaymentListPage } from "./worker-payment/pages/WorkerPaymentListPage";
 import { WorkerListPage } from "./worker/pages/WorkerListPage";
 import { AttendanceListPage } from "./attendance";
+import MaterialCostListPage from "./material-cost/pages/MaterialCostListPage";
+
 
 export function PayrollModule() {
   return (
     <Routes>
+      <Route path="attendance" element={<AttendanceListPage />} />
       <Route path="currencies" element={<CurrencyListPage />} />
       <Route path="payment-rules" element={<PaymentRuleListPage />} />
       <Route path="payroll-periods" element={<PayrollPeriodListPage />} />
       <Route path="work-schedules" element={<WorkScheduleListPage />} />
       <Route path="workers" element={<WorkerListPage />} />
       <Route path="worker-payments" element={<WorkerPaymentListPage />} />
-      <Route path="attendance" element={<AttendanceListPage />} />
+      <Route path="material-costs" element={<MaterialCostListPage />} />
     </Routes>
   );
 }

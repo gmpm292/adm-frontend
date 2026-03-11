@@ -7,7 +7,24 @@ export const GET_PRODUCTS = gql`
       data {
         id
         name
-        unitOfMeasure
+        unitOfMeasure {
+          id
+          name
+          symbol
+          category
+        }
+        materialCost {
+          id
+          name
+          costPrice
+          currency {
+            code
+            symbol
+          }
+          unitOfMeasure {
+            symbol
+          }
+        }
         costPrice
         costCurrency
         basePrice
@@ -16,6 +33,7 @@ export const GET_PRODUCTS = gql`
         createdAt
         updatedAt
         category {
+          id
           name
         }
       }
@@ -28,7 +46,30 @@ export const GET_PRODUCT_BY_ID = gql`
     product(id: $id) {
       id
       name
-      unitOfMeasure
+      unitOfMeasure {
+        id
+        name
+        symbol
+        category
+        isActive
+      }
+      materialCost {
+        id
+        name
+        costPrice
+        currency {
+          id
+          code
+          symbol
+          name
+        }
+        unitOfMeasure {
+          id
+          symbol
+          name
+        }
+        isActive
+      }
       costPrice
       costCurrency
       basePrice
@@ -40,6 +81,23 @@ export const GET_PRODUCT_BY_ID = gql`
       category {
         id
         name
+        business {
+          id
+          name
+        }
+        office {
+          id
+          name
+        }
+        department {
+          id
+          name
+        }
+        team {
+          id
+          name
+          teamType
+        }
       }
       pricingConfig {
         acceptedCurrencies
@@ -73,6 +131,7 @@ export const GET_PRODUCT_BY_ID = gql`
       }
       team {
         id
+        name
         teamType
       }
       createdBy {
@@ -95,6 +154,16 @@ export const CREATE_PRODUCT = gql`
   mutation CreateProduct($product: CreateProductInput!) {
     createProduct(createProductInput: $product) {
       id
+      name
+      unitOfMeasure {
+        id
+        name
+        symbol
+      }
+      materialCost {
+        id
+        name
+      }
     }
   }
 `;
@@ -104,7 +173,22 @@ export const UPDATE_PRODUCT = gql`
     updateProduct(updateProductInput: $product) {
       id
       name
-      unitOfMeasure
+      unitOfMeasure {
+        id
+        name
+        symbol
+      }
+      materialCost {
+        id
+        name
+        costPrice
+        currency {
+          code
+        }
+        unitOfMeasure {
+          symbol
+        }
+      }
       costPrice
       costCurrency
       basePrice
@@ -137,6 +221,29 @@ export const DELETE_PRODUCTS = gql`
   mutation RemoveProducts($ids: [Int!]!) {
     removeProducts(ids: $ids) {
       id
+    }
+  }
+`;
+
+export const GET_MATERIAL_COST_BY_ID = gql`
+  query MaterialCost($id: Int!) {
+    materialCost(id: $id) {
+      id
+      name
+      costPrice
+      currency {
+        id
+        code
+        symbol
+        name
+      }
+      unitOfMeasure {
+        id
+        name
+        symbol
+        category
+      }
+      isActive
     }
   }
 `;

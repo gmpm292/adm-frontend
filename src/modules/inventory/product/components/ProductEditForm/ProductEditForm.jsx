@@ -1,10 +1,9 @@
 import React, { useRef, useState } from "react";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
-import { useMutation, useQuery } from "@apollo/client";
-import { GET_PRODUCT_BY_ID, UPDATE_PRODUCT } from "../../graphql/queries";
+import { useMutation } from "@apollo/client";
+import { UPDATE_PRODUCT } from "../../graphql/queries";
 import { Toast } from "primereact/toast";
-import { Panel } from "primereact/panel";
 import { useProductForm } from "./hooks/useProductForm";
 import { BasicInfoPanel } from "./components/BasicInfoPanel";
 import { AttributesPanel } from "./components/AttributesPanel";
@@ -35,6 +34,8 @@ export const ProductEditForm = ({ productId, visible, onHide, onSuccess }) => {
     handleChange,
     handleNumberChange,
     handleCategorySelect,
+    handleUnitOfMeasureChange,
+    handleMaterialCostChange,
     handleAddAttribute,
     handleRemoveAttribute,
     handleAddBulkDiscount,
@@ -52,9 +53,10 @@ export const ProductEditForm = ({ productId, visible, onHide, onSuccess }) => {
 
   const handleSubmit = async () => {
     try {
-      if (!formData.name || !formData.unitOfMeasure || !formData.categoryId) {
+      // Validaciones
+      if (!formData.name || !formData.unitOfMeasureId || !formData.categoryId) {
         throw new Error(
-          "Nombre, unidad de medida y categoría son campos requeridos"
+          "Nombre, unidad de medida y categoría son campos requeridos",
         );
       }
 
@@ -81,7 +83,8 @@ export const ProductEditForm = ({ productId, visible, onHide, onSuccess }) => {
       const input = {
         id: productId,
         name: formData.name,
-        unitOfMeasure: formData.unitOfMeasure,
+        unitOfMeasureId: formData.unitOfMeasureId,
+        materialCostId: formData.materialCostId,
         costPrice: formData.costPrice,
         costCurrency: formData.costCurrency,
         basePrice: formData.basePrice,
@@ -106,9 +109,7 @@ export const ProductEditForm = ({ productId, visible, onHide, onSuccess }) => {
       };
 
       await updateProduct({
-        variables: {
-          product: input,
-        },
+        variables: { product: input },
       });
 
       toast.current.show({
@@ -176,6 +177,8 @@ export const ProductEditForm = ({ productId, visible, onHide, onSuccess }) => {
             handleToggle={() => handleToggle(0)}
             handleChange={handleChange}
             handleCategorySelect={handleCategorySelect}
+            handleUnitOfMeasureChange={handleUnitOfMeasureChange}
+            handleMaterialCostChange={handleMaterialCostChange}
             handleSecurityEntitiesChange={handleSecurityEntitiesChange}
           />
 
