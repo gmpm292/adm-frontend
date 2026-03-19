@@ -1,13 +1,10 @@
-// En product/components/ProductCreateForm/hooks/useProductForm.js
-
 import { useState, useEffect } from "react";
 import { useLazyQuery, useQuery } from "@apollo/client";
 import { GET_CURRENCIES } from "../../../../../payroll/currency/graphql/queries";
 import { ConditionalOperator } from "../../../../../../enums/conditional-operation.enum";
-
 import { calculateTotalPrice } from "../../../../../../utils/priceCalculations";
 import { GET_MATERIAL_COST_BY_ID } from "../../../graphql/queries";
-import { GET_MATERIAL_COST } from "../../../../../payroll/material-cost/graphql/queries";
+import { GET_OFFICES } from "../../../../../../components/SecurityEntitySelector/queries"; // 👈 Importar query de oficinas
 
 export const useProductForm = (visible) => {
   const [formData, setFormData] = useState({
@@ -29,14 +26,14 @@ export const useProductForm = (visible) => {
     departmentId: null,
     teamId: null,
     attributes: {},
-    quantity: 1, // Nuevo campo
+    quantity: 1,
+    createInventory: false,
+    selectedOffices: [],
     saleRules: {
       minQuantity: null,
       maxQuantity: null,
       bulkDiscounts: [],
     },
-    createInventory: false,
-    selectedOffices: [],
   });
 
   const [attributeKey, setAttributeKey] = useState("");
@@ -51,6 +48,7 @@ export const useProductForm = (visible) => {
     amount: null,
   });
   const [selectedMaterial, setSelectedMaterial] = useState(null);
+  const [officeOptions, setOfficeOptions] = useState([]); // 👈 Estado para opciones de oficinas
 
   // Query para obtener las monedas
   const {
@@ -72,13 +70,41 @@ export const useProductForm = (visible) => {
     skip: !visible,
   });
 
+  // Query para obtener detalles del material
   const [getMaterialDetails, { data: materialData }] = useLazyQuery(
     GET_MATERIAL_COST_BY_ID,
     {
       fetchPolicy: "network-only",
-      skip: true,
     },
   );
+
+  // Query para obtener oficinas
+  const [getOffices, { loading: officesLoading }] = useLazyQuery(GET_OFFICES, {
+    onCompleted: (data) => {
+      const offices =
+        data?.offices?.data?.map((office) => ({
+          label: office.name,
+          value: office.id,
+          businessId: office.business?.id,
+          businessName: office.business?.name,
+        })) || [];
+      setOfficeOptions(offices);
+    },
+  });
+
+  // Cargar oficinas cuando el formulario está visible
+  useEffect(() => {
+    if (visible) {
+      getOffices({
+        variables: {
+          options: {
+            take: 100,
+            sorts: [{ property: "name", direction: "ASC" }],
+          },
+        },
+      });
+    }
+  }, [visible, getOffices]);
 
   // Efecto para cargar detalles del material cuando se selecciona
   useEffect(() => {
@@ -118,7 +144,7 @@ export const useProductForm = (visible) => {
     };
 
     loadMaterialDetails();
-  }, [formData.materialCostId, formData.quantity]);
+  }, [formData.materialCostId, formData.quantity, getMaterialDetails]);
 
   const currencyOptions =
     currenciesData?.currencies?.data?.map((currency) => ({
@@ -282,13 +308,13 @@ export const useProductForm = (visible) => {
       teamId: null,
       attributes: {},
       quantity: 1,
+      createInventory: false,
+      selectedOffices: [],
       saleRules: {
         minQuantity: null,
         maxQuantity: null,
         bulkDiscounts: [],
       },
-      createInventory: false,
-      selectedOffices: [],
     });
     setAttributeKey("");
     setAttributeValue("");
@@ -319,6 +345,8 @@ export const useProductForm = (visible) => {
     currenciesError,
     currencyOptions,
     availableFixedPriceCurrencies,
+    officeOptions,
+    officesLoading,
     handleSecurityEntitiesChange,
     handleChange,
     handleNumberChange,

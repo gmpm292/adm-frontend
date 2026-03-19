@@ -8,12 +8,14 @@ import { BasicInfoPanel } from "./components/BasicInfoPanel";
 import { AttributesPanel } from "./components/AttributesPanel";
 import { PricingPanel } from "./components/PricingPanel";
 import { SalesRulesPanel } from "./components/SalesRulesPanel";
-import { CREATE_PRODUCT } from "../../graphql/queries";
 import { InventoryCreationPanel } from "./components/InventoryCreationPanel";
+import { CREATE_PRODUCT } from "../../graphql/queries";
+import { CREATE_INVENTORY } from "../../../inventory/graphql/queries";
 
 export const ProductCreateForm = ({ visible, onHide, onSuccess }) => {
   const toast = useRef(null);
   const [createProduct] = useMutation(CREATE_PRODUCT);
+  const [createInventory] = useMutation(CREATE_INVENTORY);
   const [openPanel, setOpenPanel] = useState(null);
 
   const {
@@ -31,6 +33,8 @@ export const ProductCreateForm = ({ visible, onHide, onSuccess }) => {
     currenciesError,
     currencyOptions,
     availableFixedPriceCurrencies,
+    officeOptions,
+    officesLoading,
     handleSecurityEntitiesChange,
     handleChange,
     handleNumberChange,
@@ -49,6 +53,43 @@ export const ProductCreateForm = ({ visible, onHide, onSuccess }) => {
 
   const handleToggle = (index) => {
     setOpenPanel(openPanel === index ? null : index);
+  };
+
+  // Función para crear inventarios automáticos
+  const createAutomaticInventories = async (productId) => {
+    if (!formData.createInventory || !formData.selectedOffices?.length) {
+      return;
+    }
+
+    // Obtener detalles completos de las oficinas seleccionadas desde officeOptions
+    const offices = formData.selectedOffices.map((officeId) => {
+      const office = officeOptions.find((opt) => opt.value === officeId);
+      return {
+        id: officeId,
+        name: office?.label || `Oficina ${officeId}`,
+        businessId: office?.businessId || formData.businessId,
+      };
+    });
+
+    // Crear inventarios en paralelo
+    const inventoryPromises = offices.map((office) =>
+      createInventory({
+        variables: {
+          inventory: {
+            productId: productId,
+            currentStock: 0,
+            minStock: 0,
+            location: office.name,
+            businessId: office.businessId || formData.businessId,
+            officeId: office.id,
+            departmentId: null,
+            teamId: null,
+          },
+        },
+      }),
+    );
+
+    await Promise.all(inventoryPromises);
   };
 
   const handleSubmit = async () => {
@@ -70,6 +111,16 @@ export const ProductCreateForm = ({ visible, onHide, onSuccess }) => {
 
       if (formData.acceptedCurrencies.length === 0) {
         throw new Error("Debe seleccionar al menos una moneda aceptada");
+      }
+
+      // Validar selección de oficinas si se activó la creación automática
+      if (
+        formData.createInventory &&
+        (!formData.selectedOffices || formData.selectedOffices.length === 0)
+      ) {
+        throw new Error(
+          "Debe seleccionar al menos una oficina para crear inventarios automáticos",
+        );
       }
 
       const pricingConfig = {
@@ -107,16 +158,31 @@ export const ProductCreateForm = ({ visible, onHide, onSuccess }) => {
             : null,
       };
 
-      await createProduct({
+      // Crear el producto
+      const { data } = await createProduct({
         variables: { product: input },
       });
 
-      toast.current.show({
-        severity: "success",
-        summary: "Éxito",
-        detail: "Producto creado correctamente",
-        life: 3000,
-      });
+      const newProductId = data?.createProduct?.id;
+
+      // Si se activó la creación automática de inventarios, crearlos
+      if (formData.createInventory && newProductId) {
+        await createAutomaticInventories(newProductId);
+
+        toast.current.show({
+          severity: "success",
+          summary: "Éxito",
+          detail: "Producto e inventarios creados correctamente",
+          life: 3000,
+        });
+      } else {
+        toast.current.show({
+          severity: "success",
+          summary: "Éxito",
+          detail: "Producto creado correctamente",
+          life: 3000,
+        });
+      }
 
       onSuccess();
       onHide();
