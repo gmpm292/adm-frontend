@@ -1,4 +1,3 @@
-// inventory-movement/components/InventorySelectorWithFilters.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import { Dropdown } from "primereact/dropdown";
 import { useLazyQuery } from "@apollo/client";
@@ -12,7 +11,8 @@ import { ConditionalOperator } from "../../../../enums/conditional-operation.enu
 export const InventorySelectorWithFilters = ({
   selectedInventoryId,
   onInventorySelect,
-  movementType, // Recibimos el tipo de movimiento del padre
+  onInventoryOptionsChange,
+  movementType,
   disabled = false,
   officeId: initialOfficeId = null,
   categoryId: initialCategoryId = null,
@@ -40,6 +40,11 @@ export const InventorySelectorWithFilters = ({
           })) || [];
 
         setInventoryOptions(inventories);
+
+        // Notificar al padre sobre las opciones disponibles
+        if (onInventoryOptionsChange) {
+          onInventoryOptionsChange(inventories);
+        }
 
         if (inventories.length === 0) {
           setNoInventoryMessage(
@@ -93,7 +98,7 @@ export const InventorySelectorWithFilters = ({
       filters.push({
         property: "office.id",
         operator: ConditionalOperator.EQUAL,
-        value: officeId,
+        value: String(officeId),
       });
     }
 
@@ -101,7 +106,7 @@ export const InventorySelectorWithFilters = ({
       filters.push({
         property: "category.id",
         operator: ConditionalOperator.EQUAL,
-        value: categoryId,
+        value: String(categoryId),
       });
     }
 
@@ -110,7 +115,7 @@ export const InventorySelectorWithFilters = ({
       filters.push({
         property: "currentStock",
         operator: ConditionalOperator.GREATER_THAN,
-        value: 0,
+        value: String(0),
       });
     }
 

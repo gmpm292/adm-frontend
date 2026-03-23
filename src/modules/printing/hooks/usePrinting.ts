@@ -1,10 +1,10 @@
 import { useState, useCallback } from "react";
-import { ApolloClient, useApolloClient } from "@apollo/client";
+import { useApolloClient } from "@apollo/client";
 import { PrintingService, PrintData } from "../services/printing.service";
 
 export const usePrinting = () => {
   const [isPrinting, setIsPrinting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   const apolloClient = useApolloClient();
 
   const print = useCallback(
@@ -41,6 +41,15 @@ export const usePrinting = () => {
     [apolloClient]
   );
 
+  // 👇 NUEVA FUNCIÓN: Para imprimir movimientos de inventario
+  const printMovement = useCallback(
+    async (movementData: any) => {
+      const printingService = PrintingService.getInstance(apolloClient);
+      return printingService.printMovement(movementData);
+    },
+    [apolloClient]
+  );
+
   const printWarranty = useCallback(
     async (garantiaData: any) => {
       const printingService = PrintingService.getInstance(apolloClient);
@@ -58,6 +67,7 @@ export const usePrinting = () => {
     error,
     print,
     printTicket,
+    printMovement, // 👈 Exportar la nueva función
     printWarranty,
     clearError,
   };

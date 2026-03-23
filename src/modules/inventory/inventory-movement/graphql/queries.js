@@ -13,8 +13,16 @@ export const GET_INVENTORY_MOVEMENTS = gql`
         updatedAt
         inventory {
           id
+          currentStock
+          location
           product {
             name
+            basePrice
+            baseCurrency
+            category {
+              id
+              name
+            }
           }
         }
         user {

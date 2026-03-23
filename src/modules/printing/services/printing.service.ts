@@ -8,7 +8,7 @@ declare global {
 }
 
 export interface PrintData {
-  type: "TICKET" | "WARRANTY" | "RECEIPT" | "CUSTOM";
+  type: "TICKET" | "WARRANTY" | "RECEIPT" | "CUSTOM" | "MOVEMENT";
   content: string[];
   config?: {
     copies?: number;
@@ -56,7 +56,7 @@ export class PrintingService {
       qz.security.setSignaturePromise((toSign: string) => {
         return async (
           resolve: (signature: string) => void,
-          reject: (error: any) => void
+          reject: (error: any) => void,
         ) => {
           try {
             const { data } = await this.apolloClient.mutate({
@@ -175,6 +175,27 @@ export class PrintingService {
   }
 
   /**
+   * Imprime un ticket de movimiento de inventario
+   */
+  async printMovement(movementData: {
+    numeroMovimiento: string;
+    fecha: string;
+    tipo: string;
+    cantidad: number;
+    motivo: string;
+    producto?: string;
+    ubicacion?: string;
+    usuario?: string;
+  }): Promise<boolean> {
+    const content = this.formatMovementContent(movementData);
+    return this.print({
+      type: "MOVEMENT",
+      content,
+      config: { cutAfterPrint: true },
+    });
+  }
+
+  /**
    * Imprime una garantía
    */
   async printWarranty(garantiaData: {
@@ -225,7 +246,43 @@ export class PrintingService {
       `TOTAL: $${ventaData.total.toFixed(2)}`,
       "********************************",
       "     ¡Gracias por su compra!",
-      "********************************"
+      "********************************",
+    );
+
+    return lines.map((line) => line + "\n");
+  }
+
+  /**
+   * Formatea contenido para ticket de movimiento
+   */
+  private formatMovementContent(movementData: any): string[] {
+    const lines = [
+      "********************************",
+      "    MOVIMIENTO DE INVENTARIO",
+      "********************************",
+      `N°: ${movementData.numeroMovimiento}`,
+      `Fecha: ${movementData.fecha}`,
+      `Tipo: ${movementData.tipo}`,
+      `Cantidad: ${movementData.cantidad}`,
+      `Motivo: ${movementData.motivo}`,
+    ];
+
+    if (movementData.producto) {
+      lines.push(`Producto: ${movementData.producto}`);
+    }
+
+    if (movementData.ubicacion) {
+      lines.push(`Ubicación: ${movementData.ubicacion}`);
+    }
+
+    if (movementData.usuario) {
+      lines.push(`Usuario: ${movementData.usuario}`);
+    }
+
+    lines.push(
+      "********************************",
+      "      ¡Operación exitosa!",
+      "********************************",
     );
 
     return lines.map((line) => line + "\n");

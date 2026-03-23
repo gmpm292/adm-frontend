@@ -9,7 +9,6 @@ import { CREATE_INVENTORY_MOVEMENT } from "../graphql/queries";
 import { Toast } from "primereact/toast";
 import { InventorySelectorWithFilters } from "./InventorySelectorWithFilters";
 import { usePrinting } from "../../../printing/printing.module";
-import { formatMovementForPrint } from "../utils/printFormatters";
 import { Message } from "primereact/message";
 
 const movementTypes = [
@@ -52,9 +51,10 @@ export const InventoryMovementCreateForm = ({
   });
 
   const [availableReasons, setAvailableReasons] = useState([]);
+  const [inventoryOptions, setInventoryOptions] = useState([]); // 👈 Estado para opciones de inventario
   const toast = useRef(null);
   const [createMovement] = useMutation(CREATE_INVENTORY_MOVEMENT);
-  const { printTicket } = usePrinting();
+  const { printMovement } = usePrinting(); // 👈 Cambiar printTicket por printMovement
 
   // Actualizar razones disponibles cuando cambia el tipo
   useEffect(() => {
@@ -80,6 +80,11 @@ export const InventoryMovementCreateForm = ({
       setFormData((prev) => ({ ...prev, inventoryId: selectedInventoryId }));
     }
   }, [selectedInventoryId]);
+
+  // Función para recibir las opciones de inventario desde el selector
+  const handleInventoryOptionsChange = (options) => {
+    setInventoryOptions(options);
+  };
 
   const handleNumberChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.value }));
@@ -140,6 +145,12 @@ export const InventoryMovementCreateForm = ({
 
       // Si está marcada la opción de imprimir, generar el ticket
       if (formData.shouldPrint && data?.createInventoryMovement?.id) {
+        // Obtener el inventario seleccionado para más detalles
+        const selectedInventory = inventoryOptions.find(
+          (opt) => opt.value === formData.inventoryId,
+        )?.data;
+
+        // Preparar datos para el servicio de impresión
         const printData = {
           numeroMovimiento: data.createInventoryMovement.id,
           fecha: new Date().toLocaleString(),
@@ -148,10 +159,13 @@ export const InventoryMovementCreateForm = ({
           motivo:
             availableReasons.find((r) => r.value === formData.reason)?.label ||
             formData.reason,
+          producto: selectedInventory?.product?.name,
+          ubicacion: selectedInventory?.location,
+          usuario: "Usuario Actual", // Idealmente esto vendría del contexto
         };
 
-        const formattedContent = formatMovementForPrint(printData);
-        await printTicket(formattedContent);
+        // ✅ Usar printMovement directamente (ya tiene su propio formateo interno)
+        await printMovement(printData);
       }
 
       toast.current.show({
@@ -231,12 +245,13 @@ export const InventoryMovementCreateForm = ({
             />
           </div>
 
-          {/* Selector de inventario con filtros - AHORA RECIBE EL TIPO */}
+          {/* Selector de inventario con filtros */}
           <InventorySelectorWithFilters
             selectedInventoryId={formData.inventoryId}
             onInventorySelect={handleInventorySelect}
-            movementType={formData.type} // Pasamos el tipo para filtrar
-            disabled={!formData.type || !!selectedInventoryId} // Deshabilitar si no hay tipo seleccionado
+            onInventoryOptionsChange={handleInventoryOptionsChange} // 👈 Pasar la función para recibir opciones
+            movementType={formData.type}
+            disabled={!formData.type || !!selectedInventoryId}
             officeId={initialOfficeId}
             categoryId={initialCategoryId}
           />
