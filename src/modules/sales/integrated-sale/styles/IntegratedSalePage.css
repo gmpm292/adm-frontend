@@ -385,3 +385,48 @@
 .step.completed .step-line {
   background-color: #28a745;
 }
+
+/* NUEVOS ESTILOS PARA LA SECCIÓN DE MENSAJERÍA */
+.delivery-section {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  transition: all 0.3s ease;
+}
+
+.delivery-section .p-field-checkbox {
+  margin-bottom: 0;
+}
+
+.delivery-section .p-field-checkbox label {
+  font-weight: 600;
+  color: #495057;
+}
+
+.delivery-fields {
+  animation: slideDown 0.3s ease-in;
+  border-top: 1px solid #dee2e6;
+  padding-top: 1.5rem;
+  margin-top: 1rem;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive para la sección de mensajería */
+@media (max-width: 768px) {
+  .delivery-fields .p-grid {
+    flex-direction: column;
+  }
+
+  .delivery-section {
+    padding: 1rem !important;
+  }
+}

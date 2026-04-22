@@ -2,6 +2,8 @@ import React from "react";
 import { Card } from "primereact/card";
 import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
+import { Checkbox } from "primereact/checkbox";
+import { InputTextarea } from "primereact/inputtextarea";
 
 import { PublicistSelector } from "../../sale-detail/components/PublicistSelector";
 import PermissionGuard from "../../../../components/PermissionGuard";
@@ -14,6 +16,14 @@ export const PublicistSection = ({
   paymentMethod,
   onPaymentMethodChange,
   sellers = [],
+  // NUEVOS PROPS PARA MENSAJERÍA
+  hasDelivery,
+  onHasDeliveryChange,
+  deliveryWorkerId,
+  onDeliveryWorkerChange,
+  deliveryNotes,
+  onDeliveryNotesChange,
+  deliveryWorkers = [], // Lista de workers disponibles como mensajeros
 }) => {
   const paymentMethods = [
     { label: "Efectivo", value: "CASH" },
@@ -94,6 +104,77 @@ export const PublicistSection = ({
                 />
               </div>
             </div>
+
+            {/* NUEVA SECCIÓN: MENSAJERÍA */}
+            <div className="p-col-12">
+              <div className="delivery-section mt-3 p-3 border-round border-1 surface-border">
+                <div className="p-field-checkbox mb-3">
+                  <Checkbox
+                    inputId="hasDelivery"
+                    checked={hasDelivery || false}
+                    onChange={(e) => onHasDeliveryChange(e.checked)}
+                  />
+                  <label htmlFor="hasDelivery" className="ml-2 font-bold">
+                    ¿Incluye servicio de mensajería?
+                  </label>
+                </div>
+
+                {/* Campos condicionales que se muestran solo si hasDelivery es true */}
+                {hasDelivery && (
+                  <div className="delivery-fields mt-3">
+                    <div className="p-grid">
+                      {/* Selector de Mensajero */}
+                      <div className="p-col-12 md:p-col-6">
+                        <div className="p-field">
+                          <label htmlFor="deliveryWorker">Mensajero</label>
+                          <Dropdown
+                            id="deliveryWorker"
+                            value={deliveryWorkerId}
+                            options={deliveryWorkers}
+                            onChange={(e) => onDeliveryWorkerChange(e.value)}
+                            optionLabel="label"
+                            placeholder="Seleccione mensajero"
+                            filter
+                            showClear
+                            disabled={deliveryWorkers.length === 0}
+                          />
+                          {deliveryWorkers.length === 0 && (
+                            <small className="text-secondary">
+                              Cargando lista de mensajeros...
+                            </small>
+                          )}
+                          <small className="text-secondary block mt-1">
+                            Seleccione el trabajador que realizará la entrega
+                          </small>
+                        </div>
+                      </div>
+
+                      {/* Notas de mensajería */}
+                      <div className="p-col-12">
+                        <div className="p-field">
+                          <label htmlFor="deliveryNotes">
+                            Notas de Mensajería
+                          </label>
+                          <InputTextarea
+                            id="deliveryNotes"
+                            value={deliveryNotes || ""}
+                            onChange={(e) =>
+                              onDeliveryNotesChange(e.target.value)
+                            }
+                            rows={3}
+                            placeholder="Instrucciones especiales, dirección de entrega, horario preferido, etc."
+                          />
+                          <small className="text-secondary block mt-1">
+                            Detalles adicionales para la entrega (opcional)
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* FIN SECCIÓN MENSAJERÍA */}
           </div>
         </div>
 
@@ -105,6 +186,15 @@ export const PublicistSection = ({
             <i className="pi pi-info-circle mr-2"></i>
             Los publicistas son opcionales y pueden ser múltiples. El método de
             pago es requerido.
+            {hasDelivery && (
+              <>
+                <br />
+                <i className="pi pi-truck mr-2"></i>
+                Esta venta incluye servicio de mensajería.
+                {deliveryWorkerId && " Mensajero asignado."}
+                {!deliveryWorkerId && " Pendiente asignar mensajero."}
+              </>
+            )}
             <PermissionGuard requiredRoles={["SUPER", "PRINCIPAL", "ADMIN"]}>
               {" "}
               Puede seleccionar un vendedor diferente.

@@ -43,7 +43,7 @@ const useDataTable = (
   globalFilterFields = [],
   showDeleted,
   initialFilters = {},
-  initialSorts = []
+  initialSorts = [],
 ): UseDataTableParams => {
   const [globalFilterValue, setGlobalFilterValue] = useState("");
   const [multiSortMeta, setMultiSortMeta] =
@@ -62,7 +62,7 @@ const useDataTable = (
     (
       filters: PrimeReactFilters,
       globalFilterValue: string,
-      globalFilterFields: string[]
+      globalFilterFields: string[],
     ): ListFilter[] => {
       const result: ListFilter[] = [];
 
@@ -91,12 +91,17 @@ const useDataTable = (
       Object.entries(filters).forEach(([field, filterData]) => {
         if (!filterData?.constraints) return;
 
+        const cutField = field.includes(".")
+          ? field.split(".").slice(-2).join(".")
+          : field;
+
         const constraints = filterData.constraints
           .filter(
-            (constraint) => constraint.value !== null && constraint.value !== ""
+            (constraint) =>
+              constraint.value !== null && constraint.value !== "",
           )
           .map((constraint) => ({
-            property: field,
+            property: cutField,
             operator: mapPrimeReactOperatorToBackend(constraint.matchMode),
             value: String(constraint.value),
             logicalOperator:
@@ -112,12 +117,14 @@ const useDataTable = (
 
       return result;
     },
-    []
+    [],
   );
 
   const buildSorts = useCallback((sortMeta) => {
     return sortMeta.map((sort) => ({
-      property: sort.field,
+      property: sort.field.includes(".")
+        ? sort.field.split(".").slice(-2).join(".")
+        : sort.field,
       direction: sort.order === 1 ? "ASC" : "DESC",
     }));
   }, []);
@@ -128,7 +135,7 @@ const useDataTable = (
     const filters = buildFilters(
       columnFilters,
       globalFilterValue,
-      globalFilterFields
+      globalFilterFields,
     );
     const sorts = buildSorts(multiSortMeta);
     const params = {
@@ -169,7 +176,7 @@ const useDataTable = (
       event.multiSortMeta ||
         (event.sortField
           ? [{ field: event.sortField, order: event.sortOrder }]
-          : [])
+          : []),
     );
   };
 

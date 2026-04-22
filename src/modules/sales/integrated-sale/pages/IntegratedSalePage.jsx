@@ -33,6 +33,7 @@ export function IntegratedSalePage() {
   const [paymentMethod, setPaymentMethod] = useState("CASH");
   const [createdSaleId, setCreatedSaleId] = useState(null);
   const [sellers, setSellers] = useState([]);
+  const [deliveryWorkers, setDeliveryWorkers] = useState([]); // NUEVO: Lista de mensajeros
   const [isInitialized, setIsInitialized] = useState(false);
   const toast = useRef(null);
 
@@ -52,6 +53,10 @@ export function IntegratedSalePage() {
           officeId: worker.office?.id,
         })) || [];
       setSellers(workerOptions);
+
+      // NUEVO: También usamos la misma lista para mensajeros
+      // En un caso real, podrías filtrar por rol específico de mensajero
+      setDeliveryWorkers(workerOptions);
     },
   });
 
@@ -60,7 +65,7 @@ export function IntegratedSalePage() {
   const currentUserOfficeId = user?.officeId;
   const currentUserRoles = user?.role || [];
   const isAdministrativeUser = ["SUPER", "PRINCIPAL"].some((role) =>
-    currentUserRoles.includes(role)
+    currentUserRoles.includes(role),
   );
 
   // Cargar ventas pendientes del localStorage SOLO al iniciar - UNA VEZ
@@ -70,7 +75,7 @@ export function IntegratedSalePage() {
         const savedSales = localStorage.getItem(PENDING_SALES_STORAGE_KEY);
         console.log(
           "Cargando ventas pendientes desde localStorage:",
-          savedSales
+          savedSales,
         );
 
         if (savedSales) {
@@ -110,7 +115,7 @@ export function IntegratedSalePage() {
     try {
       localStorage.setItem(
         PENDING_SALES_STORAGE_KEY,
-        JSON.stringify(pendingSales)
+        JSON.stringify(pendingSales),
       );
     } catch (error) {
       console.error("Error saving pending sales:", error);
@@ -150,14 +155,14 @@ export function IntegratedSalePage() {
 
       if (!businessId || !officeId) {
         throw new Error(
-          "No se pudo determinar la empresa y oficina para la venta"
+          "No se pudo determinar la empresa y oficina para la venta",
         );
       }
 
       // Calcular el nuevo total
       const newTotalAmount = currentSale.saleDetails.reduce(
         (sum, detail) => sum + detail.quantity * (detail.unitPrice || 0),
-        0
+        0,
       );
 
       const updateInput = {
@@ -176,6 +181,10 @@ export function IntegratedSalePage() {
         paymentMethod: paymentMethod,
         paymentDetails: null,
         invoiceNumber: currentSale.invoiceNumber || `INV-${Date.now()}`,
+        // NUEVOS CAMPOS DE MENSAJERÍA
+        hasDelivery: currentSale.hasDelivery || false,
+        deliveryWorkerId: currentSale.deliveryWorkerId || null,
+        deliveryNotes: currentSale.deliveryNotes || null,
       };
 
       console.log("Actualizando venta:", updateInput);
@@ -236,7 +245,7 @@ export function IntegratedSalePage() {
 
       if (!businessId || !officeId) {
         throw new Error(
-          "No se pudo determinar la empresa y oficina para la venta"
+          "No se pudo determinar la empresa y oficina para la venta",
         );
       }
 
@@ -262,6 +271,10 @@ export function IntegratedSalePage() {
         paymentDetails: null,
         invoiceNumber: `INV-${Date.now()}`,
         details: saleDetails,
+        // NUEVOS CAMPOS DE MENSAJERÍA
+        hasDelivery: currentSale.hasDelivery || false,
+        deliveryWorkerId: currentSale.deliveryWorkerId || null,
+        deliveryNotes: currentSale.deliveryNotes || null,
       };
 
       console.log("Enviando venta:", saleInput);
@@ -286,7 +299,7 @@ export function IntegratedSalePage() {
 
       // Eliminar de pendientes si existe
       const updatedPendingSales = pendingSales.filter(
-        (sale) => sale.id !== currentSale.id
+        (sale) => sale.id !== currentSale.id,
       );
       setPendingSales(updatedPendingSales);
 
@@ -330,6 +343,10 @@ export function IntegratedSalePage() {
       selectedSeller: null,
       currentStep: 1,
       createdAt: new Date().toISOString(),
+      // NUEVOS CAMPOS DE MENSAJERÍA
+      hasDelivery: false,
+      deliveryWorkerId: null,
+      deliveryNotes: "",
     };
     setCurrentSale(newSale);
     setCreatedSaleId(null);
@@ -339,7 +356,14 @@ export function IntegratedSalePage() {
 
   // Cargar venta pendiente
   const handleLoadPendingSale = (sale) => {
-    setCurrentSale(sale);
+    // Asegurar que los campos de mensajería existan en ventas antiguas
+    const saleWithDelivery = {
+      ...sale,
+      hasDelivery: sale.hasDelivery || false,
+      deliveryWorkerId: sale.deliveryWorkerId || null,
+      deliveryNotes: sale.deliveryNotes || "",
+    };
+    setCurrentSale(saleWithDelivery);
     // Si la venta está en el paso 4, restaurar el createdSaleId
     if (sale.currentStep === 4 && sale.createdSaleId) {
       setCreatedSaleId(sale.createdSaleId);
@@ -385,7 +409,7 @@ export function IntegratedSalePage() {
     };
 
     const existingIndex = pendingSales.findIndex(
-      (sale) => sale.id === currentSale.id
+      (sale) => sale.id === currentSale.id,
     );
     let updatedSales;
 
@@ -561,11 +585,38 @@ export function IntegratedSalePage() {
     }));
   };
 
+  // NUEVOS HANDLERS PARA MENSAJERÍA
+  const handleHasDeliveryChange = (checked) => {
+    setCurrentSale((prev) => ({
+      ...prev,
+      hasDelivery: checked,
+      // Si desmarca la mensajería, limpiamos los campos relacionados
+      ...(checked === false && {
+        deliveryWorkerId: null,
+        deliveryNotes: "",
+      }),
+    }));
+  };
+
+  const handleDeliveryWorkerChange = (workerId) => {
+    setCurrentSale((prev) => ({
+      ...prev,
+      deliveryWorkerId: workerId,
+    }));
+  };
+
+  const handleDeliveryNotesChange = (notes) => {
+    setCurrentSale((prev) => ({
+      ...prev,
+      deliveryNotes: notes,
+    }));
+  };
+
   // Obtener información del vendedor seleccionado
   const getSelectedSellerInfo = () => {
     if (!currentSale?.selectedSeller) return null;
     const seller = sellers.find(
-      (seller) => seller.value === currentSale.selectedSeller
+      (seller) => seller.value === currentSale.selectedSeller,
     );
     return seller;
   };
@@ -580,7 +631,7 @@ export function IntegratedSalePage() {
         severity: "success",
         summary: "Pago Procesado",
         detail: `Venta #${createdSaleId} completada exitosamente. Total: ${result.totalInBaseCurrency.toFixed(
-          2
+          2,
         )}`,
         life: 5000,
       });
@@ -598,7 +649,7 @@ export function IntegratedSalePage() {
   const totalAmount =
     currentSale?.saleDetails?.reduce(
       (sum, detail) => sum + detail.quantity * (detail.unitPrice || 0),
-      0
+      0,
     ) || 0;
 
   const selectedSellerInfo = getSelectedSellerInfo();
@@ -797,6 +848,14 @@ export function IntegratedSalePage() {
                       currentUserBusinessId={currentUserBusinessId}
                       currentUserOfficeId={currentUserOfficeId}
                       sellers={sellers}
+                      // NUEVOS PROPS DE MENSAJERÍA
+                      hasDelivery={currentSale.hasDelivery}
+                      onHasDeliveryChange={handleHasDeliveryChange}
+                      deliveryWorkerId={currentSale.deliveryWorkerId}
+                      onDeliveryWorkerChange={handleDeliveryWorkerChange}
+                      deliveryNotes={currentSale.deliveryNotes}
+                      onDeliveryNotesChange={handleDeliveryNotesChange}
+                      deliveryWorkers={deliveryWorkers}
                     />
 
                     <div className="final-summary">
@@ -824,6 +883,15 @@ export function IntegratedSalePage() {
                                       Empresa: {currentUserBusinessId}
                                       <br />
                                       Oficina: {currentUserOfficeId}
+                                      {currentSale.hasDelivery && (
+                                        <>
+                                          <br />
+                                          <i className="pi pi-truck mr-2"></i>
+                                          Incluye mensajería
+                                          {currentSale.deliveryWorkerId &&
+                                            " - Mensajero asignado"}
+                                        </>
+                                      )}
                                       {isEditingExistingSale && (
                                         <>
                                           <br />
@@ -865,6 +933,15 @@ export function IntegratedSalePage() {
                                     selectedSellerInfo
                                       ? selectedSellerInfo.officeId
                                       : currentUserOfficeId}
+                                    {currentSale.hasDelivery && (
+                                      <>
+                                        <br />
+                                        <i className="pi pi-truck mr-2"></i>
+                                        Incluye mensajería
+                                        {currentSale.deliveryWorkerId &&
+                                          " - Mensajero asignado"}
+                                      </>
+                                    )}
                                     {isEditingExistingSale && (
                                       <>
                                         <br />

@@ -16,12 +16,45 @@ import {
 import { AttendanceCreateForm } from "./AttendanceCreateForm";
 import { AttendanceEditForm } from "./AttendanceEditForm";
 import { AttendanceDetailForm } from "./AttendanceDetailForm";
-import { PrimeReactSortMeta } from "../../../../components/BaseTable/types";
+import {
+  PrimeReactFilters,
+  PrimeReactSortMeta,
+} from "../../../../components/BaseTable/types";
+import { FilterMatchMode, FilterOperator } from "primereact/api";
 
 // Ejemplo para pasar ordenamientos iniciales o por defecto.
 const defaultSorts: PrimeReactSortMeta[] = [
   { field: "attendanceDate", order: -1 },
 ];
+
+// Ejemplo para pasar filtros iniciales o por defecto.
+const getTodayRange = () => {
+  const startOfDay = new Date();
+  startOfDay.setUTCHours(0, 0, 0, 0);
+
+  const endOfDay = new Date();
+  endOfDay.setUTCHours(23, 59, 59, 999);
+
+  return {
+    start: startOfDay.toISOString(),
+    end: endOfDay.toISOString(),
+  };
+};
+const defaultFilters: PrimeReactFilters = {
+  attendanceDate: {
+    operator: FilterOperator.AND,
+    constraints: [
+      {
+        value: getTodayRange().start,
+        matchMode: FilterMatchMode.GREATER_THAN_OR_EQUAL_TO,
+      },
+      {
+        value: getTodayRange().end,
+        matchMode: FilterMatchMode.LESS_THAN_OR_EQUAL_TO,
+      },
+    ],
+  },
+};
 
 // Función para obtener el nombre completo del trabajador
 const getWorkerFullName = (worker: any) => {
@@ -657,6 +690,7 @@ export function AttendanceTable() {
         header={header}
         showDeleteFilter={true}
         initialSorts={defaultSorts}
+        initialFilters={defaultFilters}
       >
         <Column
           body={actionBodyTemplate}

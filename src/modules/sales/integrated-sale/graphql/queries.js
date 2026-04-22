@@ -19,7 +19,14 @@ export const GET_PRODUCTS_BY_CATEGORY = gql`
     productsByCategory(categoryId: $categoryId) {
       id
       name
-      unitOfMeasure
+      unitOfMeasure{
+        id
+        name
+        symbol
+        category
+        description
+        isActive
+      }
       basePrice
       baseCurrency
       attributes
