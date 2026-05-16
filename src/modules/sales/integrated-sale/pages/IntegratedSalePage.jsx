@@ -11,15 +11,18 @@ import "../styles/IntegratedSalePage.css";
 import { CustomerSection } from "../components/CustomerSection";
 import { CustomerSearchSection } from "../components/CustomerSearchSection";
 import { ProductSection } from "../components/ProductSection";
-import { SaleSummary } from "../components/SaleSummary";
-import { PublicistSection } from "../components/PublicistSection";
 import { PaymentSection } from "../components/PaymentSection";
 import { CREATE_SALE, UPDATE_SALE } from "../../sale/graphql/queries";
 import { CREATE_CUSTOMER } from "../../customer/graphql/queries";
+
 import { PendingSalesManager } from "../components/PendingSalesManager";
 import { useAuthContext } from "../../../auth/components/AuthContext";
-import PermissionGuard from "../../../../components/PermissionGuard";
 import { GET_WORKERS } from "../../../payroll/worker/graphql/queries";
+import {
+  CREATE_SALE_DETAIL,
+  DELETE_SALE_DETAILS,
+  UPDATE_SALE_DETAIL,
+} from "../../sale-detail/graphql/queries";
 
 // Clave única para localStorage
 const PENDING_SALES_STORAGE_KEY = "integrated_sales_pending_sales";
@@ -33,13 +36,16 @@ export function IntegratedSalePage() {
   const [paymentMethod, setPaymentMethod] = useState("CASH");
   const [createdSaleId, setCreatedSaleId] = useState(null);
   const [sellers, setSellers] = useState([]);
-  const [deliveryWorkers, setDeliveryWorkers] = useState([]); // NUEVO: Lista de mensajeros
+  const [deliveryWorkers, setDeliveryWorkers] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const toast = useRef(null);
 
   const [createCustomer] = useMutation(CREATE_CUSTOMER);
   const [createSale] = useMutation(CREATE_SALE);
   const [updateSale] = useMutation(UPDATE_SALE);
+  const [createSaleDetail] = useMutation(CREATE_SALE_DETAIL);
+  const [updateSaleDetail] = useMutation(UPDATE_SALE_DETAIL);
+  const [deleteSaleDetails] = useMutation(DELETE_SALE_DETAILS);
 
   const [getWorkers] = useLazyQuery(GET_WORKERS, {
     onCompleted: (data) => {
@@ -53,14 +59,10 @@ export function IntegratedSalePage() {
           officeId: worker.office?.id,
         })) || [];
       setSellers(workerOptions);
-
-      // NUEVO: También usamos la misma lista para mensajeros
-      // En un caso real, podrías filtrar por rol específico de mensajero
       setDeliveryWorkers(workerOptions);
     },
   });
 
-  // Obtener datos del usuario actual
   const currentUserBusinessId = user?.businessId;
   const currentUserOfficeId = user?.officeId;
   const currentUserRoles = user?.role || [];
@@ -68,16 +70,13 @@ export function IntegratedSalePage() {
     currentUserRoles.includes(role),
   );
 
-  // Cargar ventas pendientes del localStorage SOLO al iniciar - UNA VEZ
+  // Obtener el saleId actual (de createdSaleId o de currentSale)
+  const getSaleId = () => createdSaleId || currentSale?.createdSaleId;
+
   useEffect(() => {
     const loadPendingSales = () => {
       try {
         const savedSales = localStorage.getItem(PENDING_SALES_STORAGE_KEY);
-        console.log(
-          "Cargando ventas pendientes desde localStorage:",
-          savedSales,
-        );
-
         if (savedSales) {
           const parsedSales = JSON.parse(savedSales);
           setPendingSales(Array.isArray(parsedSales) ? parsedSales : []);
@@ -91,27 +90,17 @@ export function IntegratedSalePage() {
         setIsInitialized(true);
       }
     };
-
     loadPendingSales();
   }, []);
 
-  // Cargar vendedores AL INICIAR - SIEMPRE se cargan
   useEffect(() => {
     getWorkers({
-      variables: {
-        options: {
-          take: 100,
-        },
-      },
+      variables: { options: { take: 100 } },
     });
   }, [getWorkers]);
 
-  // Guardar ventas pendientes en localStorage SOLO cuando realmente cambien
   useEffect(() => {
     if (!isInitialized) return;
-
-    console.log("Guardando ventas pendientes en localStorage:", pendingSales);
-
     try {
       localStorage.setItem(
         PENDING_SALES_STORAGE_KEY,
@@ -119,223 +108,309 @@ export function IntegratedSalePage() {
       );
     } catch (error) {
       console.error("Error saving pending sales:", error);
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: "No se pudieron guardar las ventas pendientes",
-        life: 3000,
-      });
     }
   }, [pendingSales, isInitialized]);
 
-  // Función para actualizar una venta existente
-  const handleUpdateSale = async () => {
-    try {
-      if (!currentSale.customerData) {
-        throw new Error("Debe seleccionar o crear un cliente primero");
+  // AGREGAR PRODUCTO
+  const handleAddProduct = async (productDetail) => {
+    const saleId = getSaleId();
+
+    if (saleId) {
+      // La venta ya existe en backend: crear detalle inmediatamente
+      try {
+        const { data } = await createSaleDetail({
+          variables: {
+            saleDetail: {
+              saleId: parseInt(saleId),
+              productId: parseInt(productDetail.productId),
+              quantity: parseFloat(productDetail.quantity),
+              publicistIds: currentSale.selectedPublicists || [],
+            },
+          },
+        });
+
+        // Guardar el id devuelto por el backend
+        const detailWithId = {
+          ...productDetail,
+          id: data?.createSaleDetail?.id,
+        };
+
+        setCurrentSale((prev) => ({
+          ...prev,
+          saleDetails: [...prev.saleDetails, detailWithId],
+        }));
+
+        toast.current.show({
+          severity: "success",
+          summary: "Producto agregado",
+          detail: `${productDetail.productName} agregado correctamente`,
+          life: 2000,
+        });
+      } catch (error) {
+        toast.current.show({
+          severity: "error",
+          summary: "Error",
+          detail: "Error al agregar producto: " + error.message,
+          life: 3000,
+        });
       }
-
-      if (currentSale.saleDetails.length === 0) {
-        throw new Error("Debe agregar al menos un producto");
-      }
-
-      // Determinar businessId y officeId según el tipo de usuario
-      let businessId, officeId, salesWorkerId;
-
-      if (isAdministrativeUser && currentSale.selectedSeller) {
-        const selectedSeller = getSelectedSellerInfo();
-        businessId = selectedSeller?.businessId || currentUserBusinessId;
-        officeId = selectedSeller?.officeId || currentUserOfficeId;
-        salesWorkerId = parseInt(currentSale.selectedSeller);
-      } else {
-        businessId = currentUserBusinessId;
-        officeId = currentUserOfficeId;
-        salesWorkerId = null;
-      }
-
-      if (!businessId || !officeId) {
-        throw new Error(
-          "No se pudo determinar la empresa y oficina para la venta",
-        );
-      }
-
-      // Calcular el nuevo total
-      const newTotalAmount = currentSale.saleDetails.reduce(
-        (sum, detail) => sum + detail.quantity * (detail.unitPrice || 0),
-        0,
-      );
-
-      const updateInput = {
-        id: parseInt(createdSaleId || currentSale.createdSaleId),
-        businessId: parseInt(businessId),
-        officeId: parseInt(officeId),
-        departmentId: currentSale.customerData.departmentId
-          ? parseInt(currentSale.customerData.departmentId)
-          : null,
-        teamId: currentSale.customerData.teamId
-          ? parseInt(currentSale.customerData.teamId)
-          : null,
-        salesWorkerId: salesWorkerId,
-        customerId: parseInt(currentSale.customerData.id),
-        totalAmount: newTotalAmount,
-        paymentMethod: paymentMethod,
-        paymentDetails: null,
-        invoiceNumber: currentSale.invoiceNumber || `INV-${Date.now()}`,
-        // NUEVOS CAMPOS DE MENSAJERÍA
-        hasDelivery: currentSale.hasDelivery || false,
-        deliveryWorkerId: currentSale.deliveryWorkerId || null,
-        deliveryNotes: currentSale.deliveryNotes || null,
-      };
-
-      console.log("Actualizando venta:", updateInput);
-
-      const { data } = await updateSale({
-        variables: {
-          updateSaleInput: updateInput,
-        },
-      });
-
-      toast.current.show({
-        severity: "success",
-        summary: "Venta actualizada",
-        detail: `Venta #${data.updateSale.id} actualizada correctamente`,
-        life: 5000,
-      });
-
-      // Avanzar al paso 4 (pago)
+    } else {
+      // Venta nueva: solo actualizar estado local
       setCurrentSale((prev) => ({
         ...prev,
-        currentStep: 4,
+        saleDetails: [...prev.saleDetails, productDetail],
       }));
-    } catch (error) {
-      console.error("Error updating sale:", error);
-      toast.current.show({
-        severity: "error",
-        summary: "Error",
-        detail: "Error al actualizar la venta: " + error.message,
-        life: 5000,
-      });
     }
   };
 
-  // Función para crear una nueva venta
+  // ELIMINAR PRODUCTO
+  const handleRemoveProduct = async (index) => {
+    const detailToRemove = currentSale.saleDetails[index];
+    const saleId = getSaleId();
+
+    // Si el detalle tiene id, eliminarlo en backend
+    if (saleId && detailToRemove.id) {
+      try {
+        await deleteSaleDetails({
+          variables: { ids: [parseInt(detailToRemove.id)] },
+        });
+
+        toast.current.show({
+          severity: "info",
+          summary: "Producto eliminado",
+          detail: "Producto eliminado correctamente",
+          life: 2000,
+        });
+      } catch (error) {
+        toast.current.show({
+          severity: "error",
+          summary: "Error",
+          detail: "Error al eliminar producto: " + error.message,
+          life: 3000,
+        });
+        return; // No actualizar estado local si falló el backend
+      }
+    }
+
+    // Actualizar estado local
+    setCurrentSale((prev) => ({
+      ...prev,
+      saleDetails: prev.saleDetails.filter((_, i) => i !== index),
+    }));
+  };
+
+  // ACTUALIZAR CANTIDAD
+  const handleUpdateQuantity = async (index, newQuantity) => {
+    if (!newQuantity || newQuantity < 1) return;
+
+    const detail = currentSale.saleDetails[index];
+    const saleId = getSaleId();
+
+    // Si el detalle tiene id, actualizar en backend
+    if (saleId && detail.id) {
+      try {
+        await updateSaleDetail({
+          variables: {
+            saleDetail: {
+              id: parseInt(detail.id),
+              quantity: parseFloat(newQuantity),
+            },
+          },
+        });
+      } catch (error) {
+        toast.current.show({
+          severity: "error",
+          summary: "Error",
+          detail: "Error al actualizar cantidad: " + error.message,
+          life: 3000,
+        });
+        return; // No actualizar estado local si falló el backend
+      }
+    }
+
+    // Actualizar estado local
+    setCurrentSale((prev) => {
+      const updatedDetails = [...prev.saleDetails];
+      updatedDetails[index] = {
+        ...updatedDetails[index],
+        quantity: newQuantity,
+        subtotal: newQuantity * (updatedDetails[index].unitPrice || 0),
+      };
+      return { ...prev, saleDetails: updatedDetails };
+    });
+  };
+
+  // Crear nueva venta en backend
   const handleCreateSale = async () => {
-    try {
-      if (!currentSale.customerData) {
-        throw new Error("Debe seleccionar o crear un cliente primero");
-      }
+    if (!currentSale.customerData) {
+      throw new Error("Debe seleccionar o crear un cliente primero");
+    }
+    if (currentSale.saleDetails.length === 0) {
+      throw new Error("Debe agregar al menos un producto");
+    }
 
-      if (currentSale.saleDetails.length === 0) {
-        throw new Error("Debe agregar al menos un producto");
-      }
+    let businessId, officeId, salesWorkerId;
 
-      // Determinar businessId y officeId según el tipo de usuario
-      let businessId, officeId, salesWorkerId;
+    if (isAdministrativeUser && currentSale.selectedSeller) {
+      const selectedSeller = getSelectedSellerInfo();
+      businessId = selectedSeller?.businessId || currentUserBusinessId;
+      officeId = selectedSeller?.officeId || currentUserOfficeId;
+      salesWorkerId = parseInt(currentSale.selectedSeller);
+    } else {
+      businessId = currentUserBusinessId;
+      officeId = currentUserOfficeId;
+      salesWorkerId = null;
+    }
 
-      if (isAdministrativeUser && currentSale.selectedSeller) {
-        const selectedSeller = getSelectedSellerInfo();
-        businessId = selectedSeller?.businessId || currentUserBusinessId;
-        officeId = selectedSeller?.officeId || currentUserOfficeId;
-        salesWorkerId = parseInt(currentSale.selectedSeller);
-      } else {
-        businessId = currentUserBusinessId;
-        officeId = currentUserOfficeId;
-        salesWorkerId = null;
-      }
-
-      if (!businessId || !officeId) {
-        throw new Error(
-          "No se pudo determinar la empresa y oficina para la venta",
-        );
-      }
-
-      // Preparar los detalles de la venta con publicistIds en cada detalle
-      const saleDetails = currentSale.saleDetails.map((detail) => ({
+    const saleInput = {
+      businessId: parseInt(businessId),
+      officeId: parseInt(officeId),
+      departmentId: currentSale.customerData.departmentId
+        ? parseInt(currentSale.customerData.departmentId)
+        : null,
+      teamId: currentSale.customerData.teamId
+        ? parseInt(currentSale.customerData.teamId)
+        : null,
+      salesWorkerId: salesWorkerId,
+      customerId: parseInt(currentSale.customerData.id),
+      paymentMethod: paymentMethod,
+      paymentDetails: null,
+      invoiceNumber: `INV-${Date.now()}`,
+      details: currentSale.saleDetails.map((detail) => ({
         productId: parseInt(detail.productId),
         quantity: parseFloat(detail.quantity),
         publicistIds: currentSale.selectedPublicists || [],
-      }));
+      })),
+      hasDelivery: currentSale.hasDelivery || false,
+      deliveryWorkerId: currentSale.deliveryWorkerId || null,
+      deliveryNotes: currentSale.deliveryNotes || null,
+    };
 
-      const saleInput = {
-        businessId: parseInt(businessId),
-        officeId: parseInt(officeId),
-        departmentId: currentSale.customerData.departmentId
-          ? parseInt(currentSale.customerData.departmentId)
-          : null,
-        teamId: currentSale.customerData.teamId
-          ? parseInt(currentSale.customerData.teamId)
-          : null,
-        salesWorkerId: salesWorkerId,
-        customerId: parseInt(currentSale.customerData.id),
-        paymentMethod: paymentMethod,
-        paymentDetails: null,
-        invoiceNumber: `INV-${Date.now()}`,
-        details: saleDetails,
-        // NUEVOS CAMPOS DE MENSAJERÍA
-        hasDelivery: currentSale.hasDelivery || false,
-        deliveryWorkerId: currentSale.deliveryWorkerId || null,
-        deliveryNotes: currentSale.deliveryNotes || null,
-      };
+    const { data } = await createSale({
+      variables: { sale: saleInput },
+    });
 
-      console.log("Enviando venta:", saleInput);
+    const newSaleId = data.createSale.id;
+    setCreatedSaleId(newSaleId);
 
-      const { data } = await createSale({
-        variables: {
-          sale: saleInput,
-        },
-      });
-
-      // Guardar el ID de la venta creada para el paso de pago
-      const newSaleId = data.createSale.id;
-      setCreatedSaleId(newSaleId);
-
-      // Avanzar al paso 4 (pago) y guardar el saleId en el currentSale
-      setCurrentSale((prev) => ({
-        ...prev,
-        currentStep: 4,
-        createdSaleId: newSaleId,
-        invoiceNumber: saleInput.invoiceNumber,
-      }));
-
-      // Eliminar de pendientes si existe
-      const updatedPendingSales = pendingSales.filter(
-        (sale) => sale.id !== currentSale.id,
+    // Asignar id del backend a los detalles para futuras ediciones
+    const backendDetails = data.createSale.details || [];
+    const updatedDetails = currentSale.saleDetails.map((detail) => {
+      const backendDetail = backendDetails.find(
+        (bd) => bd.product?.id === parseInt(detail.productId),
       );
-      setPendingSales(updatedPendingSales);
+      return {
+        ...detail,
+        id: backendDetail ? backendDetail.id : detail.id,
+      };
+    });
 
-      toast.current.show({
-        severity: "success",
-        summary: "Venta creada",
-        detail: `Venta #${newSaleId} creada. Proceda al pago.`,
-        life: 5000,
-      });
+    setCurrentSale((prev) => ({
+      ...prev,
+      currentStep: 3,
+      createdSaleId: newSaleId,
+      invoiceNumber: saleInput.invoiceNumber,
+      saleDetails: updatedDetails,
+    }));
+
+    const updatedPendingSales = pendingSales.filter(
+      (sale) => sale.id !== currentSale.id,
+    );
+    setPendingSales(updatedPendingSales);
+
+    toast.current.show({
+      severity: "success",
+      summary: "Venta creada",
+      detail: `Venta #${newSaleId} creada. Proceda al pago.`,
+      life: 5000,
+    });
+
+    return newSaleId;
+  };
+
+  // Actualizar datos generales de la venta
+  const updateSaleGeneralData = async () => {
+    const saleId = parseInt(getSaleId());
+
+    let businessId, officeId, salesWorkerId;
+    if (isAdministrativeUser && currentSale.selectedSeller) {
+      const selectedSeller = getSelectedSellerInfo();
+      businessId = selectedSeller?.businessId || currentUserBusinessId;
+      officeId = selectedSeller?.officeId || currentUserOfficeId;
+      salesWorkerId = parseInt(currentSale.selectedSeller);
+    } else {
+      businessId = currentUserBusinessId;
+      officeId = currentUserOfficeId;
+      salesWorkerId = null;
+    }
+
+    // Preparar variables solo con los campos necesarios
+    const variables = {
+      id: saleId,
+      businessId: parseInt(businessId),
+      officeId: parseInt(officeId),
+      customerId: parseInt(currentSale.customerData?.id),
+      paymentMethod: paymentMethod,
+      invoiceNumber: currentSale.invoiceNumber || `INV-${Date.now()}`,
+      hasDelivery: currentSale.hasDelivery || false,
+      deliveryWorkerId: currentSale.deliveryWorkerId || null,
+      deliveryNotes: currentSale.deliveryNotes || null,
+    };
+
+    // Solo agregar campos opcionales si tienen valor
+    if (salesWorkerId) {
+      variables.salesWorkerId = salesWorkerId;
+    }
+    if (currentSale.customerData?.departmentId) {
+      variables.departmentId = parseInt(currentSale.customerData.departmentId);
+    }
+    if (currentSale.customerData?.teamId) {
+      variables.teamId = parseInt(currentSale.customerData.teamId);
+    }
+
+    console.log("=== ACTUALIZANDO VENTA ===");
+    console.log("Variables:", variables);
+
+    await updateSale({
+      variables: {
+        sale: variables,
+      },
+    });
+  };
+
+  // Continuar al pago
+  const handleContinueToPayment = async () => {
+    try {
+      const saleId = getSaleId();
+
+      if (saleId) {
+        // La venta ya existe: actualizar datos generales y navegar al paso 3
+        await updateSaleGeneralData();
+
+        toast.current.show({
+          severity: "success",
+          summary: "Venta actualizada",
+          detail: "Datos generales actualizados correctamente",
+          life: 2000,
+        });
+
+        setCurrentSale((prev) => ({ ...prev, currentStep: 3 }));
+      } else {
+        // La venta no existe: crearla en backend
+        await handleCreateSale();
+      }
     } catch (error) {
-      console.error("Error creating sale:", error);
       toast.current.show({
         severity: "error",
         summary: "Error",
-        detail: "Error al crear la venta: " + error.message,
+        detail: error.message,
         life: 5000,
       });
     }
   };
 
-  // Función unificada para crear o actualizar venta
-  const handleSaveSale = async () => {
-    const saleId = createdSaleId || currentSale?.createdSaleId;
-
-    if (saleId) {
-      // Si ya existe una venta, actualizar
-      await handleUpdateSale();
-    } else {
-      // Si no existe, crear nueva
-      await handleCreateSale();
-    }
-  };
-
-  // Nueva venta
   const handleNewSale = () => {
-    const newSale = {
+    setCurrentSale({
       id: Date.now().toString(),
       customerData: null,
       saleDetails: [],
@@ -343,20 +418,16 @@ export function IntegratedSalePage() {
       selectedSeller: null,
       currentStep: 1,
       createdAt: new Date().toISOString(),
-      // NUEVOS CAMPOS DE MENSAJERÍA
       hasDelivery: false,
       deliveryWorkerId: null,
       deliveryNotes: "",
-    };
-    setCurrentSale(newSale);
+    });
     setCreatedSaleId(null);
     setCustomerSearchMode(false);
     setActiveTab(0);
   };
 
-  // Cargar venta pendiente
   const handleLoadPendingSale = (sale) => {
-    // Asegurar que los campos de mensajería existan en ventas antiguas
     const saleWithDelivery = {
       ...sale,
       hasDelivery: sale.hasDelivery || false,
@@ -364,8 +435,8 @@ export function IntegratedSalePage() {
       deliveryNotes: sale.deliveryNotes || "",
     };
     setCurrentSale(saleWithDelivery);
-    // Si la venta está en el paso 4, restaurar el createdSaleId
-    if (sale.currentStep === 4 && sale.createdSaleId) {
+
+    if (sale.currentStep === 3 && sale.createdSaleId) {
       setCreatedSaleId(sale.createdSaleId);
     } else {
       setCreatedSaleId(null);
@@ -374,21 +445,17 @@ export function IntegratedSalePage() {
     setActiveTab(0);
   };
 
-  // Eliminar venta pendiente
   const handleDeletePendingSale = (saleId) => {
     confirmDialog({
       message: "¿Estás seguro de que deseas eliminar esta venta pendiente?",
       header: "Confirmación",
       icon: "pi pi-exclamation-triangle",
       accept: () => {
-        const updatedSales = pendingSales.filter((sale) => sale.id !== saleId);
-        setPendingSales(updatedSales);
-
+        setPendingSales(pendingSales.filter((sale) => sale.id !== saleId));
         if (currentSale && currentSale.id === saleId) {
           setCurrentSale(null);
           setCreatedSaleId(null);
         }
-
         toast.current.show({
           severity: "success",
           summary: "Venta eliminada",
@@ -399,7 +466,6 @@ export function IntegratedSalePage() {
     });
   };
 
-  // Guardar venta actual como pendiente
   const handleSaveAsPending = () => {
     if (!currentSale) return;
 
@@ -411,16 +477,13 @@ export function IntegratedSalePage() {
     const existingIndex = pendingSales.findIndex(
       (sale) => sale.id === currentSale.id,
     );
-    let updatedSales;
-
     if (existingIndex >= 0) {
-      updatedSales = [...pendingSales];
+      const updatedSales = [...pendingSales];
       updatedSales[existingIndex] = saleToSave;
+      setPendingSales(updatedSales);
     } else {
-      updatedSales = [...pendingSales, saleToSave];
+      setPendingSales([...pendingSales, saleToSave]);
     }
-
-    setPendingSales(updatedSales);
 
     toast.current.show({
       severity: "success",
@@ -430,16 +493,10 @@ export function IntegratedSalePage() {
     });
   };
 
-  // Atender otro cliente - Guarda la venta actual y crea una nueva
   const handleAttendAnotherCustomer = () => {
     if (!currentSale) return;
-
-    // Guardar venta actual como pendiente
     handleSaveAsPending();
-
-    // Crear nueva venta
     handleNewSale();
-
     toast.current.show({
       severity: "info",
       summary: "Nueva venta iniciada",
@@ -448,7 +505,6 @@ export function IntegratedSalePage() {
     });
   };
 
-  // Manejar creación de cliente
   const handleCustomerSubmit = async (customerInfo) => {
     try {
       const { data } = await createCustomer({
@@ -468,18 +524,16 @@ export function IntegratedSalePage() {
         },
       });
 
-      const customerData = {
-        id: data.createCustomer.id,
-        ...customerInfo,
-        fullName: `${customerInfo.name} ${customerInfo.lastName || ""}`.trim(),
-      };
-
       setCurrentSale((prev) => ({
         ...prev,
-        customerData,
+        customerData: {
+          id: data.createCustomer.id,
+          ...customerInfo,
+          fullName:
+            `${customerInfo.name} ${customerInfo.lastName || ""}`.trim(),
+        },
         currentStep: 2,
       }));
-
       setCustomerSearchMode(false);
 
       toast.current.show({
@@ -498,29 +552,25 @@ export function IntegratedSalePage() {
     }
   };
 
-  // Manejar selección de cliente existente
   const handleSelectExistingCustomer = (customer) => {
-    const customerData = {
-      id: customer.id,
-      name: customer.name,
-      lastName: customer.additionalInfo?.lastName || "",
-      ci: customer.additionalInfo?.ci || "",
-      email: customer.email,
-      phone: customer.phone,
-      businessId: customer.businessId,
-      officeId: customer.officeId,
-      departmentId: customer.departmentId,
-      teamId: customer.teamId,
-      fullName: customer.name,
-      existingCustomer: true,
-    };
-
     setCurrentSale((prev) => ({
       ...prev,
-      customerData,
+      customerData: {
+        id: customer.id,
+        name: customer.name,
+        lastName: customer.additionalInfo?.lastName || "",
+        ci: customer.additionalInfo?.ci || "",
+        email: customer.email,
+        phone: customer.phone,
+        businessId: customer.businessId,
+        officeId: customer.officeId,
+        departmentId: customer.departmentId,
+        teamId: customer.teamId,
+        fullName: customer.name,
+        existingCustomer: true,
+      },
       currentStep: 2,
     }));
-
     setCustomerSearchMode(false);
 
     toast.current.show({
@@ -531,119 +581,54 @@ export function IntegratedSalePage() {
     });
   };
 
-  // Cambiar entre modos de cliente
   const handleCustomerModeChange = (mode) => {
     setCustomerSearchMode(mode === "search");
   };
 
-  // Manejar agregar producto
-  const handleAddProduct = (productDetail) => {
-    setCurrentSale((prev) => ({
-      ...prev,
-      saleDetails: [...prev.saleDetails, productDetail],
-    }));
-  };
-
-  // Manejar eliminar producto
-  const handleRemoveProduct = (index) => {
-    setCurrentSale((prev) => ({
-      ...prev,
-      saleDetails: prev.saleDetails.filter((_, i) => i !== index),
-    }));
-  };
-
-  // Cambiar paso
-  const handleStepChange = (step) => {
-    setCurrentSale((prev) => ({
-      ...prev,
-      currentStep: step,
-    }));
-  };
-
-  // Volver a selección de cliente
   const handleBackToCustomerSelection = () => {
-    setCurrentSale((prev) => ({
-      ...prev,
-      currentStep: 1,
-    }));
+    setCurrentSale((prev) => ({ ...prev, currentStep: 1 }));
     setCustomerSearchMode(true);
   };
 
-  // Manejar cambio de publicistas
   const handlePublicistsChange = (publicists) => {
-    setCurrentSale((prev) => ({
-      ...prev,
-      selectedPublicists: publicists,
-    }));
+    setCurrentSale((prev) => ({ ...prev, selectedPublicists: publicists }));
   };
 
-  // Manejar cambio de vendedor
   const handleSellerChange = (seller) => {
-    setCurrentSale((prev) => ({
-      ...prev,
-      selectedSeller: seller,
-    }));
+    setCurrentSale((prev) => ({ ...prev, selectedSeller: seller }));
   };
 
-  // NUEVOS HANDLERS PARA MENSAJERÍA
   const handleHasDeliveryChange = (checked) => {
     setCurrentSale((prev) => ({
       ...prev,
       hasDelivery: checked,
-      // Si desmarca la mensajería, limpiamos los campos relacionados
-      ...(checked === false && {
-        deliveryWorkerId: null,
-        deliveryNotes: "",
-      }),
+      ...(checked === false && { deliveryWorkerId: null, deliveryNotes: "" }),
     }));
   };
 
   const handleDeliveryWorkerChange = (workerId) => {
-    setCurrentSale((prev) => ({
-      ...prev,
-      deliveryWorkerId: workerId,
-    }));
+    setCurrentSale((prev) => ({ ...prev, deliveryWorkerId: workerId }));
   };
 
   const handleDeliveryNotesChange = (notes) => {
-    setCurrentSale((prev) => ({
-      ...prev,
-      deliveryNotes: notes,
-    }));
+    setCurrentSale((prev) => ({ ...prev, deliveryNotes: notes }));
   };
 
-  // Obtener información del vendedor seleccionado
   const getSelectedSellerInfo = () => {
     if (!currentSale?.selectedSeller) return null;
-    const seller = sellers.find(
+    return sellers.find(
       (seller) => seller.value === currentSale.selectedSeller,
     );
-    return seller;
   };
 
-  // Manejar validación exitosa del pago
   const handlePaymentValidated = (result, payments, newSale = false) => {
     if (newSale) {
-      // Iniciar nueva venta
       handleNewSale();
-    } else if (result && result.valid) {
-      toast.current.show({
-        severity: "success",
-        summary: "Pago Procesado",
-        detail: `Venta #${createdSaleId} completada exitosamente. Total: ${result.totalInBaseCurrency.toFixed(
-          2,
-        )}`,
-        life: 5000,
-      });
     }
   };
 
-  // Volver al paso 3 desde el paso 4
-  const handleBackToStep3 = () => {
-    setCurrentSale((prev) => ({
-      ...prev,
-      currentStep: 3,
-    }));
+  const handleBackToStep2 = () => {
+    setCurrentSale((prev) => ({ ...prev, currentStep: 2 }));
   };
 
   const totalAmount =
@@ -652,9 +637,6 @@ export function IntegratedSalePage() {
       0,
     ) || 0;
 
-  const selectedSellerInfo = getSelectedSellerInfo();
-
-  // Determinar si estamos editando una venta existente
   const isEditingExistingSale = createdSaleId || currentSale?.createdSaleId;
 
   return (
@@ -693,11 +675,9 @@ export function IntegratedSalePage() {
           activeIndex={activeTab}
           onTabChange={(e) => setActiveTab(e.index)}
         >
-          {/* Pestaña de Venta Actual */}
           <TabPanel header="Venta Actual">
             {currentSale ? (
               <div className="sale-process">
-                {/* Paso 1: Gestión de Cliente */}
                 {currentSale.currentStep === 1 && (
                   <div className="customer-step">
                     <div className="step-header">
@@ -709,8 +689,6 @@ export function IntegratedSalePage() {
                         </div>
                       )}
                     </div>
-
-                    {/* Selector de modo cliente */}
                     <div className="customer-mode-selector">
                       <div className="mode-buttons">
                         <Button
@@ -735,8 +713,6 @@ export function IntegratedSalePage() {
                         />
                       </div>
                     </div>
-
-                    {/* Contenido según el modo seleccionado */}
                     {customerSearchMode ? (
                       <CustomerSearchSection
                         onSelectCustomer={handleSelectExistingCustomer}
@@ -746,109 +722,42 @@ export function IntegratedSalePage() {
                       <CustomerSection
                         initialData={currentSale.customerData}
                         onSubmit={handleCustomerSubmit}
-                        onStepChange={handleStepChange}
+                        onStepChange={() => {}}
                       />
                     )}
                   </div>
                 )}
 
-                {/* Paso 2: Agregar Productos */}
                 {currentSale.currentStep === 2 && (
                   <div className="step-content">
                     <div className="step-header">
-                      <div className="step-navigation">
-                        <Button
-                          icon="pi pi-arrow-left"
-                          className="p-button-text"
-                          onClick={handleBackToCustomerSelection}
-                          label="Cambiar cliente"
-                        />
-                        {currentSale.customerData?.existingCustomer && (
-                          <div className="customer-badge">
-                            <i className="pi pi-check-circle text-green-500 mr-2"></i>
-                            <span>Cliente existente</span>
-                          </div>
-                        )}
-                        {isEditingExistingSale && (
-                          <div className="edit-badge">
-                            <i className="pi pi-pencil text-blue-500 mr-2"></i>
-                            <span>
-                              Editando venta #
-                              {createdSaleId || currentSale.createdSaleId}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <h3>Paso 2: Agregar Productos</h3>
+                      <h3>Paso 2: Configurar Venta</h3>
+                      {isEditingExistingSale && (
+                        <div className="edit-badge">
+                          <i className="pi pi-pencil text-blue-500 mr-2"></i>
+                          <span>
+                            Editando venta #
+                            {createdSaleId || currentSale.createdSaleId}
+                          </span>
+                        </div>
+                      )}
                     </div>
-
-                    <div className="product-management">
-                      <ProductSection
-                        onAddProduct={handleAddProduct}
-                        saleDetails={currentSale.saleDetails}
-                        onRemoveProduct={handleRemoveProduct}
-                      />
-
-                      <SaleSummary
-                        saleDetails={currentSale.saleDetails}
-                        totalAmount={totalAmount}
-                        customer={currentSale.customerData}
-                      />
-                    </div>
-
-                    <div className="navigation-buttons">
-                      <Button
-                        label="Continuar a Publicistas"
-                        icon="pi pi-arrow-right"
-                        onClick={() => handleStepChange(3)}
-                        disabled={currentSale.saleDetails.length === 0}
-                        className="p-button-primary"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Paso 3: Publicistas y Vendedor */}
-                {currentSale.currentStep === 3 && (
-                  <div className="step-content">
-                    <div className="step-header">
-                      <div className="step-navigation">
-                        <Button
-                          icon="pi pi-arrow-left"
-                          className="p-button-text"
-                          onClick={() => handleStepChange(2)}
-                          label="Volver a productos"
-                        />
-                        {currentSale.customerData?.existingCustomer && (
-                          <div className="customer-badge">
-                            <i className="pi pi-check-circle text-green-500 mr-2"></i>
-                            <span>Cliente existente</span>
-                          </div>
-                        )}
-                        {isEditingExistingSale && (
-                          <div className="edit-badge">
-                            <i className="pi pi-pencil text-blue-500 mr-2"></i>
-                            <span>
-                              Editando venta #
-                              {createdSaleId || currentSale.createdSaleId}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <h3>Paso 3: Asignación de Publicistas y Vendedor</h3>
-                    </div>
-
-                    <PublicistSection
+                    <ProductSection
+                      onAddProduct={handleAddProduct}
+                      saleDetails={currentSale.saleDetails}
+                      onRemoveProduct={handleRemoveProduct}
+                      onUpdateQuantity={handleUpdateQuantity}
+                      customer={currentSale.customerData}
                       selectedPublicists={currentSale.selectedPublicists}
                       onPublicistsChange={handlePublicistsChange}
                       selectedSeller={currentSale.selectedSeller}
                       onSellerChange={handleSellerChange}
                       paymentMethod={paymentMethod}
                       onPaymentMethodChange={setPaymentMethod}
+                      sellers={sellers}
                       currentUserBusinessId={currentUserBusinessId}
                       currentUserOfficeId={currentUserOfficeId}
-                      sellers={sellers}
-                      // NUEVOS PROPS DE MENSAJERÍA
+                      isAdministrativeUser={isAdministrativeUser}
                       hasDelivery={currentSale.hasDelivery}
                       onHasDeliveryChange={handleHasDeliveryChange}
                       deliveryWorkerId={currentSale.deliveryWorkerId}
@@ -856,146 +765,22 @@ export function IntegratedSalePage() {
                       deliveryNotes={currentSale.deliveryNotes}
                       onDeliveryNotesChange={handleDeliveryNotesChange}
                       deliveryWorkers={deliveryWorkers}
+                      onBackToCustomer={handleBackToCustomerSelection}
+                      onContinueToPayment={handleContinueToPayment}
+                      isEditingExistingSale={isEditingExistingSale}
+                      createdSaleId={createdSaleId || currentSale.createdSaleId}
                     />
-
-                    <div className="final-summary">
-                      <SaleSummary
-                        saleDetails={currentSale.saleDetails}
-                        totalAmount={totalAmount}
-                        customer={currentSale.customerData}
-                      />
-
-                      <div>
-                        <PermissionGuard
-                          requiredRoles={["SUPER", "PRINCIPAL", "ADMIN"]}
-                          showFallback
-                          fallback={
-                            <div className="sale-info-note mb-3">
-                              <div className="p-message p-message-info">
-                                <div className="p-message-wrapper">
-                                  <span className="p-message-icon pi pi-info-circle"></span>
-                                  <div className="p-message-content">
-                                    <p>
-                                      <strong>Información de la venta:</strong>
-                                      <br />
-                                      Vendedor: Usted
-                                      <br />
-                                      Empresa: {currentUserBusinessId}
-                                      <br />
-                                      Oficina: {currentUserOfficeId}
-                                      {currentSale.hasDelivery && (
-                                        <>
-                                          <br />
-                                          <i className="pi pi-truck mr-2"></i>
-                                          Incluye mensajería
-                                          {currentSale.deliveryWorkerId &&
-                                            " - Mensajero asignado"}
-                                        </>
-                                      )}
-                                      {isEditingExistingSale && (
-                                        <>
-                                          <br />
-                                          <strong>
-                                            Venta existente: #
-                                            {createdSaleId ||
-                                              currentSale.createdSaleId}
-                                          </strong>
-                                        </>
-                                      )}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          }
-                        >
-                          <div className="sale-info-note mb-3">
-                            <div className="p-message p-message-info">
-                              <div className="p-message-wrapper">
-                                <span className="p-message-icon pi pi-info-circle"></span>
-                                <div className="p-message-content">
-                                  <p>
-                                    <strong>Información de la venta:</strong>
-                                    <br />
-                                    {currentSale.selectedSeller &&
-                                    selectedSellerInfo
-                                      ? `Vendedor: ${selectedSellerInfo.label}`
-                                      : "Vendedor: Usted"}
-                                    <br />
-                                    Empresa:{" "}
-                                    {currentSale.selectedSeller &&
-                                    selectedSellerInfo
-                                      ? selectedSellerInfo.businessId
-                                      : currentUserBusinessId}
-                                    <br />
-                                    Oficina:{" "}
-                                    {currentSale.selectedSeller &&
-                                    selectedSellerInfo
-                                      ? selectedSellerInfo.officeId
-                                      : currentUserOfficeId}
-                                    {currentSale.hasDelivery && (
-                                      <>
-                                        <br />
-                                        <i className="pi pi-truck mr-2"></i>
-                                        Incluye mensajería
-                                        {currentSale.deliveryWorkerId &&
-                                          " - Mensajero asignado"}
-                                      </>
-                                    )}
-                                    {isEditingExistingSale && (
-                                      <>
-                                        <br />
-                                        <strong>
-                                          Venta existente: #
-                                          {createdSaleId ||
-                                            currentSale.createdSaleId}
-                                        </strong>
-                                      </>
-                                    )}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </PermissionGuard>
-                      </div>
-
-                      <div className="action-buttons">
-                        <div className="flex justify-content-end">
-                          <Button
-                            label={
-                              isEditingExistingSale
-                                ? "Actualizar Venta y Proceder al Pago"
-                                : "Crear Venta y Proceder al Pago"
-                            }
-                            icon={
-                              isEditingExistingSale
-                                ? "pi pi-refresh"
-                                : "pi pi-credit-card"
-                            }
-                            className={
-                              isEditingExistingSale
-                                ? "p-button-warning"
-                                : "p-button-success"
-                            }
-                            onClick={handleSaveSale}
-                            size="normal"
-                          />
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 )}
 
-                {/* PASO 4: Procesar Pago */}
-                {currentSale.currentStep === 4 && (
+                {currentSale.currentStep === 3 && (
                   <div className="step-content">
                     <div className="step-header">
                       <div className="step-navigation">
                         <Button
                           icon="pi pi-arrow-left"
                           className="p-button-text"
-                          onClick={handleBackToStep3}
+                          onClick={handleBackToStep2}
                           label="Modificar venta"
                         />
                         {isEditingExistingSale && (
@@ -1008,15 +793,14 @@ export function IntegratedSalePage() {
                           </div>
                         )}
                       </div>
-                      <h3>Paso 4: Procesar Pago</h3>
+                      <h3>Paso 3: Procesar Pago</h3>
                     </div>
-
                     <PaymentSection
                       saleId={createdSaleId || currentSale.createdSaleId}
                       totalAmount={totalAmount}
                       baseCurrency="USD"
                       onPaymentValidated={handlePaymentValidated}
-                      onBack={handleBackToStep3}
+                      onBack={handleBackToStep2}
                     />
                   </div>
                 )}
@@ -1041,7 +825,6 @@ export function IntegratedSalePage() {
             )}
           </TabPanel>
 
-          {/* Pestaña de Ventas Pendientes */}
           <TabPanel header={`Ventas Pendientes (${pendingSales.length})`}>
             <PendingSalesManager
               pendingSales={pendingSales}

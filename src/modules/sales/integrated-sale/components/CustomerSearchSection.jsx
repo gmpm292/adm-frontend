@@ -269,6 +269,13 @@ export const CustomerSearchSection = ({ onSelectCustomer, onBack }) => {
                     !searchTerm && Object.keys(lazyState.filters).length === 0
                   }
                 />
+                <Button
+                  label="Usar Cliente Seleccionado"
+                  icon="pi pi-check"
+                  className="p-button-primary"
+                  onClick={handleConfirmSelection}
+                  disabled={!selectedCustomer}
+                />
               </div>
             </div>
           </div>
@@ -338,7 +345,7 @@ export const CustomerSearchSection = ({ onSelectCustomer, onBack }) => {
           </DataTable>
         </div>
 
-        {/* Acciones */}
+        {/* Acciones inferiores - Original */}
         <div className="search-actions mt-3">
           <div className="flex justify-content-between align-items-center">
             <Button

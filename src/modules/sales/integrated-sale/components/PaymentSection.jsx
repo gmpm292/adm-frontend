@@ -5,11 +5,11 @@ import { Dropdown } from "primereact/dropdown";
 import { Toast } from "primereact/toast";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Message } from "primereact/message";
-import { Dialog } from "primereact/dialog";
 import { Calendar } from "primereact/calendar";
 import { useMutation } from "@apollo/client";
 import { CurrencyAmountInput } from "../../../payroll/currency/components/CurrencyAmountInput";
 import { VALIDATE_SALE_PAYMENTS, MAKE_SALE } from "../../sale/graphql/queries";
+import PermissionGuard from "../../../../components/PermissionGuard";
 
 const paymentMethods = [
   { label: "Efectivo", value: "CASH" },
@@ -33,7 +33,6 @@ export const PaymentSection = ({
   const [validationResult, setValidationResult] = useState(null);
   const [validating, setValidating] = useState(false);
   const [saleCompleted, setSaleCompleted] = useState(false);
-  const [showMakeSaleDialog, setShowMakeSaleDialog] = useState(false);
   const [customDate, setCustomDate] = useState(null);
   const [processingSale, setProcessingSale] = useState(false);
   const toast = useRef(null);
@@ -102,7 +101,7 @@ export const PaymentSection = ({
     setValidationResult(null);
   };
 
-  const handleValidatePayments = async () => {
+  const handleValidateAndProcess = async () => {
     try {
       setValidating(true);
       setValidationResult(null);
@@ -119,7 +118,8 @@ export const PaymentSection = ({
         throw new Error("Todas las monedas deben estar seleccionadas");
       }
 
-      const { data } = await validatePayments({
+      // Paso 1: Validar pagos
+      const { data: validationData } = await validatePayments({
         variables: {
           validateSalePaymentsInput: {
             saleId: parseInt(saleId),
@@ -129,60 +129,25 @@ export const PaymentSection = ({
         },
       });
 
-      const result = data.validateSalePayments;
+      const result = validationData.validateSalePayments;
       setValidationResult(result);
 
-      if (result.valid) {
-        toast.current.show({
-          severity: "success",
-          summary: "Validación Exitosa",
-          detail: `Pago válido. Total en ${baseCurrency}: ${result.totalInBaseCurrency.toFixed(
-            2
-          )}`,
-          life: 5000,
-        });
-
-        if (onPaymentValidated) {
-          onPaymentValidated(result, payments);
-        }
-
-        // Abrir el diálogo para realizar la venta
-        setShowMakeSaleDialog(true);
-      } else {
+      if (!result.valid) {
         toast.current.show({
           severity: "warn",
           summary: "Validación Fallida",
           detail: result.message,
           life: 5000,
         });
+        setValidating(false);
+        return;
       }
-    } catch (err) {
-      toast.current.show({
-        severity: "error",
-        summary: "Error",
-        detail: err.message,
-        life: 5000,
-      });
-    } finally {
-      setValidating(false);
-    }
-  };
 
-  const handleProcessSale = async () => {
-    if (!validationResult?.valid) {
-      toast.current.show({
-        severity: "warn",
-        summary: "Validación Requerida",
-        detail: "Por favor valide los pagos primero",
-        life: 3000,
-      });
-      return;
-    }
-
-    try {
+      // Paso 2: Procesar venta
       setProcessingSale(true);
+      setValidating(false);
 
-      const { data } = await makeSale({
+      const { data: saleData } = await makeSale({
         variables: {
           makeSaleInput: {
             saleId: parseInt(saleId),
@@ -195,27 +160,24 @@ export const PaymentSection = ({
       toast.current.show({
         severity: "success",
         summary: "Venta Realizada",
-        detail: "La venta ha sido procesada exitosamente",
-        life: 3000,
+        detail: `Venta #${saleId} procesada exitosamente. Total en ${baseCurrency}: ${result.totalInBaseCurrency.toFixed(2)}`,
+        life: 5000,
       });
 
-      // Resetear estado
-      setValidationResult(null);
-      setCustomDate(null);
-      setShowMakeSaleDialog(false);
       setSaleCompleted(true);
 
       if (onSaleCompleted) {
-        onSaleCompleted(data.makeSale);
+        onSaleCompleted(saleData.makeSale);
       }
     } catch (err) {
       toast.current.show({
         severity: "error",
         summary: "Error",
         detail: err.message,
-        life: 3000,
+        life: 5000,
       });
     } finally {
+      setValidating(false);
       setProcessingSale(false);
     }
   };
@@ -231,14 +193,9 @@ export const PaymentSection = ({
     }
   };
 
-  const handleCloseMakeSaleDialog = () => {
-    setShowMakeSaleDialog(false);
-    setCustomDate(null);
-  };
-
   const totalPayments = payments.reduce(
     (sum, payment) => sum + (payment.amount || 0),
-    0
+    0,
   );
 
   const totalsByCurrency = payments.reduce((acc, payment) => {
@@ -248,33 +205,10 @@ export const PaymentSection = ({
     return acc;
   }, {});
 
-  // Diálogo para realizar la venta
-  const makeSaleDialogFooter = (
-    <div className="flex justify-content-between align-items-center">
-      <div>
-        <Button
-          label="Cancelar"
-          icon="pi pi-times"
-          onClick={handleCloseMakeSaleDialog}
-          className="p-button-text"
-        />
-      </div>
-      <div className="flex gap-2">
-        <Button
-          label="Procesar Venta"
-          icon="pi pi-shopping-cart"
-          onClick={handleProcessSale}
-          disabled={processingSale || !validationResult?.valid}
-          loading={processingSale}
-        />
-      </div>
-    </div>
-  );
-
   return (
     <div className="payment-section">
       <Toast ref={toast} />
-      <Card title="Paso 4: Procesar Pago">
+      <Card title="Paso 3: Procesar Pago">
         <div className="payment-content">
           {!saleCompleted ? (
             <>
@@ -335,7 +269,7 @@ export const PaymentSection = ({
                               handleCurrencyChange(
                                 index,
                                 currencyCode,
-                                currencyData
+                                currencyData,
                               )
                             }
                             placeholder="Ingrese el monto"
@@ -377,6 +311,32 @@ export const PaymentSection = ({
                   />
                 </div>
 
+                {/* Fecha Personalizada - Solo visible para roles autorizados */}
+                <PermissionGuard
+                  requiredRoles={["SUPER", "PRINCIPAL", "ADMIN"]}
+                >
+                  <div className="custom-date-section mb-4 p-3 border-round border-1 surface-border">
+                    <div className="p-field">
+                      <label htmlFor="customDate">
+                        Fecha Personalizada (Opcional)
+                      </label>
+                      <Calendar
+                        id="customDate"
+                        value={customDate}
+                        onChange={(e) => setCustomDate(e.value)}
+                        dateFormat="dd/mm/yy"
+                        showIcon
+                        showButtonBar
+                        className="w-full"
+                      />
+                      <small className="text-secondary block mt-1">
+                        Puede establecer una fecha diferente a la actual para
+                        esta venta
+                      </small>
+                    </div>
+                  </div>
+                </PermissionGuard>
+
                 {/* Resumen de pagos */}
                 <div className="payment-summary p-3 border-round border-1 surface-border bg-gray-50">
                   <h5 className="mt-0 mb-3">Resumen de Pagos Ingresados</h5>
@@ -397,7 +357,7 @@ export const PaymentSection = ({
                               })}
                             </span>
                           </div>
-                        )
+                        ),
                       )}
                     </div>
                   )}
@@ -413,14 +373,14 @@ export const PaymentSection = ({
                   </div>
                 </div>
 
-                {validationResult && (
+                {validationResult && !processingSale && (
                   <div className="mt-4">
                     <Message
                       severity={validationResult.valid ? "success" : "error"}
                       text={
                         validationResult.valid
                           ? `✅ Pago válido. Total en ${baseCurrency}: ${validationResult.totalInBaseCurrency.toFixed(
-                              2
+                              2,
                             )}`
                           : `❌ ${validationResult.message}`
                       }
@@ -428,12 +388,16 @@ export const PaymentSection = ({
                   </div>
                 )}
 
-                {validating && (
+                {(validating || processingSale) && (
                   <div className="flex justify-content-center align-items-center mt-3">
                     <ProgressSpinner
                       style={{ width: "30px", height: "30px" }}
                     />
-                    <span className="ml-2">Validando pagos...</span>
+                    <span className="ml-2">
+                      {validating
+                        ? "Validando pagos..."
+                        : "Procesando venta..."}
+                    </span>
                   </div>
                 )}
 
@@ -446,16 +410,16 @@ export const PaymentSection = ({
                       onClick={onBack}
                     />
 
-                    <div className="flex gap-2">
-                      <Button
-                        label="Validar Pago"
-                        icon="pi pi-check-circle"
-                        className="p-button-success"
-                        onClick={handleValidatePayments}
-                        disabled={validating || totalPayments === 0}
-                        loading={validating}
-                      />
-                    </div>
+                    <Button
+                      label="Validar y Procesar Venta"
+                      icon="pi pi-check-circle"
+                      className="p-button-success"
+                      onClick={handleValidateAndProcess}
+                      disabled={
+                        validating || processingSale || totalPayments === 0
+                      }
+                      loading={validating || processingSale}
+                    />
                   </div>
                 </div>
               </div>
@@ -518,98 +482,6 @@ export const PaymentSection = ({
           )}
         </div>
       </Card>
-
-      {/* Diálogo para realizar la venta */}
-      <Dialog
-        header="Realizar Venta"
-        visible={showMakeSaleDialog}
-        style={{ width: "600px" }}
-        footer={makeSaleDialogFooter}
-        onHide={handleCloseMakeSaleDialog}
-        modal
-      >
-        <div className="p-fluid">
-          <div className="mb-4">
-            <h4>Procesar Venta #{saleId}</h4>
-            <p className="text-sm text-color-secondary">
-              Complete la información para finalizar la venta
-            </p>
-          </div>
-
-          <div className="grid">
-            <div className="field col-12">
-              <label htmlFor="customDate">Fecha Personalizada (Opcional)</label>
-              <Calendar
-                id="customDate"
-                value={customDate}
-                onChange={(e) => setCustomDate(e.value)}
-                dateFormat="dd/mm/yy"
-                showIcon
-                showButtonBar
-              />
-            </div>
-          </div>
-
-          {validationResult && (
-            <div className="mt-4">
-              <Message
-                severity={validationResult.valid ? "success" : "warn"}
-                text={
-                  validationResult.valid
-                    ? `✅ Pagos validados correctamente`
-                    : `❌ ${validationResult.message}`
-                }
-              />
-
-              {validationResult.valid && (
-                <div className="mt-3 p-3 border-round border-1 surface-border">
-                  <h5>Resumen de Pagos Validados:</h5>
-                  {payments.map((payment, index) => (
-                    <div
-                      key={index}
-                      className="flex justify-content-between mb-1"
-                    >
-                      <span>Pago {index + 1}:</span>
-                      <span className="font-bold">
-                        {payment.amount.toLocaleString("en-US", {
-                          style: "currency",
-                          currency: payment.currency,
-                        })}{" "}
-                        ({payment.currency}) - {payment.paymentMethod}
-                      </span>
-                    </div>
-                  ))}
-                  <div className="flex justify-content-between mt-2 pt-2 border-top-1">
-                    <span className="font-bold">Total en {baseCurrency}:</span>
-                    <span className="font-bold text-lg">
-                      ${validationResult.totalInBaseCurrency.toFixed(2)}{" "}
-                      {baseCurrency}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {processingSale && (
-            <div className="flex justify-content-center align-items-center mt-3">
-              <ProgressSpinner style={{ width: "30px", height: "30px" }} />
-              <span className="ml-2">Procesando venta...</span>
-            </div>
-          )}
-
-          {!validationResult?.valid && (
-            <div className="mt-4 p-3 border-round border-1 surface-border bg-blue-50">
-              <div className="flex align-items-center">
-                <i className="pi pi-info-circle text-blue-500 mr-2"></i>
-                <span>
-                  Por favor valide los pagos antes de procesar la venta
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      </Dialog>
     </div>
   );
 };

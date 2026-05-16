@@ -118,7 +118,10 @@ export const UPDATE_SALE_DETAIL = gql`
       }
       publicists {
         id
-        name
+        user {
+          id
+          name
+        }
       }
     }
   }

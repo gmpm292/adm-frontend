@@ -74,6 +74,13 @@ export const CREATE_SALE = gql`
   mutation CreateSale($sale: CreateSaleInput!) {
     createSale(createSaleInput: $sale) {
       id
+      details {
+        id
+        product {
+          id
+        }
+        quantity
+      }
     }
   }
 `;
