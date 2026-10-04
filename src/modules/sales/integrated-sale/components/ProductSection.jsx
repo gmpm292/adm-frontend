@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card } from "primereact/card";
 import { Dropdown } from "primereact/dropdown";
 import { InputNumber } from "primereact/inputnumber";
@@ -169,6 +169,64 @@ export const ProductSection = ({
   };
 
   const canAddProduct = selectedProduct && quantity > 0;
+
+  // Agrupar deliveryWorkers por workerType
+  const groupedDeliveryWorkers = useMemo(() => {
+    if (!deliveryWorkers || deliveryWorkers.length === 0) return [];
+
+    const workerTypeTranslations = {
+      SERVICE: "Servicio",
+      PUBLICIST: "Publicista",
+      AGENT: "Agente",
+      TECHNICIAN: "Técnico",
+      SUPERVISOR: "Supervisor",
+      ECONOMIC: "Económico",
+      COURIER: "Mensajero",
+      OPERATIVE: "Operativo",
+      COMMUNITY_MANAGER: "Community Manager",
+      PRINCIPAL: "Principal",
+      ADMINISTRATIVE: "Administrativo",
+      MANAGER: "Gerente",
+      OTHER: "Otro",
+    };
+
+    // Verificar la estructura del primer elemento para debug
+    if (deliveryWorkers.length > 0) {
+      console.log("Estructura de deliveryWorkers:", deliveryWorkers[0]);
+    }
+
+    // Agrupar por workerType, manejando diferentes estructuras posibles
+    const grouped = deliveryWorkers.reduce((acc, worker) => {
+      // Intentar obtener workerType de diferentes ubicaciones posibles
+      const type =
+        worker.workerType ||
+        worker.originalData?.workerType ||
+        worker.__typename?.replace("Worker", "").toUpperCase() ||
+        "Sin Tipo";
+
+      if (!acc[type]) {
+        acc[type] = [];
+      }
+      acc[type].push(worker);
+      return acc;
+    }, {});
+
+    // Transformar al formato que PrimeReact necesita
+    return Object.entries(grouped)
+      .map(([workerType, workers]) => ({
+        label: workerTypeTranslations[workerType] || workerType,
+        value: workerType,
+        items: workers,
+        workerType: workerType, // Guardamos el tipo para ordenar
+      }))
+      .sort((a, b) => {
+        // COURIER siempre primero
+        if (a.workerType === "COURIER") return -1;
+        if (b.workerType === "COURIER") return 1;
+        // Luego ordenar alfabéticamente por la etiqueta traducida
+        return a.label.localeCompare(b.label);
+      });
+  }, [deliveryWorkers]);
 
   return (
     <div className="sale-configuration">
@@ -411,9 +469,11 @@ export const ProductSection = ({
                           <Dropdown
                             id="deliveryWorker"
                             value={deliveryWorkerId}
-                            options={deliveryWorkers}
+                            options={groupedDeliveryWorkers}
                             onChange={(e) => onDeliveryWorkerChange(e.value)}
                             optionLabel="label"
+                            optionGroupLabel="label"
+                            optionGroupChildren="items"
                             placeholder="Seleccione mensajero"
                             filter
                             showClear
@@ -470,15 +530,21 @@ export const ProductSection = ({
               </span>
             )}
             <Button
-              label="Continuar al Pago"
-              icon="pi pi-arrow-right"
-              className="p-button-primary"
+              label={hasDelivery ? "Finalizar" : "Continuar al Pago"}
+              icon={hasDelivery ? "pi pi-check" : "pi pi-arrow-right"}
+              className={hasDelivery ? "p-button-success" : "p-button-primary"}
               onClick={onContinueToPayment}
-              disabled={saleDetails.length === 0}
+              disabled={
+                saleDetails.length === 0 || (hasDelivery && !deliveryWorkerId)
+              }
               tooltip={
                 saleDetails.length === 0
                   ? "Agregue al menos un producto"
-                  : "Ir al paso de pago"
+                  : hasDelivery && !deliveryWorkerId
+                    ? "Debe seleccionar un mensajero"
+                    : hasDelivery
+                      ? "Finalizar y procesar la venta"
+                      : "Ir al paso de pago"
               }
             />
           </div>

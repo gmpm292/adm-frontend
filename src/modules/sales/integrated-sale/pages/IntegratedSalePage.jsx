@@ -57,6 +57,7 @@ export function IntegratedSalePage() {
           value: worker.id,
           businessId: worker.business?.id,
           officeId: worker.office?.id,
+          workerType: worker.workerType,
         })) || [];
       setSellers(workerOptions);
       setDeliveryWorkers(workerOptions);
@@ -399,6 +400,51 @@ export function IntegratedSalePage() {
         // La venta no existe: crearla en backend
         await handleCreateSale();
       }
+    } catch (error) {
+      toast.current.show({
+        severity: "error",
+        summary: "Error",
+        detail: error.message,
+        life: 5000,
+      });
+    }
+  };
+
+  const handleFinalizeWithDelivery = async () => {
+    try {
+      const saleId = getSaleId();
+
+      if (saleId) {
+        // La venta ya existe: actualizar datos generales
+        await updateSaleGeneralData();
+
+        toast.current.show({
+          severity: "success",
+          summary: "Venta actualizada",
+          detail: "Venta con mensajería finalizada correctamente",
+          life: 2000,
+        });
+      } else {
+        // La venta no existe: crearla en backend
+        await handleCreateSale();
+
+        toast.current.show({
+          severity: "success",
+          summary: "Venta creada",
+          detail: "Venta con mensajería creada y finalizada correctamente",
+          life: 2000,
+        });
+      }
+
+      // Volver a la ventana inicial (resetear todo)
+      handleNewSale();
+
+      toast.current.show({
+        severity: "success",
+        summary: "Venta completada",
+        detail: "La venta ha sido procesada. Puede iniciar una nueva venta.",
+        life: 3000,
+      });
     } catch (error) {
       toast.current.show({
         severity: "error",
@@ -766,7 +812,11 @@ export function IntegratedSalePage() {
                       onDeliveryNotesChange={handleDeliveryNotesChange}
                       deliveryWorkers={deliveryWorkers}
                       onBackToCustomer={handleBackToCustomerSelection}
-                      onContinueToPayment={handleContinueToPayment}
+                      onContinueToPayment={
+                        currentSale.hasDelivery
+                          ? handleFinalizeWithDelivery
+                          : handleContinueToPayment
+                      }
                       isEditingExistingSale={isEditingExistingSale}
                       createdSaleId={createdSaleId || currentSale.createdSaleId}
                     />

@@ -66,6 +66,14 @@ export const menuConfig = [
         requiredRoles:
           routePermissions["/sales/sale-details"]?.requiredRoles || [],
       },
+      {
+        label: "Mensajerías",
+        icon: "pi pi-truck",
+        path: "/sales/deliveries",
+        permissions: routePermissions["/sales/deliveries"]?.permissions || [],
+        requiredRoles:
+          routePermissions["/sales/deliveries"]?.requiredRoles || [],
+      },
     ],
   },
   {

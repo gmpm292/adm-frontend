@@ -242,7 +242,29 @@ export const PaymentSection = ({
                     className="payment-item mb-4 p-3 border-round border-1 surface-border"
                   >
                     <div className="flex justify-content-between align-items-center mb-3">
-                      <h5 className="m-0">Pago {index + 1}</h5>
+                      <h5 className="m-0">
+                        Pago {index + 1}
+                        {selectedCurrencies[index] && (
+                          <span className="text-sm font-normal text-600 ml-2">
+                            (Tasa:{" "}
+                            {(() => {
+                              const currencyData = selectedCurrencies[index];
+                              // Intentar obtener el exchange rate específico para la moneda base
+                              const rateField = `exchangeRateTo${baseCurrency}`;
+                              if (currencyData[rateField]) {
+                                return `${currencyData[rateField]} ${payment.currency}/${baseCurrency}`;
+                              }
+                              // Si no existe ese campo específico, mostrar el exchangeRateToCUP
+                              if (currencyData.exchangeRateToCUP) {
+                                return `${currencyData.exchangeRateToCUP} ${payment.currency}/CUP`;
+                              }
+                              // Si no hay ningún rate, mostrar N/D
+                              return "N/D";
+                            })()}
+                            )
+                          </span>
+                        )}
+                      </h5>
                       {payments.length > 1 && (
                         <Button
                           icon="pi pi-times"

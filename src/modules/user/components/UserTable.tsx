@@ -64,16 +64,28 @@ const dateBodyTemplate = (rowData, field) => {
 const dateFilterTemplate = (options) => {
   return (
     <Calendar
-      value={options.value}
-      onChange={(e) =>
-        options.filterCallback(e.value.toISOString(), options.index)
-      }
+      value={options.value ? new Date(options.value) : null}
+      onChange={(e) => {
+        // Si el valor es null (se limpió el filtro), pasamos null
+        if (!e.value) {
+          options.filterCallback(null, options.index);
+          return;
+        }
+
+        // Crear una fecha sin hora para comparación consistente
+        const date = new Date(e.value);
+        date.setHours(0, 0, 0, 0);
+
+        // Pasar la fecha como string ISO o como Date según lo que espere tu backend
+        options.filterCallback(date.toISOString(), options.index);
+      }}
       dateFormat="dd/mm/yy"
       placeholder="dd/mm/aaaa"
       showIcon
       icon="pi pi-calendar"
       showButtonBar
       showClear
+      className="p-column-filter"
     />
   );
 };
@@ -85,7 +97,7 @@ export function UserTable() {
   const [deleteUsers] = useMutation(DELETE_USERS);
   const [restoreUsers] = useMutation(RESTORE_USERS);
   const [requestPasswordChangeForAnorherUser] = useMutation(
-    REQUEST_PASSWORD_CHANGE_FOR_ANOTHER_USER
+    REQUEST_PASSWORD_CHANGE_FOR_ANOTHER_USER,
   );
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [editDialogVisible, setEditDialogVisible] = useState(false);
@@ -178,7 +190,7 @@ export function UserTable() {
         };
       }
     },
-    [getUsers]
+    [getUsers],
   );
 
   const handleRefresh = useCallback(() => {
