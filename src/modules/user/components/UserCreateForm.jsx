@@ -7,6 +7,7 @@ import { useMutation } from "@apollo/client";
 import { CREATE_USER } from "../graphql/queries";
 import { Toast } from "primereact/toast";
 import SecurityEntitySelector from "../../../components/SecurityEntitySelector/SecurityEntitySelector";
+import { FormField } from "../../../components/ui";
 
 const roles = [
   { label: "Super", value: "SUPER" },
@@ -142,12 +143,12 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Crear"
@@ -155,7 +156,7 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -164,71 +165,83 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
       <Dialog
         header="Crear Nuevo Usuario"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-40rem"
         footer={footer}
         onHide={onHide}
       >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="name">Nombres*</label>
-            <InputText
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
+        <div className="formgrid grid">
+          <div className="col-12 md:col-6">
+            <FormField label="Nombres" htmlFor="name" required>
+              <InputText
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                className="w-full"
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="lastName">Apellidos</label>
-            <InputText
-              id="lastName"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Apellidos" htmlFor="lastName">
+              <InputText
+                id="lastName"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                className="w-full"
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="email">Email*</label>
-            <InputText
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Email" htmlFor="email" required>
+              <InputText
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                className="w-full"
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="mobile">Teléfono</label>
-            <InputText
-              id="mobile"
-              name="mobile"
-              value={formData.mobile}
-              onChange={handleChange}
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Teléfono" htmlFor="mobile">
+              <InputText
+                id="mobile"
+                name="mobile"
+                value={formData.mobile}
+                onChange={handleChange}
+                className="w-full"
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="role">Rol*</label>
-            <Dropdown
-              id="role"
-              value={formData.role}
-              options={roles}
-              onChange={handleRoleChange}
-              optionLabel="label"
-              placeholder="Seleccione un rol"
-              required
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Rol" htmlFor="role" required>
+              <Dropdown
+                id="role"
+                value={formData.role}
+                options={roles}
+                onChange={handleRoleChange}
+                optionLabel="label"
+                placeholder="Seleccione un rol"
+                required
+                className="w-full"
+              />
+            </FormField>
           </div>
 
           {showSecurityEntities && (
-            <SecurityEntitySelector
-              onSelectionChange={handleSecurityEntitiesChange}
-              entitiesToInclude={entitiesToInclude}
-            />
+            <div className="col-12">
+              <SecurityEntitySelector
+                onSelectionChange={handleSecurityEntitiesChange}
+                entitiesToInclude={entitiesToInclude}
+              />
+            </div>
           )}
         </div>
       </Dialog>

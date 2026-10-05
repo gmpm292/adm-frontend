@@ -11,7 +11,7 @@ export const menuConfig = [
     key: "panel",
     items: [
       {
-        label: "Análisis",
+        label: "Resumen",
         icon: "pi pi-chart-line",
         path: "/statistics/analytics",
         permissions:
@@ -133,15 +133,6 @@ export const menuConfig = [
     key: "inventory",
     items: [
       {
-        label: "Categorías",
-        icon: "pi pi-tags",
-        path: "/inventory/categories",
-        permissions:
-          routePermissions["/inventory/categories"]?.permissions || [],
-        requiredRoles:
-          routePermissions["/inventory/categories"]?.requiredRoles || [],
-      },
-      {
         label: "Productos",
         icon: "pi pi-shopping-bag",
         path: "/inventory/products",
@@ -167,15 +158,6 @@ export const menuConfig = [
         requiredRoles:
           routePermissions["/inventory/movements"]?.requiredRoles || [],
       },
-      {
-        label: "Unidades de Medida",
-        icon: "pi pi-ruler",
-        path: "/inventory/units-of-measure",
-        permissions:
-          routePermissions["/inventory/units-of-measure"]?.permissions || [],
-        requiredRoles:
-          routePermissions["/inventory/units-of-measure"]?.requiredRoles || [],
-      },
     ],
   },
   {
@@ -190,14 +172,6 @@ export const menuConfig = [
         permissions: routePermissions["/payroll/attendance"]?.permissions || [],
         requiredRoles:
           routePermissions["/payroll/attendance"]?.requiredRoles || [],
-      },
-      {
-        label: "Monedas",
-        icon: "pi pi-dollar",
-        path: "/payroll/currencies",
-        permissions: routePermissions["/payroll/currencies"]?.permissions || [],
-        requiredRoles:
-          routePermissions["/payroll/currencies"]?.requiredRoles || [],
       },
       {
         label: "Reglas de Pago",
@@ -243,9 +217,43 @@ export const menuConfig = [
         requiredRoles:
           routePermissions["/payroll/worker-payments"]?.requiredRoles || [],
       },
+    ],
+  },
+  {
+    // Catálogos de referencia que usan los demás módulos
+    label: "Nomencladores",
+    icon: "pi pi-bookmark",
+    key: "catalogs",
+    items: [
+      {
+        label: "Categorías",
+        icon: "pi pi-tags",
+        path: "/inventory/categories",
+        permissions:
+          routePermissions["/inventory/categories"]?.permissions || [],
+        requiredRoles:
+          routePermissions["/inventory/categories"]?.requiredRoles || [],
+      },
+      {
+        label: "Unidades de Medida",
+        icon: "pi pi-ruler",
+        path: "/inventory/units-of-measure",
+        permissions:
+          routePermissions["/inventory/units-of-measure"]?.permissions || [],
+        requiredRoles:
+          routePermissions["/inventory/units-of-measure"]?.requiredRoles || [],
+      },
+      {
+        label: "Monedas",
+        icon: "pi pi-dollar",
+        path: "/payroll/currencies",
+        permissions: routePermissions["/payroll/currencies"]?.permissions || [],
+        requiredRoles:
+          routePermissions["/payroll/currencies"]?.requiredRoles || [],
+      },
       {
         label: "Costos de Materiales",
-        icon: "pi pi-dollar",
+        icon: "pi pi-calculator",
         path: "/payroll/material-costs",
         permissions:
           routePermissions["/payroll/material-costs"]?.permissions || [],

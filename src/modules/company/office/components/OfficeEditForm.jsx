@@ -7,6 +7,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import { Toast } from "primereact/toast";
 import { useRef } from "react";
 import { GET_OFFICE_BY_ID, UPDATE_OFFICE } from "../graphql/queries";
+import { FormField } from "../../../../components/ui";
 
 const officeTypes = [
   { label: "Oficina", value: "OFFICE" },
@@ -78,12 +79,12 @@ export const OfficeEditForm = ({ officeId, visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Guardar"
@@ -91,7 +92,7 @@ export const OfficeEditForm = ({ officeId, visible, onHide, onSuccess }) => {
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -100,7 +101,7 @@ export const OfficeEditForm = ({ officeId, visible, onHide, onSuccess }) => {
       <Dialog
         header="Editar Oficina"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
       >
@@ -109,50 +110,54 @@ export const OfficeEditForm = ({ officeId, visible, onHide, onSuccess }) => {
         ) : error ? (
           <p>Error al cargar oficina</p>
         ) : (
-          <div className="p-fluid">
-            <div className="p-field">
-              <label htmlFor="officeType">Tipo*</label>
-              <Dropdown
-                id="officeType"
-                value={formData.officeType}
-                options={officeTypes}
-                onChange={handleOfficeTypeChange}
-                optionLabel="label"
-                placeholder="Seleccione tipo"
-                required
-              />
+          <div className="formgrid grid">
+            <div className="col-12 md:col-6">
+              <FormField label="Tipo" htmlFor="officeType" required>
+                <Dropdown
+                  id="officeType"
+                  value={formData.officeType}
+                  options={officeTypes}
+                  onChange={handleOfficeTypeChange}
+                  optionLabel="label"
+                  placeholder="Seleccione tipo"
+                  required
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="name">Nombre*</label>
-              <InputText
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Nombre" htmlFor="name" required>
+                <InputText
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="description">Descripción*</label>
-              <InputText
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                required
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Descripción" htmlFor="description" required>
+                <InputText
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  required
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="address">Dirección</label>
-              <InputText
-                id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Dirección" htmlFor="address">
+                <InputText
+                  id="address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
           </div>
         )}

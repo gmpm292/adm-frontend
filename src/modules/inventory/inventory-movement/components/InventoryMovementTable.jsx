@@ -30,13 +30,13 @@ const idBodyTemplate = (rowData) => {
  */
 const categoryBodyTemplate = (rowData) => {
   const category = rowData.inventory?.product?.category;
-  if (!category) return <span className="text-secondary">—</span>;
+  if (!category) return <span className="text-color-secondary">—</span>;
 
   return (
     <div className="flex flex-column">
       <span>{category.name}</span>
       {category.description && (
-        <small className="text-secondary">{category.description}</small>
+        <small className="text-color-secondary">{category.description}</small>
       )}
     </div>
   );
@@ -47,13 +47,13 @@ const categoryBodyTemplate = (rowData) => {
  */
 const productBodyTemplate = (rowData) => {
   const product = rowData.inventory?.product;
-  if (!product) return <span className="text-secondary">—</span>;
+  if (!product) return <span className="text-color-secondary">—</span>;
 
   return (
     <div className="flex flex-column">
       <span className="font-bold">{product.name}</span>
       {product.unitOfMeasure && (
-        <small className="text-secondary">U/M: {product.unitOfMeasure}</small>
+        <small className="text-color-secondary">U/M: {product.unitOfMeasure}</small>
       )}
     </div>
   );
@@ -64,7 +64,7 @@ const productBodyTemplate = (rowData) => {
  */
 const salePriceBodyTemplate = (rowData) => {
   const product = rowData.inventory?.product;
-  if (!product?.basePrice) return <span className="text-secondary">—</span>;
+  if (!product?.basePrice) return <span className="text-color-secondary">—</span>;
 
   return (
     <div className="flex flex-column">
@@ -72,7 +72,7 @@ const salePriceBodyTemplate = (rowData) => {
         {product.basePrice} {product.baseCurrency || "USD"}
       </span>
       {product.costPrice && (
-        <small className="text-secondary">
+        <small className="text-color-secondary">
           Costo: {product.costPrice} {product.costCurrency || "USD"}
         </small>
       )}
@@ -85,7 +85,7 @@ const salePriceBodyTemplate = (rowData) => {
  */
 const stockBodyTemplate = (rowData) => {
   const inventory = rowData.inventory;
-  if (!inventory) return <span className="text-secondary">—</span>;
+  if (!inventory) return <span className="text-color-secondary">—</span>;
 
   const stockStatus =
     inventory.currentStock <= (inventory.minStock || 0) ? "danger" : "success";
@@ -98,7 +98,7 @@ const stockBodyTemplate = (rowData) => {
         className="mb-1"
       />
       {inventory.minStock > 0 && (
-        <small className="text-secondary">Mínimo: {inventory.minStock}</small>
+        <small className="text-color-secondary">Mínimo: {inventory.minStock}</small>
       )}
     </div>
   );
@@ -109,13 +109,13 @@ const stockBodyTemplate = (rowData) => {
  */
 const locationBodyTemplate = (rowData) => {
   const inventory = rowData.inventory;
-  if (!inventory?.location) return <span className="text-secondary">—</span>;
+  if (!inventory?.location) return <span className="text-color-secondary">—</span>;
 
   return (
     <div className="flex flex-column">
       <span>{inventory.location}</span>
       {inventory.office && (
-        <small className="text-secondary">
+        <small className="text-color-secondary">
           Oficina: {inventory.office.name}
         </small>
       )}
@@ -144,7 +144,7 @@ const quantityBodyTemplate = (rowData) => {
     <div className="flex flex-column">
       <span className="font-bold">{rowData.quantity}</span>
       {rowData.inventory?.product?.unitOfMeasure && (
-        <small className="text-secondary">
+        <small className="text-color-secondary">
           {rowData.inventory.product.unitOfMeasure}
         </small>
       )}
@@ -163,8 +163,7 @@ const reasonBodyTemplate = (rowData) => {
         <Tag
           value="Reserva"
           severity="info"
-          className="mt-1"
-          style={{ fontSize: "0.7rem" }}
+          className="mt-1 text-xs"
         />
       )}
     </div>
@@ -180,7 +179,7 @@ const dateBodyTemplate = (rowData, field) => {
   return (
     <div className="flex flex-column">
       <span>{date.toLocaleDateString()}</span>
-      <small className="text-secondary">{date.toLocaleTimeString()}</small>
+      <small className="text-color-secondary">{date.toLocaleTimeString()}</small>
     </div>
   );
 };
@@ -190,7 +189,7 @@ const dateBodyTemplate = (rowData, field) => {
  */
 const userBodyTemplate = (rowData) => {
   const user = rowData.user;
-  if (!user) return <span className="text-secondary">—</span>;
+  if (!user) return <span className="text-color-secondary">—</span>;
 
   return (
     <div className="flex flex-column">
@@ -215,7 +214,7 @@ const securityEntitiesBodyTemplate = (rowData) => {
       {entities.length > 0 ? (
         entities.map((entity, index) => <small key={index}>{entity}</small>)
       ) : (
-        <span className="text-secondary">—</span>
+        <span className="text-color-secondary">—</span>
       )}
     </div>
   );
@@ -235,7 +234,7 @@ const auditBodyTemplate = (rowData) => {
           <strong>Creado:</strong>{" "}
           {createdBy.name || createdBy.email || `#${createdBy.id}`}
           <br />
-          <span className="text-secondary">
+          <span className="text-color-secondary">
             {new Date(rowData.createdAt).toLocaleDateString()}
           </span>
         </small>
@@ -245,7 +244,7 @@ const auditBodyTemplate = (rowData) => {
           <strong>Actualizado:</strong>{" "}
           {updatedBy.name || updatedBy.email || `#${updatedBy.id}`}
           <br />
-          <span className="text-secondary">
+          <span className="text-color-secondary">
             {new Date(rowData.updatedAt).toLocaleDateString()}
           </span>
         </small>
@@ -284,7 +283,7 @@ export function InventoryMovementTable() {
         header: "ID",
         body: idBodyTemplate,
         sortable: true,
-        style: { width: "80px" },
+        className: "w-6rem",
         visible: false, // Oculta por defecto
       },
       {
@@ -293,7 +292,7 @@ export function InventoryMovementTable() {
         body: categoryBodyTemplate,
         sortable: true,
         filter: true,
-        style: { minWidth: "150px" },
+        className: "w-10rem",
       },
       {
         field: "product",
@@ -301,21 +300,21 @@ export function InventoryMovementTable() {
         body: productBodyTemplate,
         sortable: true,
         filter: true,
-        style: { minWidth: "200px" },
+        className: "w-14rem",
       },
       {
         field: "salePrice",
         header: "Precio Venta",
         body: salePriceBodyTemplate,
         sortable: true,
-        style: { minWidth: "150px" },
+        className: "w-10rem",
       },
       {
         field: "stock",
         header: "Existencia",
         body: stockBodyTemplate,
         sortable: true,
-        style: { minWidth: "150px" },
+        className: "w-10rem",
       },
       {
         field: "location",
@@ -323,7 +322,7 @@ export function InventoryMovementTable() {
         body: locationBodyTemplate,
         sortable: true,
         filter: true,
-        style: { minWidth: "150px" },
+        className: "w-10rem",
       },
       {
         field: "type",
@@ -331,7 +330,7 @@ export function InventoryMovementTable() {
         body: typeBodyTemplate,
         sortable: true,
         filter: true,
-        style: { width: "120px" },
+        className: "w-8rem",
       },
       {
         field: "quantity",
@@ -339,7 +338,7 @@ export function InventoryMovementTable() {
         body: quantityBodyTemplate,
         sortable: true,
         filter: true,
-        style: { width: "120px" },
+        className: "w-8rem",
       },
       {
         field: "reason",
@@ -347,14 +346,14 @@ export function InventoryMovementTable() {
         body: reasonBodyTemplate,
         sortable: true,
         filter: true,
-        style: { minWidth: "150px" },
+        className: "w-10rem",
       },
       {
         field: "createdAt",
         header: "Fecha",
         body: (rowData) => dateBodyTemplate(rowData, "createdAt"),
         sortable: true,
-        style: { minWidth: "150px" },
+        className: "w-10rem",
       },
       {
         field: "user",
@@ -362,13 +361,13 @@ export function InventoryMovementTable() {
         body: userBodyTemplate,
         sortable: true,
         filter: true,
-        style: { minWidth: "150px" },
+        className: "w-10rem",
       },
       {
         field: "entities",
         header: "Organización",
         body: securityEntitiesBodyTemplate,
-        style: { minWidth: "150px" },
+        className: "w-10rem",
         visible: false, // Oculta por defecto
       },
       {
@@ -376,14 +375,14 @@ export function InventoryMovementTable() {
         header: "Actualizado",
         body: (rowData) => dateBodyTemplate(rowData, "updatedAt"),
         sortable: true,
-        style: { width: "150px" },
+        className: "w-10rem",
         visible: false, // Oculta por defecto
       },
       {
         field: "audit",
         header: "Auditoría",
         body: auditBodyTemplate,
-        style: { minWidth: "200px" },
+        className: "w-14rem",
         visible: false, // Oculta por defecto
       },
       {
@@ -391,7 +390,7 @@ export function InventoryMovementTable() {
         header: "ID Reserva",
         body: (rowData) => rowData.reservationId || "—",
         sortable: true,
-        style: { minWidth: "150px" },
+        className: "w-10rem",
         visible: false, // Oculta por defecto
       },
       {
@@ -399,7 +398,7 @@ export function InventoryMovementTable() {
         header: "Referencia",
         body: (rowData) => rowData.referenceId || "—",
         sortable: true,
-        style: { minWidth: "150px" },
+        className: "w-10rem",
         visible: false, // Oculta por defecto
       },
     ],
@@ -461,6 +460,8 @@ export function InventoryMovementTable() {
     handleRefresh();
   }, [handleRefresh]);
 
+  // Las acciones de editar y eliminar están desactivadas en la tabla
+  // eslint-disable-next-line no-unused-vars
   const handleEdit = (movementId) => {
     setSelectedMovementId(movementId);
     setEditDialogVisible(true);
@@ -471,6 +472,7 @@ export function InventoryMovementTable() {
     setDetailDialogVisible(true);
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleDelete = (movementId) => {
     confirmDialog({
       message: "¿Estás seguro de que deseas eliminar este movimiento?",
@@ -502,27 +504,30 @@ export function InventoryMovementTable() {
 
   const actionBodyTemplate = (rowData) => {
     return (
-      <div
-        className="actions-column"
-        style={{ display: "flex", gap: "0.25rem", justifyContent: "center" }}
-      >
+      <div className="actions-column">
         {/* <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
+          severity="secondary"
           tooltip="Editar movimiento"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
         <Button
           icon="pi pi-trash"
-          className="p-button-rounded p-button-text p-button-danger"
+          text
+          rounded
+          severity="danger"
           tooltip="Eliminar movimiento"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleDelete(rowData.id)}
         /> */}
         <Button
           icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
+          text
+          rounded
+          severity="secondary"
           tooltip="Ver detalles"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleViewDetails(rowData.id)}
@@ -568,8 +573,7 @@ export function InventoryMovementTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "8rem" }}
-          bodyStyle={{ textAlign: "center" }}
+          headerClassName="w-8rem"
         />
       </GenericDataTable>
 

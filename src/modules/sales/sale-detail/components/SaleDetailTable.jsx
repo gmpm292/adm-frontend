@@ -31,7 +31,7 @@ const formatCurrency = (value) => {
 
 const publicistsBodyTemplate = (rowData) => {
   if (!rowData.publicists || rowData.publicists.length === 0) {
-    return <span className="text-gray-400">Sin publicistas</span>;
+    return <span className="text-color-secondary">Sin publicistas</span>;
   }
 
   return (
@@ -161,14 +161,17 @@ export function SaleDetailTable({ saleId }) {
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
           tooltip="Editar detalle"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
         <Button
           icon="pi pi-trash"
-          className="p-button-rounded p-button-text p-button-danger"
+          text
+          rounded
+          severity="danger"
           tooltip="Eliminar detalle"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleDelete(rowData.id)}
@@ -249,8 +252,7 @@ export function SaleDetailTable({ saleId }) {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "10rem" }}
-          bodyStyle={{ textAlign: "center" }}
+          className="w-10rem"
         />
       </GenericDataTable>
 

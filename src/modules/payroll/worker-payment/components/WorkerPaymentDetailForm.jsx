@@ -8,6 +8,8 @@ import { Divider } from "primereact/divider";
 import { Panel } from "primereact/panel";
 import { Accordion, AccordionTab } from "primereact/accordion";
 import { Badge } from "primereact/badge";
+import { Message } from "primereact/message";
+import { EmptyState } from "../../../../components/ui";
 import { Chip } from "primereact/chip";
 
 // ==================== LABELS ====================
@@ -147,19 +149,19 @@ const GeneralInfoSection = ({ payment }) => (
     <div className="grid">
       <div className="col-12 md:col-6 lg:col-3">
         <div className="field">
-          <label className="font-bold block text-secondary">ID del Pago</label>
+          <label className="block text-sm font-medium text-color-secondary mb-1">ID del Pago</label>
           <Badge value={`#${payment.id}`} size="large" severity="info" />
         </div>
       </div>
 
       <div className="col-12 md:col-6 lg:col-3">
         <div className="field">
-          <label className="font-bold block text-secondary">Monto</label>
+          <label className="block text-sm font-medium text-color-secondary mb-1">Monto</label>
           <span className="text-xl font-bold">
             {formatCurrency(payment.amount, payment.currency)}
           </span>
           {payment.exchangeRate && payment.exchangeRate !== 1 && (
-            <div className="text-sm text-secondary">
+            <div className="text-sm text-color-secondary">
               Tasa de cambio: {payment.exchangeRate}
             </div>
           )}
@@ -168,14 +170,14 @@ const GeneralInfoSection = ({ payment }) => (
 
       <div className="col-12 md:col-6 lg:col-3">
         <div className="field">
-          <label className="font-bold block text-secondary">Moneda</label>
+          <label className="block text-sm font-medium text-color-secondary mb-1">Moneda</label>
           <Chip label={payment.currency || "USD"} />
         </div>
       </div>
 
       <div className="col-12 md:col-6 lg:col-3">
         <div className="field">
-          <label className="font-bold block text-secondary">Estado</label>
+          <label className="block text-sm font-medium text-color-secondary mb-1">Estado</label>
           <Tag
             value={payment.paidDate ? "Pagado" : "Pendiente"}
             severity={payment.paidDate ? "success" : "warning"}
@@ -196,7 +198,7 @@ const PaymentTypeSection = ({ payment }) => (
     <div className="grid">
       <div className="col-12 md:col-4">
         <div className="field">
-          <label className="font-bold block text-secondary">Concepto</label>
+          <label className="block text-sm font-medium text-color-secondary mb-1">Concepto</label>
           <Tag
             value={
               paymentConceptLabels[payment.paymentConcept] ||
@@ -212,7 +214,7 @@ const PaymentTypeSection = ({ payment }) => (
 
       <div className="col-12 md:col-4">
         <div className="field">
-          <label className="font-bold block text-secondary">Método</label>
+          <label className="block text-sm font-medium text-color-secondary mb-1">Método</label>
           <Tag
             value={
               paymentMethodLabels[payment.paymentMethod] ||
@@ -228,7 +230,7 @@ const PaymentTypeSection = ({ payment }) => (
 
       <div className="col-12 md:col-4">
         <div className="field">
-          <label className="font-bold block text-secondary">
+          <label className="block text-sm font-medium text-color-secondary mb-1">
             Fecha de Pago
           </label>
           <span>
@@ -257,14 +259,14 @@ const WorkerSection = ({ worker }) => {
       <div className="grid">
         <div className="col-12 md:col-6">
           <div className="field">
-            <label className="font-bold block text-secondary">
+            <label className="block text-sm font-medium text-color-secondary mb-1">
               Nombre Completo
             </label>
             <span className="text-lg">{fullName}</span>
           </div>
 
           <div className="field">
-            <label className="font-bold block text-secondary">
+            <label className="block text-sm font-medium text-color-secondary mb-1">
               Tipo de Trabajador
             </label>
             <Tag value={workerType} severity="info" />
@@ -272,7 +274,7 @@ const WorkerSection = ({ worker }) => {
 
           {worker.workerType === "OTHER" && worker.otherType && (
             <div className="field">
-              <label className="font-bold block text-secondary">
+              <label className="block text-sm font-medium text-color-secondary mb-1">
                 Otro Tipo (especificado)
               </label>
               <span>{worker.otherType}</span>
@@ -284,7 +286,7 @@ const WorkerSection = ({ worker }) => {
           {worker.user ? (
             <>
               <div className="field">
-                <label className="font-bold block text-secondary">
+                <label className="block text-sm font-medium text-color-secondary mb-1">
                   Usuario Asociado
                 </label>
                 <div className="flex align-items-center gap-2">
@@ -294,7 +296,7 @@ const WorkerSection = ({ worker }) => {
               </div>
 
               <div className="field">
-                <label className="font-bold block text-secondary">Rol</label>
+                <label className="block text-sm font-medium text-color-secondary mb-1">Rol</label>
                 <div className="flex flex-wrap gap-1">
                   {worker.user.role?.map((role) => (
                     <Chip key={role} label={role} />
@@ -304,7 +306,7 @@ const WorkerSection = ({ worker }) => {
             </>
           ) : (
             <div className="field">
-              <label className="font-bold block text-secondary">
+              <label className="block text-sm font-medium text-color-secondary mb-1">
                 Trabajador Temporal
               </label>
               <div className="flex align-items-center gap-2">
@@ -323,7 +325,7 @@ const WorkerSection = ({ worker }) => {
 
       <div className="grid">
         <div className="col-12">
-          <label className="font-bold block text-secondary">
+          <label className="block text-sm font-medium text-color-secondary mb-1">
             ID del Trabajador
           </label>
           <Badge value={`#${worker.id}`} severity="secondary" />
@@ -340,17 +342,17 @@ const PeriodAndSaleSection = ({ payment }) => (
   <Panel header="Período y Venta" className="mb-3">
     <div className="grid">
       <div className="col-12 md:col-6">
-        <label className="font-bold block text-secondary">
+        <label className="block text-sm font-medium text-color-secondary mb-1">
           Período de Nómina
         </label>
         {payment.payrollPeriod ? (
           <div className="flex flex-column">
             <span className="text-lg">{payment.payrollPeriod.name}</span>
-            <small className="text-secondary">
+            <small className="text-color-secondary">
               {formatDate(payment.payrollPeriod.startDate)} -{" "}
               {formatDate(payment.payrollPeriod.endDate)}
             </small>
-            <small className="text-secondary">
+            <small className="text-color-secondary">
               ID: {payment.payrollPeriod.id}
             </small>
           </div>
@@ -360,14 +362,14 @@ const PeriodAndSaleSection = ({ payment }) => (
       </div>
 
       <div className="col-12 md:col-6">
-        <label className="font-bold block text-secondary">Venta Asociada</label>
+        <label className="block text-sm font-medium text-color-secondary mb-1">Venta Asociada</label>
         {payment.sale ? (
           <div className="flex flex-column">
             <span className="text-lg">Venta #{payment.sale.id}</span>
-            <small className="text-secondary">
+            <small className="text-color-secondary">
               Fecha: {formatDate(payment.sale.effectiveDate)}
             </small>
-            <small className="text-secondary">
+            <small className="text-color-secondary">
               Monto: {formatCurrency(payment.sale.totalAmount)}
             </small>
             {payment.sale.isConfirmed && (
@@ -375,7 +377,7 @@ const PeriodAndSaleSection = ({ payment }) => (
             )}
           </div>
         ) : (
-          <span className="text-secondary">Pago no asociado a venta</span>
+          <span className="text-color-secondary">Pago no asociado a venta</span>
         )}
       </div>
     </div>
@@ -389,7 +391,7 @@ const BreakdownSection = ({ breakdown }) => {
   if (!breakdown || Object.keys(breakdown).length === 0) {
     return (
       <Panel header="Desglose" className="mb-3">
-        <span className="text-secondary">
+        <span className="text-color-secondary">
           No hay información de desglose disponible
         </span>
       </Panel>
@@ -405,7 +407,7 @@ const BreakdownSection = ({ breakdown }) => {
             <div className="grid">
               {breakdown.ruleName && (
                 <div className="col-12">
-                  <label className="font-bold block text-secondary">
+                  <label className="block text-sm font-medium text-color-secondary mb-1">
                     Regla
                   </label>
                   <span>{breakdown.ruleName}</span>
@@ -413,7 +415,7 @@ const BreakdownSection = ({ breakdown }) => {
               )}
               {breakdown.ruleType && (
                 <div className="col-12">
-                  <label className="font-bold block text-secondary">
+                  <label className="block text-sm font-medium text-color-secondary mb-1">
                     Tipo de Regla
                   </label>
                   <Tag value={breakdown.ruleType} severity="info" />
@@ -428,10 +430,10 @@ const BreakdownSection = ({ breakdown }) => {
           <div className="grid">
             {breakdown.baseSalary !== undefined && breakdown.baseSalary > 0 && (
               <div className="col-12 md:col-6">
-                <label className="font-bold block text-secondary">
+                <label className="block text-sm font-medium text-color-secondary mb-1">
                   Salario Base
                 </label>
-                <span className="text-success">
+                <span className="text-green-600">
                   {formatCurrency(breakdown.baseSalary)}
                 </span>
               </div>
@@ -440,7 +442,7 @@ const BreakdownSection = ({ breakdown }) => {
             {breakdown.commissions !== undefined &&
               breakdown.commissions > 0 && (
                 <div className="col-12 md:col-6">
-                  <label className="font-bold block text-secondary">
+                  <label className="block text-sm font-medium text-color-secondary mb-1">
                     Comisiones
                   </label>
                   <span className="text-primary">
@@ -451,8 +453,8 @@ const BreakdownSection = ({ breakdown }) => {
 
             {breakdown.bonuses !== undefined && breakdown.bonuses > 0 && (
               <div className="col-12 md:col-6">
-                <label className="font-bold block text-secondary">Bonos</label>
-                <span className="text-warning">
+                <label className="block text-sm font-medium text-color-secondary mb-1">Bonos</label>
+                <span className="text-yellow-600">
                   {formatCurrency(breakdown.bonuses)}
                 </span>
               </div>
@@ -460,10 +462,10 @@ const BreakdownSection = ({ breakdown }) => {
 
             {breakdown.deductions !== undefined && breakdown.deductions > 0 && (
               <div className="col-12 md:col-6">
-                <label className="font-bold block text-secondary">
+                <label className="block text-sm font-medium text-color-secondary mb-1">
                   Deducciones
                 </label>
-                <span className="text-danger">
+                <span className="text-red-600">
                   -{formatCurrency(breakdown.deductions)}
                 </span>
               </div>
@@ -474,7 +476,7 @@ const BreakdownSection = ({ breakdown }) => {
         {/* Detalles de cálculo */}
         {breakdown.calculationSummary && (
           <AccordionTab header="Detalles del Cálculo">
-            <pre className="bg-gray-100 p-3 border-round">
+            <pre className="surface-100 p-3 border-round text-sm m-0 max-h-20rem overflow-auto">
               {JSON.stringify(breakdown.calculationSummary, null, 2)}
             </pre>
           </AccordionTab>
@@ -482,7 +484,7 @@ const BreakdownSection = ({ breakdown }) => {
 
         {/* Información adicional */}
         {Object.keys(breakdown).filter(
-          (key) =>
+          () =>
             ![
               "ruleName",
               "ruleType",
@@ -494,11 +496,11 @@ const BreakdownSection = ({ breakdown }) => {
             ],
         ).length > 0 && (
           <AccordionTab header="Información Adicional">
-            <pre className="bg-gray-100 p-3 border-round">
+            <pre className="surface-100 p-3 border-round text-sm m-0 max-h-20rem overflow-auto">
               {JSON.stringify(
                 Object.fromEntries(
                   Object.entries(breakdown).filter(
-                    ([key]) =>
+                    () =>
                       ![
                         "ruleName",
                         "ruleType",
@@ -555,7 +557,7 @@ const SecurityEntitiesSection = ({ payment }) => {
   if (entities.length === 0) {
     return (
       <Panel header="Estructura Organizativa" className="mb-3">
-        <span className="text-secondary">
+        <span className="text-color-secondary">
           No hay información organizativa disponible
         </span>
       </Panel>
@@ -568,12 +570,12 @@ const SecurityEntitiesSection = ({ payment }) => {
         {entities.map((entity, index) => (
           <div key={index} className="col-12 md:col-6 lg:col-3">
             <div className="field">
-              <label className="font-bold block text-secondary">
+              <label className="block text-sm font-medium text-color-secondary mb-1">
                 {entity.type}
               </label>
               <div className="flex flex-column">
                 <span>{entity.name}</span>
-                <small className="text-secondary">ID: {entity.id}</small>
+                <small className="text-color-secondary">ID: {entity.id}</small>
               </div>
             </div>
           </div>
@@ -592,7 +594,7 @@ const NotesSection = ({ notes }) => {
   return (
     <Panel header="Notas" className="mb-3">
       <div className="field">
-        <p className="whitespace-pre-wrap bg-gray-50 p-3 border-round">
+        <p className="surface-50 p-3 border-round m-0">
           {notes}
         </p>
       </div>
@@ -607,22 +609,22 @@ const AuditSection = ({ payment }) => (
   <Panel header="Auditoría" className="mb-3">
     <div className="grid">
       <div className="col-12 md:col-6">
-        <label className="font-bold block text-secondary">Creado por</label>
+        <label className="block text-sm font-medium text-color-secondary mb-1">Creado por</label>
         <div className="flex flex-column">
           <span>{payment.createdBy?.name || "Sistema"}</span>
-          <small className="text-secondary">
+          <small className="text-color-secondary">
             {formatDate(payment.createdAt, true)}
           </small>
         </div>
       </div>
 
       <div className="col-12 md:col-6">
-        <label className="font-bold block text-secondary">
+        <label className="block text-sm font-medium text-color-secondary mb-1">
           Última actualización
         </label>
         <div className="flex flex-column">
           <span>{payment.updatedBy?.name || "Sistema"}</span>
-          <small className="text-secondary">
+          <small className="text-color-secondary">
             {formatDate(payment.updatedAt, true)}
           </small>
         </div>
@@ -632,12 +634,12 @@ const AuditSection = ({ payment }) => (
         <div className="col-12">
           <Divider />
           <div className="field">
-            <label className="font-bold block text-secondary text-danger">
+            <label className="block text-sm font-medium text-red-600 mb-1">
               Eliminado
             </label>
             <div className="flex flex-column">
               <span>{payment.deletedBy?.name || "Sistema"}</span>
-              <small className="text-secondary">
+              <small className="text-color-secondary">
                 {formatDate(payment.deletedAt, true)}
               </small>
             </div>
@@ -671,22 +673,22 @@ export const WorkerPaymentDetailForm = ({ paymentId, visible, onHide }) => {
     <Dialog
       header="Detalles del Pago al Trabajador"
       visible={visible}
-      style={{ width: "900px", maxWidth: "95vw" }}
+      className="w-full lg:w-10 xl:w-8"
       onHide={onHide}
       modal
-      className="worker-payment-detail-dialog"
     >
       {loading ? (
         <div className="flex justify-content-center align-items-center p-5">
           <ProgressSpinner />
         </div>
       ) : error ? (
-        <div className="p-3 bg-red-50 border-round text-red-600">
-          <i className="pi pi-exclamation-triangle mr-2"></i>
-          Error al cargar los detalles del pago: {error.message}
-        </div>
+        <Message
+          severity="error"
+          text={`Error al cargar los detalles del pago: ${error.message}`}
+          className="w-full"
+        />
       ) : payment ? (
-        <div className="worker-payment-detail">
+        <div>
           {/* ID y estado general */}
           <div className="flex justify-content-between align-items-center mb-3">
             <Badge value={`ID: ${payment.id}`} size="large" severity="info" />
@@ -710,37 +712,11 @@ export const WorkerPaymentDetailForm = ({ paymentId, visible, onHide }) => {
           <AuditSection payment={payment} />
         </div>
       ) : (
-        <div className="text-center p-5 text-secondary">
-          <i className="pi pi-info-circle text-4xl mb-3"></i>
+        <EmptyState icon="pi pi-info-circle">
           <p>No se encontró información del pago solicitado.</p>
-        </div>
+        </EmptyState>
       )}
 
-      <style jsx="true">{`
-        .worker-payment-detail-dialog .field {
-          margin-bottom: 1rem;
-        }
-
-        .worker-payment-detail-dialog .field label {
-          margin-bottom: 0.25rem;
-          font-size: 0.875rem;
-        }
-
-        .worker-payment-detail-dialog .p-panel .p-panel-header {
-          padding: 0.75rem 1rem;
-        }
-
-        .worker-payment-detail-dialog .p-panel .p-panel-content {
-          padding: 1rem;
-        }
-
-        .worker-payment-detail-dialog pre {
-          max-height: 300px;
-          overflow: auto;
-          font-size: 0.875rem;
-          margin: 0;
-        }
-      `}</style>
     </Dialog>
   );
 };

@@ -6,7 +6,7 @@ import { Button } from "primereact/button";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
 
-import { Badge } from "primereact/badge";
+import { Tag } from "primereact/tag";
 import { GET_ROLE_GUARDS, UPDATE_ROLE_GUARD } from "../graphql/queries";
 import GenericDataTable from "../../../components/BaseTable";
 import { RoleGuardEditForm } from "./RoleGuardEditForm";
@@ -244,21 +244,21 @@ export function RoleGuardTable() {
       severity: "secondary",
     };
 
-    return <Badge value={config.label} severity={config.severity} />;
+    return <Tag value={config.label} severity={config.severity} />;
   };
 
   const rolesBodyTemplate = (rowData) => {
     if (!rowData.roles || rowData.roles.length === 0) {
-      return <Badge value="Sin roles" severity="danger" />;
+      return <Tag value="Sin roles" severity="danger" />;
     }
 
     return (
       <div className="flex flex-wrap gap-1">
         {rowData.roles.slice(0, 3).map((role, index) => (
-          <Badge key={index} value={role} severity="success" />
+          <Tag key={index} value={role} severity="success" />
         ))}
         {rowData.roles.length > 3 && (
-          <Badge value={`+${rowData.roles.length - 3}`} />
+          <Tag value={`+${rowData.roles.length - 3}`} severity="secondary" />
         )}
       </div>
     );
@@ -267,13 +267,9 @@ export function RoleGuardTable() {
   const statusBodyTemplate = (rowData) => {
     const isActive = rowData.roles && rowData.roles.length > 0;
     return (
-      <i
-        className={`pi ${
-          isActive
-            ? "pi-check-circle text-green-500"
-            : "pi-times-circle text-red-500"
-        }`}
-        style={{ fontSize: "1.25rem" }}
+      <Tag
+        severity={isActive ? "success" : "danger"}
+        value={isActive ? "Activo" : "Inactivo"}
       />
     );
   };
@@ -289,23 +285,26 @@ export function RoleGuardTable() {
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
           tooltip="Configurar roles"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
         <Button
           icon={isActive ? "pi pi-ban" : "pi pi-check"}
-          className={`p-button-rounded p-button-text ${
-            isActive ? "p-button-warning" : "p-button-success"
-          }`}
+          text
+          rounded
+          severity={isActive ? "warning" : "success"}
           tooltip={isActive ? "Desactivar" : "Activar"}
           tooltipOptions={{ position: "top" }}
           onClick={() => handleToggleStatus(rowData)}
         />
         <Button
           icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
+          text
+          rounded
+          severity="secondary"
           tooltip="Ver detalles"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleViewDetails(rowData.id)}
@@ -384,8 +383,7 @@ export function RoleGuardTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "12rem" }}
-          bodyStyle={{ textAlign: "center" }}
+          headerClassName="w-12rem"
         />
       </GenericDataTable>
 

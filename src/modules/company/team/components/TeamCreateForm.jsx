@@ -8,6 +8,7 @@ import { useMutation } from "@apollo/client";
 import { CREATE_TEAM } from "../graphql/queries";
 import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
 import { EntityTypes } from "../../../../components/SecurityEntitySelector/entityTypes";
+import { FormField } from "../../../../components/ui";
 
 const teamTypes = [
   { label: "Trabajo de campo", value: "FIELDWORK" },
@@ -92,12 +93,12 @@ export const TeamCreateForm = ({ visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Crear"
@@ -105,7 +106,7 @@ export const TeamCreateForm = ({ visible, onHide, onSuccess }) => {
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -114,60 +115,65 @@ export const TeamCreateForm = ({ visible, onHide, onSuccess }) => {
       <Dialog
         header="Crear Nuevo Equipo"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
       >
-        <div className="p-fluid">
-          <SecurityEntitySelector
-            onSelectionChange={handleSecurityEntitiesChange}
-            entitiesToInclude={[
-              EntityTypes.BUSINESS,
-              EntityTypes.OFFICE,
-              EntityTypes.DEPARTMENT,
-            ]}
-            labels={{
-              business: "Empresa",
-              office: "Oficina",
-              department: "Departamento",
-              team: "Equipo",
-            }}
-          />
-
-          <div className="p-field">
-            <label htmlFor="teamType">Tipo*</label>
-            <Dropdown
-              id="teamType"
-              value={formData.teamType}
-              options={teamTypes}
-              onChange={handleTeamTypeChange}
-              optionLabel="label"
-              placeholder="Seleccione tipo"
-              required
+        <div className="formgrid grid">
+          <div className="col-12">
+            <SecurityEntitySelector
+              onSelectionChange={handleSecurityEntitiesChange}
+              entitiesToInclude={[
+                EntityTypes.BUSINESS,
+                EntityTypes.OFFICE,
+                EntityTypes.DEPARTMENT,
+              ]}
+              labels={{
+                business: "Empresa",
+                office: "Oficina",
+                department: "Departamento",
+                team: "Equipo",
+              }}
             />
           </div>
 
-          <div className="p-field">
-            <label htmlFor="name">Nombre*</label>
-            <InputText
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Ingrese nombre del equipo"
-              required
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Tipo" htmlFor="teamType" required>
+              <Dropdown
+                id="teamType"
+                value={formData.teamType}
+                options={teamTypes}
+                onChange={handleTeamTypeChange}
+                optionLabel="label"
+                placeholder="Seleccione tipo"
+                required
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="description">Descripción</label>
-            <InputText
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Ingrese descripción del equipo"
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Nombre" htmlFor="name" required>
+              <InputText
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Ingrese nombre del equipo"
+                required
+              />
+            </FormField>
+          </div>
+
+          <div className="col-12 md:col-6">
+            <FormField label="Descripción" htmlFor="description">
+              <InputText
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="Ingrese descripción del equipo"
+              />
+            </FormField>
           </div>
         </div>
       </Dialog>

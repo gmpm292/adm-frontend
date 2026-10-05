@@ -9,6 +9,7 @@ import { GET_INVENTORY_MOVEMENT_BY_ID, UPDATE_INVENTORY_MOVEMENT } from "../grap
 import { Toast } from "primereact/toast";
 import { InventorySelector } from "../../inventory/components/InventorySelector";
 //import { InventorySelector } from "../../inventory/components/InventorySelector";
+import { FormField } from "../../../../components/ui";
 
 const movementTypes = [
   { label: "Entrada", value: "IN" },
@@ -91,20 +92,20 @@ export const InventoryMovementEditForm = ({ movementId, visible, onHide, onSucce
   };
 
   const footer = (
-    <div>
-      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} className="p-button-text" />
+    <>
+      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} severity="secondary" />
       <Button label="Guardar" icon="pi pi-check" onClick={handleSubmit} autoFocus />
-    </div>
+    </>
   );
 
   return (
     <>
       <Toast ref={toast} />
-      <Dialog 
-        header="Editar Movimiento" 
-        visible={visible} 
-        style={{ width: '50vw' }} 
-        footer={footer} 
+      <Dialog
+        header="Editar Movimiento"
+        visible={visible}
+        className="w-full md:w-8 lg:w-6"
+        footer={footer}
         onHide={onHide}
       >
         {loading ? (
@@ -112,47 +113,51 @@ export const InventoryMovementEditForm = ({ movementId, visible, onHide, onSucce
         ) : error ? (
           <p>Error al cargar movimiento</p>
         ) : (
-          <div className="p-fluid">
-            <div className="p-field">
-              <label htmlFor="inventoryId">Inventario</label>
-              <InventorySelector
-                onInventorySelect={handleInventorySelect}
-                selectedInventoryId={formData.inventoryId}
-              />
+          <div className="formgrid grid p-fluid">
+            <div className="col-12">
+              <FormField label="Inventario" htmlFor="inventoryId">
+                <InventorySelector
+                  onInventorySelect={handleInventorySelect}
+                  selectedInventoryId={formData.inventoryId}
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="type">Tipo</label>
-              <Dropdown
-                id="type"
-                value={formData.type}
-                options={movementTypes}
-                onChange={handleTypeChange}
-                optionLabel="label"
-                placeholder="Seleccione un tipo"
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Tipo" htmlFor="type">
+                <Dropdown
+                  id="type"
+                  value={formData.type}
+                  options={movementTypes}
+                  onChange={handleTypeChange}
+                  optionLabel="label"
+                  placeholder="Seleccione un tipo"
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="quantity">Cantidad</label>
-              <InputNumber
-                id="quantity"
-                name="quantity"
-                value={formData.quantity}
-                onValueChange={handleNumberChange}
-                mode="decimal"
-                min={1}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Cantidad" htmlFor="quantity">
+                <InputNumber
+                  inputId="quantity"
+                  name="quantity"
+                  value={formData.quantity}
+                  onValueChange={handleNumberChange}
+                  mode="decimal"
+                  min={1}
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="reason">Motivo</label>
-              <InputText
-                id="reason"
-                name="reason"
-                value={formData.reason}
-                onChange={handleChange}
-              />
+            <div className="col-12">
+              <FormField label="Motivo" htmlFor="reason">
+                <InputText
+                  id="reason"
+                  name="reason"
+                  value={formData.reason}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
           </div>
         )}

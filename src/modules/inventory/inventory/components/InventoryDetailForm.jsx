@@ -7,10 +7,9 @@ import { formatDate } from "../../../../utils/dateUtils";
 import { formatCurrency } from "../../../../utils/numberUtils";
 import { Tag } from "primereact/tag";
 import { Panel } from "primereact/panel";
-import { DataView } from "primereact/dataview";
-import { Badge } from "primereact/badge";
 import { Divider } from "primereact/divider";
 import { ScrollPanel } from "primereact/scrollpanel";
+import { DetailField } from "../../components/DetailField";
 
 export function InventoryDetailForm({ inventoryId, visible, onHide }) {
   const [getInventory, { data, loading }] = useLazyQuery(GET_INVENTORY_BY_ID, {
@@ -29,27 +28,19 @@ export function InventoryDetailForm({ inventoryId, visible, onHide }) {
 
   const renderSecurityEntities = (inventory) => {
     return (
-      <div className="p-grid">
-        <div className="p-col-6 p-md-3">
-          <div className="field">
-            <b>Empresa:</b> {inventory.business?.name || "N/A"}
-          </div>
-        </div>
-        <div className="p-col-6 p-md-3">
-          <div className="field">
-            <b>Oficina:</b> {inventory.office?.name || "N/A"}
-          </div>
-        </div>
-        <div className="p-col-6 p-md-3">
-          <div className="field">
-            <b>Departamento:</b> {inventory.department?.name || "N/A"}
-          </div>
-        </div>
-        <div className="p-col-6 p-md-3">
-          <div className="field">
-            <b>Equipo:</b> {inventory.team?.name || "N/A"}
-          </div>
-        </div>
+      <div className="grid">
+        <DetailField label="Empresa" className="col-6 md:col-3">
+          {inventory.business?.name || "N/A"}
+        </DetailField>
+        <DetailField label="Oficina" className="col-6 md:col-3">
+          {inventory.office?.name || "N/A"}
+        </DetailField>
+        <DetailField label="Departamento" className="col-6 md:col-3">
+          {inventory.department?.name || "N/A"}
+        </DetailField>
+        <DetailField label="Equipo" className="col-6 md:col-3">
+          {inventory.team?.name || "N/A"}
+        </DetailField>
       </div>
     );
   };
@@ -63,42 +54,25 @@ export function InventoryDetailForm({ inventoryId, visible, onHide }) {
         : "success";
 
     return (
-      <div className="p-grid">
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Producto:</b> {inventory.product?.name || "N/A"}
-          </div>
-        </div>
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Unidad de Medida:</b> {inventory.product?.unitOfMeasure || "N/A"}
-          </div>
-        </div>
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Stock Actual:</b>
-            <Tag
-              value={inventory.currentStock}
-              severity={stockStatus}
-              className="ml-2"
-            />
-          </div>
-        </div>
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Stock Mínimo:</b> {inventory.minStock || "N/A"}
-          </div>
-        </div>
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Ubicación:</b> {inventory.location || "N/A"}
-          </div>
-        </div>
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Categoría:</b> {inventory.product?.category?.name || "N/A"}
-          </div>
-        </div>
+      <div className="grid">
+        <DetailField label="Producto">
+          {inventory.product?.name || "N/A"}
+        </DetailField>
+        <DetailField label="Unidad de Medida">
+          {inventory.product?.unitOfMeasure || "N/A"}
+        </DetailField>
+        <DetailField label="Stock Actual">
+          <Tag value={inventory.currentStock} severity={stockStatus} />
+        </DetailField>
+        <DetailField label="Stock Mínimo">
+          {inventory.minStock || "N/A"}
+        </DetailField>
+        <DetailField label="Ubicación">
+          {inventory.location || "N/A"}
+        </DetailField>
+        <DetailField label="Categoría">
+          {inventory.product?.category?.name || "N/A"}
+        </DetailField>
       </div>
     );
   };
@@ -107,28 +81,19 @@ export function InventoryDetailForm({ inventoryId, visible, onHide }) {
     if (!product) return <p>No hay información de precios disponible</p>;
 
     return (
-      <div className="p-grid">
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Precio Costo:</b>{" "}
-            {formatCurrency(product.costPrice, product.costCurrency)}
-          </div>
-        </div>
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Precio Venta:</b>{" "}
-            {formatCurrency(product.basePrice, product.baseCurrency)}
-          </div>
-        </div>
-        <div className="p-col-12">
-          <div className="field">
-            <b>Valor Total en Inventario:</b>
-            {formatCurrency(
-              inventory.currentStock * product.costPrice,
-              product.costCurrency
-            )}
-          </div>
-        </div>
+      <div className="grid">
+        <DetailField label="Precio Costo">
+          {formatCurrency(product.costPrice, product.costCurrency)}
+        </DetailField>
+        <DetailField label="Precio Venta">
+          {formatCurrency(product.basePrice, product.baseCurrency)}
+        </DetailField>
+        <DetailField label="Valor Total en Inventario" className="col-12">
+          {formatCurrency(
+            inventory.currentStock * product.costPrice,
+            product.costCurrency
+          )}
+        </DetailField>
       </div>
     );
   };
@@ -141,25 +106,25 @@ export function InventoryDetailForm({ inventoryId, visible, onHide }) {
     };
 
     return (
-      <div className="p-grid p-fluid p-ai-center border-bottom-1 surface-border pb-2 mb-2">
-        <div className="p-col-12 p-md-2">
+      <div className="grid align-items-center border-bottom-1 surface-border pb-2 mb-2">
+        <div className="col-12 md:col-2">
           <Tag
             value={movement.type}
             severity={movementTypeSeverity[movement.type] || "info"}
           />
         </div>
-        <div className="p-col-12 p-md-2">
-          <b>Cantidad:</b> {movement.quantity}
-        </div>
-        <div className="p-col-12 p-md-3">
-          <b>Fecha:</b> {formatDate(movement.createdAt)}
-        </div>
-        <div className="p-col-12 p-md-3">
-          <b>Usuario:</b> {movement.user?.name || "N/A"}
-        </div>
-        <div className="p-col-12 p-md-2">
-          <b>Razón:</b> {movement.reason}
-        </div>
+        <DetailField label="Cantidad" className="col-12 md:col-2">
+          {movement.quantity}
+        </DetailField>
+        <DetailField label="Fecha" className="col-12 md:col-3">
+          {formatDate(movement.createdAt)}
+        </DetailField>
+        <DetailField label="Usuario" className="col-12 md:col-3">
+          {movement.user?.name || "N/A"}
+        </DetailField>
+        <DetailField label="Razón" className="col-12 md:col-2">
+          {movement.reason}
+        </DetailField>
       </div>
     );
   };
@@ -170,7 +135,7 @@ export function InventoryDetailForm({ inventoryId, visible, onHide }) {
     }
 
     return (
-      <ScrollPanel style={{ width: "100%", height: "300px" }}>
+      <ScrollPanel className="w-full h-20rem">
         {movements.map((movement, index) => (
           <div key={index}>{renderMovementItem(movement)}</div>
         ))}
@@ -180,32 +145,28 @@ export function InventoryDetailForm({ inventoryId, visible, onHide }) {
 
   const renderAuditInfo = (inventory) => {
     return (
-      <div className="p-grid">
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Creado por:</b> {inventory.createdBy?.name || "N/A"}
-          </div>
-          <div className="field">
-            <b>Fecha creación:</b> {formatDate(inventory.createdAt)}
-          </div>
-        </div>
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Actualizado por:</b> {inventory.updatedBy?.name || "N/A"}
-          </div>
-          <div className="field">
-            <b>Última actualización:</b> {formatDate(inventory.updatedAt)}
-          </div>
-        </div>
+      <div className="grid">
+        <DetailField label="Creado por">
+          {inventory.createdBy?.name || "N/A"}
+        </DetailField>
+        <DetailField label="Actualizado por">
+          {inventory.updatedBy?.name || "N/A"}
+        </DetailField>
+        <DetailField label="Fecha creación">
+          {formatDate(inventory.createdAt)}
+        </DetailField>
+        <DetailField label="Última actualización">
+          {formatDate(inventory.updatedAt)}
+        </DetailField>
         {inventory.deletedAt && (
-          <div className="p-col-12 p-md-6">
-            <div className="field">
-              <b>Eliminado por:</b> {inventory.deletedBy?.name || "N/A"}
-            </div>
-            <div className="field">
-              <b>Fecha eliminación:</b> {formatDate(inventory.deletedAt)}
-            </div>
-          </div>
+          <>
+            <DetailField label="Eliminado por">
+              {inventory.deletedBy?.name || "N/A"}
+            </DetailField>
+            <DetailField label="Fecha eliminación">
+              {formatDate(inventory.deletedAt)}
+            </DetailField>
+          </>
         )}
       </div>
     );
@@ -215,18 +176,18 @@ export function InventoryDetailForm({ inventoryId, visible, onHide }) {
     <Dialog
       header={`Detalles del Inventario: ${inventory?.product?.name || ""}`}
       visible={visible}
-      style={{ width: "70vw" }}
+      className="w-full lg:w-8"
       onHide={onHide}
       modal
       resizable
       draggable
     >
       {loading ? (
-        <div className="flex justify-center">
+        <div className="flex justify-content-center">
           <ProgressSpinner />
         </div>
       ) : inventory ? (
-        <div className="p-fluid">
+        <div>
           <Panel header="Entidades de Seguridad" toggleable>
             {renderSecurityEntities(inventory)}
           </Panel>

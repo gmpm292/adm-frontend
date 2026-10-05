@@ -3,8 +3,9 @@ import { Dialog } from "primereact/dialog";
 import { useLazyQuery } from "@apollo/client";
 import { GET_SCOPED_ACCESS_BY_ID } from "../graphql/queries";
 import { ProgressSpinner } from "primereact/progressspinner";
-import { Badge } from "primereact/badge";
+import { Tag } from "primereact/tag";
 import { formatDate } from "../../../utils/dateUtils";
+import { FormField } from "../../../components/ui";
 
 export function ScopedAccessDetailForm({ scopedAccessId, visible, onHide }) {
   const [getScopedAccess, { data, loading }] = useLazyQuery(
@@ -27,7 +28,7 @@ export function ScopedAccessDetailForm({ scopedAccessId, visible, onHide }) {
   const levelConfig = {
     BUSINESS: { label: "Negocio", severity: "info" },
     OFFICE: { label: "Oficina", severity: "warning" },
-    DEPARTMENT: { label: "Departamento", severity: "help" },
+    DEPARTMENT: { label: "Departamento" },
     TEAM: { label: "Equipo", severity: "success" },
     GENERAL: { label: "General", severity: "secondary" },
     PERSONAL: { label: "Personal", severity: "contrast" },
@@ -38,78 +39,100 @@ export function ScopedAccessDetailForm({ scopedAccessId, visible, onHide }) {
     <Dialog
       header="Detalles del Nivel de Acceso"
       visible={visible}
-      style={{ width: "600px" }}
+      className="w-full md:w-30rem"
       onHide={onHide}
       modal
     >
       {loading ? (
-        <div className="flex justify-center">
-          <ProgressSpinner />
+        <div className="flex justify-content-center">
+          <ProgressSpinner strokeWidth="4" className="w-3rem h-3rem" />
         </div>
       ) : scopedAccess ? (
-        <div className="p-fluid">
-          <div className="field">
-            <b>Negocio:</b> {scopedAccess.business?.name || "N/A"}
+        <div className="grid">
+          <div className="col-12 md:col-6">
+            <FormField label="Negocio">
+              <span className="font-medium">
+                {scopedAccess.business?.name || "N/A"}
+              </span>
+            </FormField>
           </div>
-          <div className="field">
-            <b>Operación:</b>{" "}
-            {scopedAccess.roleGuard?.description ||
-              scopedAccess.roleGuard?.queryOrEndPointURL ||
-              "N/A"}
+          <div className="col-12 md:col-6">
+            <FormField label="Estado">
+              <div>
+                <Tag
+                  value={
+                    scopedAccess.entityStatus == 1
+                      ? "Habilitado"
+                      : "Deshabilitado"
+                  }
+                  severity={
+                    scopedAccess.entityStatus == 1 ? "success" : "danger"
+                  }
+                />
+              </div>
+            </FormField>
           </div>
-          <div className="field">
-            <b>Tipo de Operación:</b> {scopedAccess.roleGuard?.type || "N/A"}
+          <div className="col-12">
+            <FormField label="Operación">
+              <span>
+                {scopedAccess.roleGuard?.description ||
+                  scopedAccess.roleGuard?.queryOrEndPointURL ||
+                  "N/A"}
+              </span>
+            </FormField>
           </div>
-          <div className="field">
-            <b>Niveles de Acceso:</b>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {scopedAccess.accessLevels &&
-              scopedAccess.accessLevels.length > 0 ? (
-                scopedAccess.accessLevels.map((level, index) => {
-                  const config = levelConfig[level] || {
-                    label: level,
-                    severity: "secondary",
-                  };
-                  return (
-                    <Badge
-                      key={index}
-                      value={config.label}
-                      severity={config.severity}
-                    />
-                  );
-                })
-              ) : (
-                <Badge value="Sin niveles configurados" severity="danger" />
-              )}
-            </div>
+          <div className="col-12">
+            <FormField label="Tipo de Operación">
+              <span>{scopedAccess.roleGuard?.type || "N/A"}</span>
+            </FormField>
           </div>
-          <div className="field">
-            <b>Estado:</b>{" "}
-            <Badge
-              value={
-                scopedAccess.entityStatus == 1 ? "Habilitado" : "Deshabilitado"
-              }
-              severity={scopedAccess.entityStatus == 1 ? "success" : "danger"}
-            />
+          <div className="col-12">
+            <FormField label="Niveles de Acceso">
+              <div className="flex flex-wrap gap-1">
+                {scopedAccess.accessLevels &&
+                scopedAccess.accessLevels.length > 0 ? (
+                  scopedAccess.accessLevels.map((level, index) => {
+                    const config = levelConfig[level] || {
+                      label: level,
+                      severity: "secondary",
+                    };
+                    return (
+                      <Tag
+                        key={index}
+                        value={config.label}
+                        severity={config.severity}
+                      />
+                    );
+                  })
+                ) : (
+                  <Tag value="Sin niveles configurados" severity="danger" />
+                )}
+              </div>
+            </FormField>
           </div>
-          <div className="field">
-            <b>Roles Permitidos en la Operación:</b>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {scopedAccess.roleGuard?.roles &&
-              scopedAccess.roleGuard.roles.length > 0 ? (
-                scopedAccess.roleGuard.roles.map((role, index) => (
-                  <Badge key={index} value={role} severity="success" />
-                ))
-              ) : (
-                <Badge value="Sin roles configurados" severity="danger" />
-              )}
-            </div>
+          <div className="col-12">
+            <FormField label="Roles Permitidos en la Operación">
+              <div className="flex flex-wrap gap-1">
+                {scopedAccess.roleGuard?.roles &&
+                scopedAccess.roleGuard.roles.length > 0 ? (
+                  scopedAccess.roleGuard.roles.map((role, index) => (
+                    <Tag key={index} value={role} severity="success" />
+                  ))
+                ) : (
+                  <Tag value="Sin roles configurados" severity="danger" />
+                )}
+              </div>
+            </FormField>
           </div>
-          <div className="field">
-            <b>Fecha de creación:</b> {formatDate(scopedAccess.createdAt)}
+          <div className="col-12 md:col-6">
+            <FormField label="Fecha de creación">
+              <span>{formatDate(scopedAccess.createdAt)}</span>
+            </FormField>
           </div>
-          <div className="field">
-            <b>Última actualización:</b> {formatDate(scopedAccess.updatedAt)}
+          <div className="col-12 md:col-6">
+            <FormField label="Última actualización">
+              <span>{formatDate(scopedAccess.updatedAt)}</span>
+            </FormField>
           </div>
         </div>
       ) : (

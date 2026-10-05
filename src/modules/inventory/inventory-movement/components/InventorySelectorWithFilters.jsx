@@ -7,6 +7,7 @@ import { GET_CATEGORIES } from "../../category/graphql/queries";
 import { GET_INVENTORIES } from "../../inventory/graphql/queries";
 import { Message } from "primereact/message";
 import { ConditionalOperator } from "../../../../enums/conditional-operation.enum";
+import { FormField } from "../../../../components/ui";
 
 export const InventorySelectorWithFilters = ({
   selectedInventoryId,
@@ -171,78 +172,73 @@ export const InventorySelectorWithFilters = ({
   const isInventoryDisabled = disabled || inventoriesLoading;
 
   return (
-    <div className="p-fluid">
-      <div className="p-grid">
-        <div className="p-col-12 p-md-6">
-          <div className="p-field">
-            <label htmlFor="office">Oficina</label>
-            <Dropdown
-              id="office"
-              value={officeId}
-              options={officeOptions}
-              onChange={handleOfficeChange}
-              placeholder="Todas las oficinas"
-              disabled={disabled || officesLoading}
-              showClear
-              filter
-            />
-          </div>
-        </div>
+    <div className="formgrid grid p-fluid">
+      <div className="col-12 md:col-6">
+        <FormField label="Oficina" htmlFor="office">
+          <Dropdown
+            id="office"
+            value={officeId}
+            options={officeOptions}
+            onChange={handleOfficeChange}
+            placeholder="Todas las oficinas"
+            disabled={disabled || officesLoading}
+            showClear
+            filter
+          />
+        </FormField>
+      </div>
 
-        <div className="p-col-12 p-md-6">
-          <div className="p-field">
-            <label htmlFor="category">Categoría</label>
-            <Dropdown
-              id="category"
-              value={categoryId}
-              options={categoryOptions}
-              onChange={handleCategoryChange}
-              placeholder="Todas las categorías"
-              disabled={disabled || categoriesLoading}
-              showClear
-              filter
-            />
-          </div>
-        </div>
+      <div className="col-12 md:col-6">
+        <FormField label="Categoría" htmlFor="category">
+          <Dropdown
+            id="category"
+            value={categoryId}
+            options={categoryOptions}
+            onChange={handleCategoryChange}
+            placeholder="Todas las categorías"
+            disabled={disabled || categoriesLoading}
+            showClear
+            filter
+          />
+        </FormField>
+      </div>
 
-        <div className="p-col-12">
-          <div className="p-field">
-            <label htmlFor="inventory">Inventario*</label>
-            {inventoriesLoading ? (
-              <div className="flex align-items-center gap-2 p-2 border-1 surface-border border-round">
-                <ProgressSpinner style={{ width: "24px", height: "24px" }} />
-                <span>Cargando inventarios...</span>
-              </div>
-            ) : (
-              <>
-                <Dropdown
-                  id="inventory"
-                  value={inventoryId}
-                  options={inventoryOptions}
-                  onChange={handleInventoryChange}
-                  placeholder="Seleccione inventario"
-                  disabled={isInventoryDisabled}
-                  filter
-                  showClear
-                  optionLabel="label"
-                  className="w-full"
-                />
-                {movementType === "OUT" && (
-                  <small className="p-d-block p-mt-1 text-color-secondary">
-                    Solo se muestran inventarios con stock disponible
-                  </small>
-                )}
-              </>
-            )}
-            {noInventoryMessage && !inventoriesLoading && (
-              <Message
-                severity="warn"
-                text={noInventoryMessage}
-                className="w-full p-mt-2"
+      <div className="col-12">
+        <FormField label="Inventario" htmlFor="inventory" required>
+          {inventoriesLoading ? (
+            <div className="flex align-items-center gap-2 p-2 border-1 surface-border border-round">
+              <ProgressSpinner className="w-2rem h-2rem m-0" />
+              <span>Cargando inventarios...</span>
+            </div>
+          ) : (
+            <>
+              <Dropdown
+                id="inventory"
+                value={inventoryId}
+                options={inventoryOptions}
+                onChange={handleInventoryChange}
+                placeholder="Seleccione inventario"
+                disabled={isInventoryDisabled}
+                filter
+                showClear
+                optionLabel="label"
+                className="w-full"
               />
-            )}
-          </div>
-        </div>
+              {movementType === "OUT" && (
+                <small className="block text-color-secondary">
+                  Solo se muestran inventarios con stock disponible
+                </small>
+              )}
+            </>
+          )}
+          {noInventoryMessage && !inventoriesLoading && (
+            <Message
+              severity="warn"
+              text={noInventoryMessage}
+              className="w-full"
+            />
+          )}
+        </FormField>
       </div>
     </div>
   );

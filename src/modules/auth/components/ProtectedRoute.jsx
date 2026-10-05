@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuthContext } from "./AuthContext";
-import { ProgressSpinner } from "primereact/progressspinner";
+import { getTwoFactorStep, useAuthContext } from "./AuthContext";
+import { LoadingScreen } from "../../../components/ui";
 import { useEffect, useState, useRef } from "react";
 import { routePermissions } from "../../../config/routes";
 import { usePermissions } from "../../../hooks/usePermissions";
@@ -125,34 +125,22 @@ const ProtectedRoute = () => {
 
   // Estado de carga inicial
   if (!ready || loading) {
-    return (
-      <div
-        className="flex justify-content-center align-items-center"
-        style={{ height: "100vh" }}
-      >
-        <ProgressSpinner />
-        <span className="ml-2">Cargando.....</span>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   // Verificación de autenticación
   if (!isAuthenticated || authFailed) {
+    // Sesión iniciada pero con el segundo factor pendiente
+    if (getTwoFactorStep()) {
+      return <Navigate to="/two-factor" replace />;
+    }
     console.log("🔐 Redirigiendo a login - No autenticado");
     return <Navigate to="/login" replace />;
   }
 
   // Esperar verificación de permisos
   if (!permissionChecked) {
-    return (
-      <div
-        className="flex justify-content-center align-items-center"
-        style={{ height: "100vh" }}
-      >
-        <ProgressSpinner />
-        <span className="ml-2">Verificando permisos...</span>
-      </div>
-    );
+    return <LoadingScreen message="Verificando permisos..." />;
   }
 
   // Verificación de acceso

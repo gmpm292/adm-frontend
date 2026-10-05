@@ -3,11 +3,12 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
+import { IconField } from "primereact/iconfield";
+import { InputIcon } from "primereact/inputicon";
 import { ToggleButton } from "primereact/togglebutton";
 import { MultiSelect } from "primereact/multiselect";
 import PropTypes from "prop-types";
 import { FilterMatchMode, FilterOperator } from "primereact/api";
-import "./styles.css";
 import useDataTable from "./useDataTable";
 
 const renderColumnHeader = (field, displayName) => (
@@ -26,7 +27,6 @@ const GenericDataTable = ({
   currentPageReportTemplate = "Mostrando {first} a {last} de {totalRecords} registros",
   pageSizeOptions = [5, 10, 25, 50],
   globalFilterFields = [],
-  initialPageSize = 10,
   initialFilters = {},
   initialSorts = [],
   refreshable = true,
@@ -48,7 +48,6 @@ const GenericDataTable = ({
   const {
     lazyState,
     globalFilterValue,
-    columnFilters,
     multiSortMeta,
     onPage,
     onSort,
@@ -78,11 +77,10 @@ const GenericDataTable = ({
         };
       }
     });
-    console.log("filters", filters);
     return filters;
   };
 
-  const [filters, setFilters] = useState({
+  const [filters] = useState({
     ...initFilters(), // Solo añade filtros para columnas no especificadas
     ...initialFilters,
   });
@@ -112,18 +110,29 @@ const GenericDataTable = ({
     }));
   }, [columns]);
 
-  const defaultHeader = (
-    <div className="flex justify-content-between align-items-center">
-      <div className="flex align-items-center gap-2">
-        {refreshable && (
-          <Button
-            icon="pi pi-refresh"
-            onClick={handleRefresh}
-            className="p-button-text"
-            tooltip="Recargar datos"
-            tooltipOptions={{ position: "bottom" }}
+  // Barra de la tabla: acciones de la pantalla a la izquierda, búsqueda y
+  // opciones de vista a la derecha
+  const combinedHeader = (
+    <div className="ui-table-toolbar">
+      <div className="ui-table-toolbar__group">{header}</div>
+      <div className="ui-table-toolbar__group">
+        <IconField iconPosition="left" className="ui-table-toolbar__search">
+          <InputIcon className="pi pi-search" />
+          <InputText
+            value={globalFilterValue}
+            onChange={onGlobalFilterChange}
+            placeholder="Buscar..."
           />
-        )}
+        </IconField>
+        <MultiSelect
+          value={selectedColumns}
+          options={columnOptions}
+          onChange={(e) => setSelectedColumns(e.value)}
+          optionLabel="label"
+          placeholder="Columnas"
+          maxSelectedLabels={0}
+          selectedItemsLabel="{0} columnas"
+        />
         {showDeleted && (
           <ToggleButton
             checked={showDeletedState}
@@ -132,83 +141,26 @@ const GenericDataTable = ({
             offLabel=""
             onIcon="pi pi-eye"
             offIcon="pi pi-eye-slash"
-            className="p-button-sm"
+            tooltip={
+              showDeletedState
+                ? "Ocultar registros eliminados"
+                : "Mostrar registros eliminados"
+            }
+            tooltipOptions={{ position: "bottom" }}
           />
         )}
-      </div>
-      <div className="flex align-items-center gap-2">
-        <MultiSelect
-          value={selectedColumns}
-          options={columnOptions}
-          onChange={(e) => setSelectedColumns(e.value)}
-          optionLabel="label"
-          placeholder="Columnas"
-          display="chip"
-          maxSelectedLabels={0}
-          selectedItemsLabel="{0} columnas"
-          className="flex-1"
-        />
-        <span className="p-input-icon-left w-full md:w-20rem">
-          <i className="pi pi-search" />
-          <InputText
-            value={globalFilterValue}
-            onChange={onGlobalFilterChange}
-            placeholder=" Buscar en todos los campos... "
-          />
-        </span>
-      </div>
-    </div>
-  );
-
-  const combinedHeader = header ? (
-    <div className="flex justify-content-between align-items-center">
-      <div className="flex align-items-center gap-2">
         {refreshable && (
           <Button
             icon="pi pi-refresh"
             onClick={handleRefresh}
-            className="p-button-text"
+            text
+            severity="secondary"
             tooltip="Recargar datos"
             tooltipOptions={{ position: "bottom" }}
           />
         )}
-        {showDeleted && (
-          <ToggleButton
-            checked={showDeletedState}
-            onChange={handleToggleDeleted}
-            onLabel=""
-            offLabel=""
-            onIcon="pi pi-eye"
-            offIcon="pi pi-eye-slash"
-            className="p-button-sm"
-          />
-        )}
-        {header}
-      </div>
-      <div className="flex align-items-center gap-2">
-        <MultiSelect
-          value={selectedColumns}
-          options={columnOptions}
-          onChange={(e) => setSelectedColumns(e.value)}
-          optionLabel="label"
-          placeholder="Columnas"
-          display="chip"
-          maxSelectedLabels={0}
-          selectedItemsLabel="{0} columnas"
-          className="flex-1"
-        />
-        <span className="p-input-icon-left w-full md:w-20rem">
-          <i className="pi pi-search" />
-          <InputText
-            value={globalFilterValue}
-            onChange={onGlobalFilterChange}
-            placeholder=" Buscar en todos los campos... "
-          />
-        </span>
       </div>
     </div>
-  ) : (
-    defaultHeader
   );
 
   const getRowClassName = (data) => {
@@ -292,10 +244,9 @@ const GenericDataTable = ({
             //showFilterMenuOptions={column.filterElement ? false : column.filter}
             showFilterMenuOptions={column.filter}
             showFilterMenu={column.filter}
-            style={column.style}
-            headerStyle={column.headerStyle}
-            bodyStyle={column.bodyStyle}
             className={column.className}
+            headerClassName={column.headerClassName}
+            bodyClassName={column.bodyClassName}
             sortIcon="pi pi-sort-alt"
           />
         ))}
@@ -320,10 +271,9 @@ GenericDataTable.propTypes = {
       sortable: PropTypes.bool,
       sortField: PropTypes.string,
       filter: PropTypes.bool,
-      style: PropTypes.object,
-      headerStyle: PropTypes.object,
-      bodyStyle: PropTypes.object,
       className: PropTypes.string,
+      headerClassName: PropTypes.string,
+      bodyClassName: PropTypes.string,
     })
   ).isRequired,
   data: PropTypes.array,

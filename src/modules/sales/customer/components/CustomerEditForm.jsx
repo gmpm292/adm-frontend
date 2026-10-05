@@ -5,7 +5,9 @@ import { InputText } from "primereact/inputtext";
 import { useMutation, useQuery } from "@apollo/client";
 import { GET_CUSTOMER_BY_ID, UPDATE_CUSTOMER } from "../graphql/queries";
 import { Toast } from "primereact/toast";
+import { Message } from "primereact/message";
 import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
+import { FormField } from "../../../../components/ui";
 
 export const CustomerEditForm = ({ customerId, visible, onHide, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -91,10 +93,10 @@ export const CustomerEditForm = ({ customerId, visible, onHide, onSuccess }) => 
   };
 
   const footer = (
-    <div>
-      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} className="p-button-text" />
+    <>
+      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} severity="secondary" />
       <Button label="Guardar" icon="pi pi-check" onClick={handleSubmit} autoFocus />
-    </div>
+    </>
   );
 
   return (
@@ -103,56 +105,61 @@ export const CustomerEditForm = ({ customerId, visible, onHide, onSuccess }) => 
       <Dialog
         header="Editar Cliente"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 xl:w-6"
         footer={footer}
         onHide={onHide}
       >
         {loading ? (
-          <p>Cargando...</p>
+          <p className="text-color-secondary">Cargando...</p>
         ) : error ? (
-          <p>Error al cargar cliente</p>
+          <Message severity="error" className="w-full" text="Error al cargar cliente" />
         ) : (
-          <div className="p-fluid">
-            <div className="p-field">
-              <label htmlFor="name">Nombre*</label>
-              <InputText
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
+          <div className="formgrid grid">
+            <div className="col-12">
+              <FormField label="Nombre" htmlFor="name" required>
+                <InputText
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="email">Email</label>
-              <InputText
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Email" htmlFor="email">
+                <InputText
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="phone">Teléfono</label>
-              <InputText
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Teléfono" htmlFor="phone">
+                <InputText
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
 
-            <SecurityEntitySelector
-              initialValues={{
-                businessId: formData.businessId,
-                officeId: formData.officeId,
-                departmentId: formData.departmentId,
-                teamId: formData.teamId
-              }}
-              onSelectionChange={handleSecurityEntitiesChange}
-            />
+            <div className="col-12">
+              <SecurityEntitySelector
+                initialValues={{
+                  businessId: formData.businessId,
+                  officeId: formData.officeId,
+                  departmentId: formData.departmentId,
+                  teamId: formData.teamId
+                }}
+                onSelectionChange={handleSecurityEntitiesChange}
+              />
+            </div>
           </div>
         )}
       </Dialog>

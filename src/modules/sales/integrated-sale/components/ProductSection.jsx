@@ -12,7 +12,18 @@ import { Fieldset } from "primereact/fieldset";
 import { useLazyQuery } from "@apollo/client";
 import { GET_CATEGORIES, GET_PRODUCTS_BY_CATEGORY } from "../graphql/queries";
 import { PublicistSelector } from "../../sale-detail/components/PublicistSelector";
+import { Tag } from "primereact/tag";
 import PermissionGuard from "../../../../components/PermissionGuard";
+import { FormField } from "../../../../components/ui";
+
+const PANEL_CLASS = "p-3 border-round border-1 surface-border surface-50";
+
+const DetailItem = ({ label, children }) => (
+  <div className="col-12 md:col-6">
+    <span className="block text-sm text-color-secondary mb-1">{label}</span>
+    <span className="font-medium">{children}</span>
+  </div>
+);
 
 export const ProductSection = ({
   // Props originales de productos
@@ -30,9 +41,6 @@ export const ProductSection = ({
   paymentMethod,
   onPaymentMethodChange,
   sellers = [],
-  currentUserBusinessId,
-  currentUserOfficeId,
-  isAdministrativeUser,
   // Props de mensajería
   hasDelivery,
   onHasDeliveryChange,
@@ -147,7 +155,7 @@ export const ProductSection = ({
         min={1}
         showButtons
         size={1}
-        inputStyle={{ width: "80px" }}
+        inputClassName="w-5rem"
       />
     );
   };
@@ -161,7 +169,9 @@ export const ProductSection = ({
     return (
       <Button
         icon="pi pi-trash"
-        className="p-button-danger p-button-text"
+        text
+        rounded
+        severity="danger"
         onClick={() => onRemoveProduct(column.rowIndex)}
         tooltip="Eliminar producto"
       />
@@ -229,77 +239,72 @@ export const ProductSection = ({
   }, [deliveryWorkers]);
 
   return (
-    <div className="sale-configuration">
+    <>
       {/* Sección de Productos */}
       <Card title="Productos de la Venta">
         {/* Selector para agregar productos */}
-        <div className="p-fluid mb-4">
-          <div className="p-grid">
-            <div className="p-col-12 md:p-col-4">
-              <div className="p-field">
-                <label htmlFor="category">Categoría</label>
-                <Dropdown
-                  id="category"
-                  value={selectedCategory}
-                  options={categories}
-                  onChange={(e) => {
-                    setSelectedCategory(e.value);
-                    setSelectedProduct(null);
-                  }}
-                  optionLabel="label"
-                  placeholder="Seleccione categoría"
-                  filter
-                />
-              </div>
-            </div>
+        <div className="formgrid grid align-items-end">
+          <div className="col-12 md:col-4">
+            <FormField label="Categoría" htmlFor="category">
+              <Dropdown
+                id="category"
+                value={selectedCategory}
+                options={categories}
+                onChange={(e) => {
+                  setSelectedCategory(e.value);
+                  setSelectedProduct(null);
+                }}
+                optionLabel="label"
+                placeholder="Seleccione categoría"
+                filter
+              />
+            </FormField>
+          </div>
 
-            <div className="p-col-12 md:p-col-4">
-              <div className="p-field">
-                <label htmlFor="product">Producto</label>
-                <Dropdown
-                  id="product"
-                  value={selectedProduct}
-                  options={products}
-                  onChange={(e) => setSelectedProduct(e.value)}
-                  optionLabel="label"
-                  placeholder="Seleccione producto"
-                  disabled={!selectedCategory}
-                  filter
-                />
-              </div>
-            </div>
+          <div className="col-12 md:col-4">
+            <FormField label="Producto" htmlFor="product">
+              <Dropdown
+                id="product"
+                value={selectedProduct}
+                options={products}
+                onChange={(e) => setSelectedProduct(e.value)}
+                optionLabel="label"
+                placeholder="Seleccione producto"
+                disabled={!selectedCategory}
+                filter
+              />
+            </FormField>
+          </div>
 
-            <div className="p-col-12 md:p-col-2">
-              <div className="p-field">
-                <label htmlFor="quantity">Cantidad</label>
-                <InputNumber
-                  id="quantity"
-                  value={quantity}
-                  onValueChange={(e) => setQuantity(e.value)}
-                  min={1}
-                  showButtons
-                />
-              </div>
-            </div>
+          <div className="col-12 md:col-2">
+            <FormField label="Cantidad" htmlFor="quantity">
+              <InputNumber
+                id="quantity"
+                value={quantity}
+                onValueChange={(e) => setQuantity(e.value)}
+                min={1}
+                showButtons
+                inputClassName="w-full"
+              />
+            </FormField>
+          </div>
 
-            <div className="p-col-12 md:p-col-2">
-              <div className="p-field" style={{ paddingTop: "1.8rem" }}>
-                <Button
-                  label="Agregar"
-                  icon="pi pi-plus"
-                  onClick={handleAddProduct}
-                  disabled={!canAddProduct}
-                  className="p-button-success"
-                />
-              </div>
-            </div>
+          <div className="col-12 md:col-2 mb-4">
+            <Button
+              label="Agregar"
+              icon="pi pi-plus"
+              onClick={handleAddProduct}
+              disabled={!canAddProduct}
+              severity="secondary"
+              className="w-full"
+            />
           </div>
         </div>
 
         {/* Tabla de productos agregados */}
         {saleDetails.length > 0 ? (
-          <div className="product-list">
-            <DataTable value={saleDetails} className="p-datatable-sm">
+          <>
+            <DataTable value={saleDetails} size="small">
               <Column field="productName" header="Producto"></Column>
               <Column field="productCode" header="Código"></Column>
               <Column
@@ -320,25 +325,22 @@ export const ProductSection = ({
               <Column
                 body={actionBodyTemplate}
                 header="Acciones"
-                style={{ width: "80px" }}
+                className="w-6rem"
               ></Column>
             </DataTable>
 
             {/* Total */}
             <div
-              className="total-section mt-3 p-3 border-round"
-              style={{ backgroundColor: "#f8f9fa" }}
+              className={`${PANEL_CLASS} mt-3 flex justify-content-between align-items-center`}
             >
-              <div className="flex justify-content-between align-items-center">
-                <h4 className="m-0">Total:</h4>
-                <h4 className="m-0 text-primary">
-                  ${totalAmount.toFixed(2)} {saleDetails[0]?.baseCurrency || ""}
-                </h4>
-              </div>
+              <h4 className="m-0">Total:</h4>
+              <h4 className="m-0 text-primary">
+                ${totalAmount.toFixed(2)} {saleDetails[0]?.baseCurrency || ""}
+              </h4>
             </div>
-          </div>
+          </>
         ) : (
-          <p className="text-gray-500 text-center">
+          <p className="text-color-secondary text-center">
             No hay productos agregados
           </p>
         )}
@@ -347,30 +349,23 @@ export const ProductSection = ({
       {/* Sección de Cliente */}
       {customer && (
         <Card title="Cliente" className="mt-3">
-          <div className="customer-summary">
-            <p>
-              <strong>Nombre:</strong> {customer.fullName}
-            </p>
-            {customer.ci && (
-              <p>
-                <strong>CI:</strong> {customer.ci}
-              </p>
-            )}
+          <div className="grid">
+            <DetailItem label="Nombre">{customer.fullName}</DetailItem>
+            {customer.ci && <DetailItem label="CI">{customer.ci}</DetailItem>}
             {customer.email && (
-              <p>
-                <strong>Email:</strong> {customer.email}
-              </p>
+              <DetailItem label="Email">{customer.email}</DetailItem>
             )}
             {customer.phone && (
-              <p>
-                <strong>Teléfono:</strong> {customer.phone}
-              </p>
+              <DetailItem label="Teléfono">{customer.phone}</DetailItem>
             )}
             {customer.existingCustomer && (
-              <span className="text-sm text-green-600">
-                <i className="pi pi-check-circle mr-1"></i>
-                Cliente existente
-              </span>
+              <div className="col-12">
+                <Tag
+                  severity="success"
+                  icon="pi pi-check-circle"
+                  value="Cliente existente"
+                />
+              </div>
             )}
           </div>
         </Card>
@@ -378,178 +373,174 @@ export const ProductSection = ({
 
       {/* Sección de Personal, Pago y Mensajería */}
       <Card title="Asignación de Personal y Pago" className="mt-3">
-        <div className="p-fluid">
-          <div className="p-grid">
-            {/* Publicistas */}
-            <div className="p-col-12">
-              <PublicistSelector
-                selectedPublicistIds={selectedPublicists}
-                onPublicistsChange={onPublicistsChange}
-                label="Publicistas Asociados"
-              />
-            </div>
-
-            {/* Vendedor - Solo para SUPER, PRINCIPAL, ADMIN */}
-            <PermissionGuard requiredRoles={["SUPER", "PRINCIPAL", "ADMIN"]}>
-              <div className="p-col-12 md:p-col-6">
-                <div className="p-field">
-                  <label htmlFor="seller">Vendedor</label>
-                  <Dropdown
-                    id="seller"
-                    value={selectedSeller}
-                    options={sellers}
-                    onChange={(e) => onSellerChange(e.value)}
-                    optionLabel="label"
-                    placeholder="Seleccione vendedor"
-                    filter
-                    disabled={sellers.length === 0}
-                  />
-                  {sellers.length === 0 && (
-                    <small className="text-secondary">
-                      Cargando lista de vendedores...
-                    </small>
-                  )}
-                </div>
-              </div>
-            </PermissionGuard>
-
-            <PermissionGuard
-              requiredRoles={["SUPER", "PRINCIPAL", "ADMIN"]}
-              showFallback
-              fallback={
-                <div className="p-col-12 md:p-col-6">
-                  <div className="p-field">
-                    <label htmlFor="currentSeller">Vendedor Actual</label>
-                    <InputText
-                      id="currentSeller"
-                      value="Usted es el vendedor"
-                      disabled
-                    />
-                  </div>
-                </div>
-              }
+        <div className="formgrid grid">
+          {/* Publicistas */}
+          <div className="col-12">
+            <PublicistSelector
+              selectedPublicistIds={selectedPublicists}
+              onPublicistsChange={onPublicistsChange}
+              label="Publicistas Asociados"
             />
+          </div>
 
-            {/* Método de Pago */}
-            <div className="p-col-12 md:p-col-6">
-              <div className="p-field">
-                <label htmlFor="paymentMethod">Método de Pago *</label>
+          {/* Vendedor - Solo para SUPER, PRINCIPAL, ADMIN */}
+          <PermissionGuard requiredRoles={["SUPER", "PRINCIPAL", "ADMIN"]}>
+            <div className="col-12 md:col-6">
+              <FormField
+                label="Vendedor"
+                htmlFor="seller"
+                hint={
+                  sellers.length === 0
+                    ? "Cargando lista de vendedores..."
+                    : undefined
+                }
+              >
                 <Dropdown
-                  id="paymentMethod"
-                  value={paymentMethod}
-                  options={paymentMethods}
-                  onChange={(e) => onPaymentMethodChange(e.value)}
+                  id="seller"
+                  value={selectedSeller}
+                  options={sellers}
+                  onChange={(e) => onSellerChange(e.value)}
                   optionLabel="label"
-                  placeholder="Seleccione método de pago"
-                  required
+                  placeholder="Seleccione vendedor"
+                  filter
+                  disabled={sellers.length === 0}
                 />
-              </div>
+              </FormField>
             </div>
+          </PermissionGuard>
 
-            {/* Sección de Mensajería */}
-            <div className="p-col-12">
-              <div className="delivery-section mt-3 p-3 border-round border-1 surface-border">
-                <div className="p-field-checkbox mb-3">
-                  <Checkbox
-                    inputId="hasDelivery"
-                    checked={hasDelivery || false}
-                    onChange={(e) => onHasDeliveryChange(e.checked)}
+          <PermissionGuard
+            requiredRoles={["SUPER", "PRINCIPAL", "ADMIN"]}
+            showFallback
+            fallback={
+              <div className="col-12 md:col-6">
+                <FormField label="Vendedor Actual" htmlFor="currentSeller">
+                  <InputText
+                    id="currentSeller"
+                    value="Usted es el vendedor"
+                    disabled
                   />
-                  <label htmlFor="hasDelivery" className="ml-2 font-bold">
-                    ¿Incluye servicio de mensajería?
-                  </label>
-                </div>
-
-                {hasDelivery && (
-                  <div className="delivery-fields mt-3">
-                    <div className="p-grid">
-                      <div className="p-col-12 md:p-col-6">
-                        <div className="p-field">
-                          <label htmlFor="deliveryWorker">Mensajero</label>
-                          <Dropdown
-                            id="deliveryWorker"
-                            value={deliveryWorkerId}
-                            options={groupedDeliveryWorkers}
-                            onChange={(e) => onDeliveryWorkerChange(e.value)}
-                            optionLabel="label"
-                            optionGroupLabel="label"
-                            optionGroupChildren="items"
-                            placeholder="Seleccione mensajero"
-                            filter
-                            showClear
-                            disabled={deliveryWorkers.length === 0}
-                          />
-                          {deliveryWorkers.length === 0 && (
-                            <small className="text-secondary">
-                              Cargando lista de mensajeros...
-                            </small>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="p-col-12">
-                        <div className="p-field">
-                          <label htmlFor="deliveryNotes">
-                            Notas de Mensajería
-                          </label>
-                          <InputTextarea
-                            id="deliveryNotes"
-                            value={deliveryNotes || ""}
-                            onChange={(e) =>
-                              onDeliveryNotesChange(e.target.value)
-                            }
-                            rows={3}
-                            placeholder="Instrucciones especiales, dirección de entrega, horario preferido, etc."
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                </FormField>
               </div>
+            }
+          />
+
+          {/* Método de Pago */}
+          <div className="col-12 md:col-6">
+            <FormField label="Método de Pago" htmlFor="paymentMethod" required>
+              <Dropdown
+                id="paymentMethod"
+                value={paymentMethod}
+                options={paymentMethods}
+                onChange={(e) => onPaymentMethodChange(e.value)}
+                optionLabel="label"
+                placeholder="Seleccione método de pago"
+                required
+              />
+            </FormField>
+          </div>
+
+          {/* Sección de Mensajería */}
+          <div className="col-12">
+            <div className={PANEL_CLASS}>
+              <div className="flex align-items-center">
+                <Checkbox
+                  inputId="hasDelivery"
+                  checked={hasDelivery || false}
+                  onChange={(e) => onHasDeliveryChange(e.checked)}
+                />
+                <label htmlFor="hasDelivery" className="ml-2 font-semibold">
+                  ¿Incluye servicio de mensajería?
+                </label>
+              </div>
+
+              {hasDelivery && (
+                <div className="formgrid grid mt-3 pt-3 border-top-1 surface-border">
+                  <div className="col-12 md:col-6">
+                    <FormField
+                      label="Mensajero"
+                      htmlFor="deliveryWorker"
+                      hint={
+                        deliveryWorkers.length === 0
+                          ? "Cargando lista de mensajeros..."
+                          : undefined
+                      }
+                    >
+                      <Dropdown
+                        id="deliveryWorker"
+                        value={deliveryWorkerId}
+                        options={groupedDeliveryWorkers}
+                        onChange={(e) => onDeliveryWorkerChange(e.value)}
+                        optionLabel="label"
+                        optionGroupLabel="label"
+                        optionGroupChildren="items"
+                        placeholder="Seleccione mensajero"
+                        filter
+                        showClear
+                        disabled={deliveryWorkers.length === 0}
+                      />
+                    </FormField>
+                  </div>
+
+                  <div className="col-12">
+                    <FormField
+                      label="Notas de Mensajería"
+                      htmlFor="deliveryNotes"
+                    >
+                      <InputTextarea
+                        id="deliveryNotes"
+                        value={deliveryNotes || ""}
+                        onChange={(e) => onDeliveryNotesChange(e.target.value)}
+                        rows={3}
+                        placeholder="Instrucciones especiales, dirección de entrega, horario preferido, etc."
+                      />
+                    </FormField>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </Card>
 
       {/* Botones de navegación */}
-      <div className="navigation-buttons mt-4">
-        <div className="flex justify-content-between align-items-center">
-          <Button
-            label="Volver a Clientes"
-            icon="pi pi-arrow-left"
-            className="p-button-text"
-            onClick={onBackToCustomer}
-          />
+      <div className="flex flex-wrap justify-content-between align-items-center gap-2 mt-4">
+        <Button
+          label="Volver a Clientes"
+          icon="pi pi-arrow-left"
+          text
+          severity="secondary"
+          onClick={onBackToCustomer}
+        />
 
-          <div className="flex align-items-center gap-2">
-            {isEditingExistingSale && (
-              <span className="text-blue-600 mr-3">
-                <i className="pi pi-pencil mr-1"></i>
-                Editando venta #{createdSaleId}
-              </span>
-            )}
-            <Button
-              label={hasDelivery ? "Finalizar" : "Continuar al Pago"}
-              icon={hasDelivery ? "pi pi-check" : "pi pi-arrow-right"}
-              className={hasDelivery ? "p-button-success" : "p-button-primary"}
-              onClick={onContinueToPayment}
-              disabled={
-                saleDetails.length === 0 || (hasDelivery && !deliveryWorkerId)
-              }
-              tooltip={
-                saleDetails.length === 0
-                  ? "Agregue al menos un producto"
-                  : hasDelivery && !deliveryWorkerId
-                    ? "Debe seleccionar un mensajero"
-                    : hasDelivery
-                      ? "Finalizar y procesar la venta"
-                      : "Ir al paso de pago"
-              }
+        <div className="flex flex-wrap align-items-center gap-3">
+          {isEditingExistingSale && (
+            <Tag
+              severity="info"
+              icon="pi pi-pencil"
+              value={`Editando venta #${createdSaleId}`}
             />
-          </div>
+          )}
+          <Button
+            label={hasDelivery ? "Finalizar" : "Continuar al Pago"}
+            icon={hasDelivery ? "pi pi-check" : "pi pi-arrow-right"}
+            severity={hasDelivery ? "success" : undefined}
+            onClick={onContinueToPayment}
+            disabled={
+              saleDetails.length === 0 || (hasDelivery && !deliveryWorkerId)
+            }
+            tooltip={
+              saleDetails.length === 0
+                ? "Agregue al menos un producto"
+                : hasDelivery && !deliveryWorkerId
+                  ? "Debe seleccionar un mensajero"
+                  : hasDelivery
+                    ? "Finalizar y procesar la venta"
+                    : "Ir al paso de pago"
+            }
+          />
         </div>
       </div>
-    </div>
+    </>
   );
 };

@@ -7,6 +7,7 @@ import { InputSwitch } from 'primereact/inputswitch';
 import { useMutation } from '@apollo/client';
 import { CREATE_WORK_SCHEDULE } from '../graphql/queries';
 import { Toast } from 'primereact/toast';
+import { FormField } from '../../../../components/ui';
 import { WorkDaysSelector } from './WorkDaysSelector';
 import SecurityEntitySelector from '../../../../components/SecurityEntitySelector/SecurityEntitySelector';
 
@@ -119,88 +120,89 @@ export const WorkScheduleCreateForm = ({ visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
-      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} className="p-button-text" />
+    <>
+      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} severity="secondary" />
       <Button label="Crear" icon="pi pi-check" onClick={handleSubmit} autoFocus />
-    </div>
+    </>
   );
 
   return (
     <>
       <Toast ref={toast} />
-      <Dialog 
-        header="Crear Nuevo Horario Laboral" 
-        visible={visible} 
-        style={{ width: '60vw' }} 
-        footer={footer} 
+      <Dialog
+        header="Crear Nuevo Horario Laboral"
+        visible={visible}
+        className="w-full md:w-8 lg:w-6"
+        footer={footer}
         onHide={onHide}
       >
-        <div className="p-fluid">
-          <div className="p-grid">
-            <div className="p-col-12 p-md-6">
-              <div className="p-field">
-                <label htmlFor="startDate">Fecha de Inicio*</label>
-                <Calendar
-                  id="startDate"
-                  value={formData.startDate}
-                  onChange={(e) => handleDateChange('startDate', e.value)}
-                  dateFormat="dd/mm/yy"
-                  showIcon
-                  required
-                />
-              </div>
-            </div>
-            <div className="p-col-12 p-md-6">
-              <div className="p-field">
-                <label htmlFor="endDate">Fecha de Fin*</label>
-                <Calendar
-                  id="endDate"
-                  value={formData.endDate}
-                  onChange={(e) => handleDateChange('endDate', e.value)}
-                  dateFormat="dd/mm/yy"
-                  showIcon
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="p-field">
-            <label htmlFor="isRecurring">Recurrente</label>
-            <div className="flex align-items-center">
-              <InputSwitch
-                id="isRecurring"
-                checked={formData.isRecurring}
-                onChange={handleStatusChange}
+        <div className="formgrid grid">
+          <div className="col-12 md:col-6">
+            <FormField label="Fecha de Inicio" htmlFor="startDate" required>
+              <Calendar
+                id="startDate"
+                value={formData.startDate}
+                onChange={(e) => handleDateChange('startDate', e.value)}
+                dateFormat="dd/mm/yy"
+                showIcon
+                required
               />
-              <span className="ml-2">
-                {formData.isRecurring ? 'Sí' : 'No'}
-              </span>
-            </div>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Fecha de Fin" htmlFor="endDate" required>
+              <Calendar
+                id="endDate"
+                value={formData.endDate}
+                onChange={(e) => handleDateChange('endDate', e.value)}
+                dateFormat="dd/mm/yy"
+                showIcon
+                required
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label>Días Laborales*</label>
-            <WorkDaysSelector 
-              workingDays={formData.workingDays}
-              onChange={handleWorkingDaysChange}
+          <div className="col-12">
+            <FormField label="Recurrente" htmlFor="isRecurring">
+              <div className="flex align-items-center gap-2">
+                <InputSwitch
+                  id="isRecurring"
+                  checked={formData.isRecurring}
+                  onChange={handleStatusChange}
+                />
+                <span>
+                  {formData.isRecurring ? 'Sí' : 'No'}
+                </span>
+              </div>
+            </FormField>
+          </div>
+
+          <div className="col-12">
+            <FormField label="Días Laborales" required>
+              <WorkDaysSelector
+                workingDays={formData.workingDays}
+                onChange={handleWorkingDaysChange}
+              />
+            </FormField>
+          </div>
+
+          <div className="col-12">
+            <FormField label="Notas" htmlFor="notes">
+              <InputText
+                id="notes"
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+              />
+            </FormField>
+          </div>
+
+          <div className="col-12">
+            <SecurityEntitySelector
+              onSelectionChange={handleSecurityEntitiesChange}
+              requireOffice={true}
             />
           </div>
-
-          <div className="p-field">
-            <label htmlFor="notes">Notas</label>
-            <InputText 
-              id="notes" 
-              name="notes" 
-              value={formData.notes} 
-              onChange={handleChange} 
-            />
-          </div>
-
-          <SecurityEntitySelector
-            onSelectionChange={handleSecurityEntitiesChange}
-            requireOffice={true}
-          />
         </div>
       </Dialog>
     </>

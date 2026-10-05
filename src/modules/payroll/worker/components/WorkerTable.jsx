@@ -10,19 +10,17 @@ import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
+import { Tag } from "primereact/tag";
 import { WorkerEditForm } from "./WorkerEditForm";
 import { WorkerCreateForm } from "./WorkerCreateForm";
 import { WorkerDetailForm } from "./WorkerDetailForm";
 
 const statusBodyTemplate = (rowData) => {
   return (
-    <span
-      className={`badge status-${
-        rowData?.user?.enabled ? "active" : "inactive"
-      }`}
-    >
-      {rowData.user?.enabled ? "Activo" : "Inactivo"}
-    </span>
+    <Tag
+      severity={rowData?.user?.enabled ? "success" : "danger"}
+      value={rowData.user?.enabled ? "Activo" : "Inactivo"}
+    />
   );
 };
 
@@ -107,6 +105,7 @@ export function WorkerTable() {
     setDetailDialogVisible(true);
   };
 
+  // eslint-disable-next-line no-unused-vars -- la acción de fila que lo usa está comentada
   const handleToggleStatus = (workerId, isActive) => {
     confirmDialog({
       message: `¿Estás seguro de que deseas ${
@@ -146,23 +145,26 @@ export function WorkerTable() {
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
           tooltip="Editar trabajador"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
         {/* <Button
           icon={rowData.isActive ? "pi pi-ban" : "pi pi-check"}
-          className={`p-button-rounded p-button-text ${
-            rowData.isActive ? "p-button-warning" : "p-button-success"
-          }`}
+          text
+          rounded
+          severity={rowData.isActive ? "warning" : "success"}
           tooltip={rowData.isActive ? "Desactivar" : "Activar"}
           tooltipOptions={{ position: "top" }}
           onClick={() => handleToggleStatus(rowData.id, rowData.isActive)}
         /> */}
         <Button
           icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
+          text
+          rounded
+          severity="info"
           tooltip="Ver detalles"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleViewDetails(rowData.id)}
@@ -261,8 +263,7 @@ export function WorkerTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "10rem" }}
-          bodyStyle={{ textAlign: "center" }}
+          headerClassName="w-10rem"
         />
       </GenericDataTable>
 

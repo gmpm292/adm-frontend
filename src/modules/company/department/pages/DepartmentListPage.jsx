@@ -1,14 +1,15 @@
 import React from "react";
-import { Card } from "primereact/card";
-import "../../styles/CompanyList.css";
+import { PageHeader } from "../../../../components/ui";
 import DepartmentTable from "../components/DepartmentTable";
 
 export function DepartmentListPage() {
   return (
-    <div className="department-list-page">
-      <Card title="Gestión de Departamentos">
-        <DepartmentTable />
-      </Card>
-    </div>
+    <>
+      <PageHeader
+        title="Departamentos"
+        subtitle="Organiza los departamentos que componen cada oficina."
+      />
+      <DepartmentTable />
+    </>
   );
 }

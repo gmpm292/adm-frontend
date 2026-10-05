@@ -9,6 +9,16 @@ import { LOGOUT } from "../graphql/queries";
 
 const AuthContext = createContext();
 
+const PUBLIC_PATHS = ["/login", "/cfu", "/forgot-password", "/two-factor"];
+const TWO_FACTOR_STEP_KEY = "twoFactorStep";
+
+/** Paso de 2FA pendiente tras el login: "verify", "setup" o null */
+export const getTwoFactorStep = () =>
+  sessionStorage.getItem(TWO_FACTOR_STEP_KEY);
+
+const isTwoFactorRequiredError = (error) =>
+  error?.graphQLErrors?.some((e) => /Two-factor/i.test(e.message));
+
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -18,18 +28,28 @@ export const AuthProvider = ({ children }) => {
 
   const location = useLocation();
   const isLoginPage = location.pathname === "/login";
-  const isChangePasswordPage =
+  const isPublicPage =
+    PUBLIC_PATHS.includes(location.pathname) ||
     location.pathname.startsWith("/change-password/");
+  // En el login solo se consulta el perfil si el navegador recuerda una sesión,
+  // para redirigir al panel sin provocar un 401 a quien todavía no ha entrado.
+  const hasSessionHint = localStorage.getItem("isAuthenticated") === "true";
+  const skipProfile = isPublicPage && !(isLoginPage && hasSessionHint);
 
   const { data, loading, error } = useQuery(GET_PROFILE, {
     fetchPolicy: "network-only",
-    skip: isChangePasswordPage,
+    skip: skipProfile,
     onError: (err) => {
       console.error("Error al obtener el perfil:", err);
     },
   });
 
   useEffect(() => {
+    if (skipProfile) {
+      setReady(true);
+      return;
+    }
+
     if (loading) return;
     if (error || !data?.profile) {
       console.warn("Fallo de autenticación:", error);
@@ -38,6 +58,14 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       localStorage.removeItem("isAuthenticated");
       localStorage.removeItem("userAuthenticated");
+      // La sesión existe pero falta el segundo factor: se pide el código
+      if (isTwoFactorRequiredError(error)) {
+        sessionStorage.setItem(
+          TWO_FACTOR_STEP_KEY,
+          getTwoFactorStep() ?? "verify"
+        );
+        navigate("/two-factor", { replace: true });
+      }
     } else {
       setAuthFailed(false);
       setIsAuthenticated(true);
@@ -45,9 +73,9 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("userAuthenticated", JSON.stringify(data.profile));
     }
-    
+
     setReady(true);
-  }, [loading, data, error]);
+  }, [loading, data, error, skipProfile, navigate]);
 
   useEffect(() => {
     const handleAuthFailed = () => {
@@ -57,6 +85,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       localStorage.removeItem("isAuthenticated");
       localStorage.removeItem("userAuthenticated");
+      sessionStorage.removeItem(TWO_FACTOR_STEP_KEY);
       if (!isLoginPage) {
         console.log("Estoy redirigiendo en AuthProvider.");
         navigate("/login");
@@ -68,9 +97,27 @@ export const AuthProvider = ({ children }) => {
     return () => {
       window.removeEventListener("auth-failed", handleAuthFailed);
     };
-  }, [navigate]);
+  }, [navigate, isLoginPage]);
 
+  /**
+   * Registra el resultado del login. Devuelve la ruta a la que debe ir el
+   * usuario: el panel, o el paso de 2FA si su cuenta lo exige.
+   */
   const login = (profileData) => {
+    if (profileData.isTwoFactorEnabled) {
+      sessionStorage.setItem(
+        TWO_FACTOR_STEP_KEY,
+        profileData.isTwoFactorConfigured ? "verify" : "setup"
+      );
+      return "/two-factor";
+    }
+
+    completeLogin(profileData);
+    return "/statistics/analytics";
+  };
+
+  const completeLogin = (profileData) => {
+    sessionStorage.removeItem(TWO_FACTOR_STEP_KEY);
     setAuthFailed(false);
     setReady(true);
     setIsAuthenticated(true);
@@ -90,6 +137,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("userAuthenticated");
+    sessionStorage.removeItem(TWO_FACTOR_STEP_KEY);
     navigate("/login");
   };
 
@@ -101,6 +149,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         authFailed,
         login,
+        completeLogin,
         logout,
         ready,
       }}

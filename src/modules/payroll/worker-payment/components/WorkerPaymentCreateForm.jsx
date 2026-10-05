@@ -8,6 +8,7 @@ import { Calendar } from "primereact/calendar";
 import { useMutation, useQuery } from "@apollo/client";
 import { CREATE_WORKER_PAYMENT } from "../graphql/queries";
 import { Toast } from "primereact/toast";
+import { FormField } from "../../../../components/ui";
 import { PaymentBreakdownEditor } from "./PaymentBreakdownEditor";
 import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
 import { GET_WORKERS } from "../../worker/graphql/queries";
@@ -169,12 +170,12 @@ export const WorkerPaymentCreateForm = ({ visible, onHide, onSuccess }) => {
     })) || [];
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Registrar"
@@ -182,7 +183,7 @@ export const WorkerPaymentCreateForm = ({ visible, onHide, onSuccess }) => {
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -191,15 +192,14 @@ export const WorkerPaymentCreateForm = ({ visible, onHide, onSuccess }) => {
       <Dialog
         header="Registrar Nuevo Pago"
         visible={visible}
-        style={{ width: "70vw" }}
+        className="w-full md:w-10 lg:w-8"
         footer={footer}
         onHide={onHide}
       >
         <div className="p-fluid">
-          <div className="p-grid">
-            <div className="p-col-12 p-md-6">
-              <div className="p-field">
-                <label htmlFor="workerId">Trabajador*</label>
+          <div className="formgrid grid">
+            <div className="col-12 md:col-6">
+              <FormField label="Trabajador" htmlFor="workerId" required>
                 <Dropdown
                   id="workerId"
                   value={formData.workerId}
@@ -212,11 +212,10 @@ export const WorkerPaymentCreateForm = ({ visible, onHide, onSuccess }) => {
                   required
                   filter
                 />
-              </div>
+              </FormField>
             </div>
-            <div className="p-col-12 p-md-6">
-              <div className="p-field">
-                <label htmlFor="payrollPeriodId">Período de Nómina*</label>
+            <div className="col-12 md:col-6">
+              <FormField label="Período de Nómina" htmlFor="payrollPeriodId" required>
                 <Dropdown
                   id="payrollPeriodId"
                   value={formData.payrollPeriodId}
@@ -232,14 +231,13 @@ export const WorkerPaymentCreateForm = ({ visible, onHide, onSuccess }) => {
                   required
                   filter
                 />
-              </div>
+              </FormField>
             </div>
           </div>
 
-          <div className="p-grid">
-            <div className="p-col-12 p-md-4">
-              <div className="p-field">
-                <label htmlFor="paymentMethod">Método de Pago*</label>
+          <div className="formgrid grid">
+            <div className="col-12 md:col-4">
+              <FormField label="Método de Pago" htmlFor="paymentMethod" required>
                 <Dropdown
                   id="paymentMethod"
                   value={formData.paymentMethod}
@@ -251,11 +249,10 @@ export const WorkerPaymentCreateForm = ({ visible, onHide, onSuccess }) => {
                   placeholder="Seleccione"
                   required
                 />
-              </div>
+              </FormField>
             </div>
-            <div className="p-col-12 p-md-4">
-              <div className="p-field">
-                <label htmlFor="paymentType">Tipo de Pago*</label>
+            <div className="col-12 md:col-4">
+              <FormField label="Tipo de Pago" htmlFor="paymentType" required>
                 <Dropdown
                   id="paymentType"
                   value={formData.paymentType}
@@ -267,11 +264,10 @@ export const WorkerPaymentCreateForm = ({ visible, onHide, onSuccess }) => {
                   placeholder="Seleccione"
                   required
                 />
-              </div>
+              </FormField>
             </div>
-            <div className="p-col-12 p-md-4">
-              <div className="p-field">
-                <label htmlFor="currency">Moneda*</label>
+            <div className="col-12 md:col-4">
+              <FormField label="Moneda" htmlFor="currency" required>
                 <InputText
                   id="currency"
                   name="currency"
@@ -279,14 +275,13 @@ export const WorkerPaymentCreateForm = ({ visible, onHide, onSuccess }) => {
                   onChange={handleChange}
                   required
                 />
-              </div>
+              </FormField>
             </div>
           </div>
 
-          <div className="p-grid">
-            <div className="p-col-12 p-md-6">
-              <div className="p-field">
-                <label htmlFor="amount">Monto Total*</label>
+          <div className="formgrid grid">
+            <div className="col-12 md:col-6">
+              <FormField label="Monto Total" htmlFor="amount" required>
                 <InputNumber
                   id="amount"
                   name="amount"
@@ -297,11 +292,10 @@ export const WorkerPaymentCreateForm = ({ visible, onHide, onSuccess }) => {
                   locale="en-US"
                   disabled
                 />
-              </div>
+              </FormField>
             </div>
-            <div className="p-col-12 p-md-6">
-              <div className="p-field">
-                <label htmlFor="exchangeRate">Tasa de Cambio</label>
+            <div className="col-12 md:col-6">
+              <FormField label="Tasa de Cambio" htmlFor="exchangeRate">
                 <InputNumber
                   id="exchangeRate"
                   name="exchangeRate"
@@ -311,28 +305,26 @@ export const WorkerPaymentCreateForm = ({ visible, onHide, onSuccess }) => {
                   min={0}
                   max={100}
                 />
-              </div>
+              </FormField>
             </div>
           </div>
 
-          <div className="p-field">
-            <label>Desglose del Pago</label>
+          <FormField label="Desglose del Pago">
             <PaymentBreakdownEditor
               breakdown={formData.breakdown}
               onChange={handleBreakdownChange}
               currency={formData.currency}
             />
-          </div>
+          </FormField>
 
-          <div className="p-field">
-            <label htmlFor="notes">Notas</label>
+          <FormField label="Notas" htmlFor="notes">
             <InputText
               id="notes"
               name="notes"
               value={formData.notes}
               onChange={handleChange}
             />
-          </div>
+          </FormField>
 
           <SecurityEntitySelector
             onSelectionChange={handleSecurityEntitiesChange}

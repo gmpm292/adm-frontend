@@ -1,7 +1,8 @@
-import React from 'react';
-import { Panel } from 'primereact/panel';
-import { InputText } from 'primereact/inputtext';
-import { Button } from 'primereact/button';
+import React from "react";
+import { Panel } from "primereact/panel";
+import { InputText } from "primereact/inputtext";
+import { Button } from "primereact/button";
+import { FormField } from "../../../../../../components/ui";
 
 export const AttributesPanel = ({
   formData,
@@ -12,7 +13,7 @@ export const AttributesPanel = ({
   attributeValue,
   setAttributeValue,
   handleAddAttribute,
-  handleRemoveAttribute
+  handleRemoveAttribute,
 }) => (
   <Panel
     header="Atributos"
@@ -20,48 +21,46 @@ export const AttributesPanel = ({
     collapsed={openPanel !== 1}
     onToggle={handleToggle}
   >
-    <div className="p-grid p-fluid">
-      <div className="p-col-12 p-md-4">
-        <div className="p-field">
-          <label htmlFor="attributeKey">Característica</label>
+    <div className="formgrid grid">
+      <div className="col-12 md:col-4">
+        <FormField label="Característica" htmlFor="attributeKey">
           <InputText
             id="attributeKey"
             value={attributeKey}
             onChange={(e) => setAttributeKey(e.target.value)}
           />
-        </div>
+        </FormField>
       </div>
-      <div className="p-col-12 p-md-4">
-        <div className="p-field">
-          <label htmlFor="attributeValue">Descripción</label>
+      <div className="col-12 md:col-4">
+        <FormField label="Descripción" htmlFor="attributeValue">
           <InputText
             id="attributeValue"
             value={attributeValue}
             onChange={(e) => setAttributeValue(e.target.value)}
           />
-        </div>
+        </FormField>
       </div>
-      <div className="p-col-12 p-md-4">
-        <div className="p-field" style={{ paddingTop: "1.5rem" }}>
-          <Button
-            label="Agregar"
-            icon="pi pi-plus"
-            onClick={handleAddAttribute}
-            disabled={!attributeKey || !attributeValue}
-          />
-        </div>
+      <div className="col-12 md:col-4 flex align-items-end">
+        <Button
+          label="Agregar"
+          icon="pi pi-plus"
+          severity="secondary"
+          className="mb-3"
+          onClick={handleAddAttribute}
+          disabled={!attributeKey || !attributeValue}
+        />
       </div>
-      <div className="p-col-12">
+      <div className="col-12">
         {Object.keys(formData.attributes).length > 0 ? (
-          <div className="p-grid">
+          <div className="grid">
             {Object.entries(formData.attributes).map(([key, value]) => (
-              <div className="p-col-12 p-md-6" key={key}>
+              <div className="col-12 md:col-6" key={key}>
                 <div className="p-inputgroup">
                   <span className="p-inputgroup-addon">{key}</span>
                   <InputText value={value} disabled />
                   <Button
                     icon="pi pi-trash"
-                    className="p-button-danger"
+                    severity="danger"
                     onClick={() => handleRemoveAttribute(key)}
                   />
                 </div>
@@ -69,7 +68,7 @@ export const AttributesPanel = ({
             ))}
           </div>
         ) : (
-          <p>No hay atributos definidos</p>
+          <p className="text-color-secondary">No hay atributos definidos</p>
         )}
       </div>
     </div>

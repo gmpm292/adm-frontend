@@ -7,6 +7,7 @@ import { CHANGE_PASSWORD_BY_EMAIL } from "../graphql/queries";
 import { Toast } from "primereact/toast";
 import { useRef } from "react";
 import { Message } from "primereact/message";
+import { FormField } from "../../../components/ui";
 
 export const UserChangePasswordForm = ({
   userEmail,
@@ -82,12 +83,12 @@ export const UserChangePasswordForm = ({
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
         disabled={loading}
       />
       <Button
@@ -96,7 +97,7 @@ export const UserChangePasswordForm = ({
         onClick={handleSubmit}
         loading={loading}
       />
-    </div>
+    </>
   );
 
   return (
@@ -105,45 +106,55 @@ export const UserChangePasswordForm = ({
       <Dialog
         header={`Cambiar Contraseña para ${userEmail}`}
         visible={visible}
-        style={{ width: "40vw" }}
+        className="w-full md:w-30rem"
         footer={footer}
         onHide={onHide}
       >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="newPassword">Nueva Contraseña</label>
-            <Password
-              id="newPassword"
-              name="newPassword"
-              value={formData.newPassword}
-              onChange={handleChange}
-              toggleMask
-              feedback={false}
-              className={errors.newPassword ? "p-invalid" : ""}
-            />
-            {errors.newPassword && (
-              <small className="p-error">{errors.newPassword}</small>
-            )}
+        <div className="formgrid grid">
+          <div className="col-12">
+            <FormField
+              label="Nueva Contraseña"
+              htmlFor="newPassword"
+              error={errors.newPassword}
+            >
+              <Password
+                inputId="newPassword"
+                name="newPassword"
+                value={formData.newPassword}
+                onChange={handleChange}
+                toggleMask
+                feedback={false}
+                invalid={Boolean(errors.newPassword)}
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="confirmPassword">Confirmar Contraseña</label>
-            <Password
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              toggleMask
-              feedback={false}
-              className={errors.confirmPassword ? "p-invalid" : ""}
-            />
-            {errors.confirmPassword && (
-              <small className="p-error">{errors.confirmPassword}</small>
-            )}
+          <div className="col-12">
+            <FormField
+              label="Confirmar Contraseña"
+              htmlFor="confirmPassword"
+              error={errors.confirmPassword}
+            >
+              <Password
+                inputId="confirmPassword"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                toggleMask
+                feedback={false}
+                invalid={Boolean(errors.confirmPassword)}
+              />
+            </FormField>
           </div>
 
           {errors.general && (
-            <Message severity="error" text={errors.general} className="mt-3" />
+            <div className="col-12">
+              <Message
+                severity="error"
+                text={errors.general}
+                className="w-full"
+              />
+            </div>
           )}
         </div>
       </Dialog>

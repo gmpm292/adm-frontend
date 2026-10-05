@@ -1,14 +1,15 @@
-import React from 'react';
-import { Card } from 'primereact/card';
-import { InventoryTable } from '../components/InventoryTable';
-import '../styles/InventoryList.css';
+import React from "react";
+import { PageHeader } from "../../../../components/ui";
+import { InventoryTable } from "../components/InventoryTable";
 
 export function InventoryListPage() {
-    return (
-        <div className="inventory-list-page">
-            <Card title="Gestión de Inventarios">
-                <InventoryTable />
-            </Card>
-        </div>
-    );
+  return (
+    <>
+      <PageHeader
+        title="Inventarios"
+        subtitle="Consulta las existencias de cada producto y registra sus movimientos."
+      />
+      <InventoryTable />
+    </>
+  );
 }

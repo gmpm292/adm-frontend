@@ -4,6 +4,7 @@ import { Button } from "primereact/button";
 import { useMutation } from "@apollo/client";
 import { UPDATE_PRODUCT } from "../../graphql/queries";
 import { Toast } from "primereact/toast";
+import { Message } from "primereact/message";
 import { useProductForm } from "./hooks/useProductForm";
 import { BasicInfoPanel } from "./components/BasicInfoPanel";
 import { AttributesPanel } from "./components/AttributesPanel";
@@ -42,7 +43,6 @@ export const ProductEditForm = ({ productId, visible, onHide, onSuccess }) => {
     handleRemoveBulkDiscount,
     handleAddFixedPrice,
     handleRemoveFixedPrice,
-    resetForm,
     loading,
     error,
   } = useProductForm(productId, visible);
@@ -132,12 +132,12 @@ export const ProductEditForm = ({ productId, visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Guardar"
@@ -146,7 +146,7 @@ export const ProductEditForm = ({ productId, visible, onHide, onSuccess }) => {
         autoFocus
         disabled={currenciesLoading || loading}
       />
-    </div>
+    </>
   );
 
   if (loading) return <p>Cargando...</p>;
@@ -158,16 +158,18 @@ export const ProductEditForm = ({ productId, visible, onHide, onSuccess }) => {
       <Dialog
         header={`Editar Producto: ${formData.name}`}
         visible={visible}
-        style={{ width: "70vw" }}
+        className="w-full lg:w-8"
         footer={footer}
         onHide={onHide}
         resizable
         draggable
       >
         {currenciesError && (
-          <div className="p-message p-message-error">
-            Error al cargar las monedas: {currenciesError.message}
-          </div>
+          <Message
+            severity="error"
+            text={`Error al cargar las monedas: ${currenciesError.message}`}
+            className="w-full mb-3"
+          />
         )}
 
         <div className="p-fluid">
@@ -211,6 +213,7 @@ export const ProductEditForm = ({ productId, visible, onHide, onSuccess }) => {
 
           <SalesRulesPanel
             formData={formData}
+            setFormData={setFormData}
             openPanel={openPanel}
             handleToggle={() => handleToggle(3)}
             currencyOptions={currencyOptions}

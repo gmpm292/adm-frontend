@@ -8,6 +8,7 @@ import { CREATE_SALE_DETAIL } from "../graphql/queries";
 import { Toast } from "primereact/toast";
 import { GET_PRODUCTS } from "../../../inventory/product/graphql/queries";
 import { PublicistSelector } from "./PublicistSelector";
+import { FormField } from "../../../../components/ui";
 
 export const SaleDetailCreateForm = ({ saleId, visible, onHide, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -82,12 +83,12 @@ export const SaleDetailCreateForm = ({ saleId, visible, onHide, onSuccess }) => 
   };
 
   const footer = (
-    <div>
+    <>
       <Button 
         label="Cancelar" 
         icon="pi pi-times" 
         onClick={onHide} 
-        className="p-button-text" 
+        severity="secondary"
       />
       <Button 
         label="Crear" 
@@ -95,7 +96,7 @@ export const SaleDetailCreateForm = ({ saleId, visible, onHide, onSuccess }) => 
         onClick={handleSubmit} 
         autoFocus 
       />
-    </div>
+    </>
   );
 
   return (
@@ -104,46 +105,50 @@ export const SaleDetailCreateForm = ({ saleId, visible, onHide, onSuccess }) => 
       <Dialog
         header="Agregar Producto a Venta"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-30rem"
         footer={footer}
         onHide={onHide}
       >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="productId">Producto*</label>
-            <Dropdown
-              id="productId"
-              value={formData.productId}
-              options={products}
-              onChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                productId: e.value 
-              }))}
-              optionLabel="label"
-              placeholder="Seleccione producto"
-              filter
-              required
-            />
+        <div className="formgrid grid">
+          <div className="col-12">
+            <FormField label="Producto" htmlFor="productId" required>
+              <Dropdown
+                id="productId"
+                value={formData.productId}
+                options={products}
+                onChange={(e) => setFormData(prev => ({ 
+                  ...prev, 
+                  productId: e.value 
+                }))}
+                optionLabel="label"
+                placeholder="Seleccione producto"
+                filter
+                required
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="quantity">Cantidad*</label>
-            <InputNumber
-              id="quantity"
-              value={formData.quantity}
-              onValueChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                quantity: e.value 
-              }))}
-              min={1}
-              required
-            />
+          <div className="col-12">
+            <FormField label="Cantidad" htmlFor="quantity" required>
+              <InputNumber
+                id="quantity"
+                value={formData.quantity}
+                onValueChange={(e) => setFormData(prev => ({ 
+                  ...prev, 
+                  quantity: e.value 
+                }))}
+                min={1}
+                required
+              />
+            </FormField>
           </div>
 
-          <PublicistSelector
-            selectedPublicistIds={formData.publicistIds}
-            onPublicistsChange={handlePublicistsChange}
-          />
+          <div className="col-12">
+            <PublicistSelector
+              selectedPublicistIds={formData.publicistIds}
+              onPublicistsChange={handlePublicistsChange}
+            />
+          </div>
         </div>
       </Dialog>
     </>

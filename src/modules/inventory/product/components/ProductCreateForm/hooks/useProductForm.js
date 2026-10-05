@@ -71,7 +71,7 @@ export const useProductForm = (visible) => {
   });
 
   // Query para obtener detalles del material
-  const [getMaterialDetails, { data: materialData }] = useLazyQuery(
+  const [getMaterialDetails] = useLazyQuery(
     GET_MATERIAL_COST_BY_ID,
     {
       fetchPolicy: "network-only",

@@ -1,21 +1,22 @@
+import { Navigate } from "react-router-dom";
 import { LoginForm } from "../components/LoginForm";
-import "../styles/LoginPage.css";
-import "../../../styles/ButtonStyles.css";
+import { useAuthContext } from "../components/AuthContext";
+import { AuthLayout } from "../../../components/ui";
 
 export function LoginPage() {
-  console.log("Styles should be loaded"); // Para debug
+  const { isAuthenticated } = useAuthContext();
+
+  // Con una sesión activa no tiene sentido mostrar el formulario
+  if (isAuthenticated) {
+    return <Navigate to="/statistics/analytics" replace />;
+  }
 
   return (
-    <div className="login-page">
-      <div className="login-container w-full lg:w-6 md:w-8">
-        <div className="login-header">
-          {/* Si tienes un logo, puedes agregarlo aquí */}
-          {/* <img src="/path/to/logo.png" alt="Logo" className="login-logo" /> */}
-          <div className="login-title">Bienvenido</div>
-          <span className="login-subtitle">Inicia sesión para continuar</span>
-        </div>
-        <LoginForm /> 
-      </div>
-    </div>
+    <AuthLayout
+      title="Bienvenido"
+      subtitle="Inicia sesión para continuar"
+    >
+      <LoginForm />
+    </AuthLayout>
   );
 }

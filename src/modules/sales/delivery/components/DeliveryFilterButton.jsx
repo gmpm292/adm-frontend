@@ -12,7 +12,9 @@ export const DeliveryFilterButton = ({
     <Button
       icon={icon}
       label={label}
-      className={`p-button-sm ${isActive ? 'p-button-warning' : 'p-button-outlined p-button-warning'}`}
+      size="small"
+      severity="warning"
+      outlined={!isActive}
       onClick={onToggle}
       tooltip={tooltip}
       tooltipOptions={{ position: "top" }}

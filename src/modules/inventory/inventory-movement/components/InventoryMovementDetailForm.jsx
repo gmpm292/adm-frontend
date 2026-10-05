@@ -5,6 +5,7 @@ import { GET_INVENTORY_MOVEMENT_BY_ID } from "../graphql/queries";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { formatDate } from "../../../../utils/dateUtils";
 import { Tag } from "primereact/tag";
+import { DetailField } from "../../components/DetailField";
 
 export function InventoryMovementDetailForm({ movementId, visible, onHide }) {
   const [getMovement, { data, loading }] = useLazyQuery(GET_INVENTORY_MOVEMENT_BY_ID, {
@@ -25,29 +26,29 @@ export function InventoryMovementDetailForm({ movementId, visible, onHide }) {
     <Dialog
       header="Detalles del Movimiento"
       visible={visible}
-      style={{ width: "600px" }}
+      className="w-full md:w-8 lg:w-6"
       onHide={onHide}
       modal
     >
       {loading ? (
-        <div className="flex justify-center">
+        <div className="flex justify-content-center">
           <ProgressSpinner />
         </div>
       ) : movement ? (
-        <div className="p-fluid">
-          <div className="field"><b>Producto:</b> {movement.inventory?.product?.name || 'N/A'}</div>
-          <div className="field">
-            <b>Tipo:</b> 
-            <Tag 
-              value={movement.type === 'IN' ? 'ENTRADA' : 'SALIDA'} 
-              severity={movement.type === 'IN' ? 'success' : 'danger'} 
-              className="ml-2"
+        <div className="grid">
+          <DetailField label="Producto">
+            {movement.inventory?.product?.name || 'N/A'}
+          </DetailField>
+          <DetailField label="Tipo">
+            <Tag
+              value={movement.type === 'IN' ? 'ENTRADA' : 'SALIDA'}
+              severity={movement.type === 'IN' ? 'success' : 'danger'}
             />
-          </div>
-          <div className="field"><b>Cantidad:</b> {movement.quantity}</div>
-          <div className="field"><b>Motivo:</b> {movement.reason || 'N/A'}</div>
-          <div className="field"><b>Fecha:</b> {formatDate(movement.timestamp)}</div>
-          <div className="field"><b>Usuario:</b> {movement.user?.name || 'N/A'}</div>
+          </DetailField>
+          <DetailField label="Cantidad">{movement.quantity}</DetailField>
+          <DetailField label="Motivo">{movement.reason || 'N/A'}</DetailField>
+          <DetailField label="Fecha">{formatDate(movement.timestamp)}</DetailField>
+          <DetailField label="Usuario">{movement.user?.name || 'N/A'}</DetailField>
         </div>
       ) : (
         <p>No se encontró información del movimiento.</p>

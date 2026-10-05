@@ -220,7 +220,7 @@ export function DeliveryTable() {
     [handleRefresh],
   );
 
-  const handleValidationSuccess = (result, payments, deliveryId) => {
+  const handleValidationSuccess = (result) => {
     if (result.valid) {
       toast.current.show({
         severity: "success",
@@ -292,7 +292,9 @@ export function DeliveryTable() {
         {canProcess && (
           <Button
             icon="pi pi-check-circle"
-            className="p-button-rounded p-button-text p-button-success"
+            text
+            rounded
+            severity="success"
             tooltip="Confirmar entrega"
             tooltipOptions={{ position: "top" }}
             onClick={() => handleMakeSale(rowData.id)}
@@ -317,7 +319,8 @@ export function DeliveryTable() {
         {/* Botón Editar */}
         <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
           tooltip="Editar mensajería"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
@@ -326,7 +329,9 @@ export function DeliveryTable() {
         {/* Botón Ver Detalles */}
         <Button
           icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
+          text
+          rounded
+          severity="info"
           tooltip="Ver detalles"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleViewDetails(rowData.id)}
@@ -335,7 +340,9 @@ export function DeliveryTable() {
         {/* Botón Eliminar */}
         <Button
           icon="pi pi-trash"
-          className="p-button-rounded p-button-text p-button-danger"
+          text
+          rounded
+          severity="danger"
           tooltip="Eliminar mensajería"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleDelete(rowData.id)}
@@ -437,8 +444,7 @@ export function DeliveryTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "13rem" }}
-          bodyStyle={{ textAlign: "center" }}
+          className="w-13rem"
         />
       </GenericDataTable>
 

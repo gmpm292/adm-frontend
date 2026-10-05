@@ -7,6 +7,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import { GET_USER_BY_ID, UPDATE_USER } from "../graphql/queries";
 import { Toast } from "primereact/toast";
 import { useRef } from "react";
+import { FormField } from "../../../components/ui";
 
 export const UserEditForm = ({ userId, visible, onHide, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -84,12 +85,12 @@ export const UserEditForm = ({ userId, visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Guardar"
@@ -97,7 +98,7 @@ export const UserEditForm = ({ userId, visible, onHide, onSuccess }) => {
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -106,69 +107,76 @@ export const UserEditForm = ({ userId, visible, onHide, onSuccess }) => {
       <Dialog
         header="Editar Usuario"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-40rem"
         footer={footer}
         onHide={onHide}
       >
         {loading ? (
-          <p>Cargando...</p>
+          <p className="m-0 text-color-secondary">Cargando...</p>
         ) : error ? (
-          <p>Error al cargar usuario</p>
+          <p className="m-0 text-color-secondary">Error al cargar usuario</p>
         ) : (
-          <div className="p-fluid">
-            <div className="p-field">
-              <label htmlFor="name">Nombres</label>
-              <InputText
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="p-field">
-              <label htmlFor="lastName">Apellidos</label>
-              <InputText
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="p-field">
-              <label htmlFor="email">Email</label>
-              <InputText
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                disabled
-              />
-            </div>
-
-            <div className="p-field">
-              <label htmlFor="mobile">Teléfono</label>
-              <InputText
-                id="mobile"
-                name="mobile"
-                value={formData.mobile}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="p-field">
-              <label htmlFor="enabled">Estado</label>
-              <div className="flex align-items-center">
-                <InputSwitch
-                  id="enabled"
-                  checked={formData.enabled}
-                  onChange={handleStatusChange}
+          <div className="formgrid grid">
+            <div className="col-12 md:col-6">
+              <FormField label="Nombres" htmlFor="name">
+                <InputText
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full"
                 />
-                <span className="ml-2">
-                  {formData.enabled ? "Activo" : "Inactivo"}
-                </span>
-              </div>
+              </FormField>
+            </div>
+
+            <div className="col-12 md:col-6">
+              <FormField label="Apellidos" htmlFor="lastName">
+                <InputText
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className="w-full"
+                />
+              </FormField>
+            </div>
+
+            <div className="col-12 md:col-6">
+              <FormField label="Email" htmlFor="email">
+                <InputText
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  disabled
+                  className="w-full"
+                />
+              </FormField>
+            </div>
+
+            <div className="col-12 md:col-6">
+              <FormField label="Teléfono" htmlFor="mobile">
+                <InputText
+                  id="mobile"
+                  name="mobile"
+                  value={formData.mobile}
+                  onChange={handleChange}
+                  className="w-full"
+                />
+              </FormField>
+            </div>
+
+            <div className="col-12 md:col-6">
+              <FormField label="Estado" htmlFor="enabled">
+                <div className="flex align-items-center gap-2">
+                  <InputSwitch
+                    inputId="enabled"
+                    checked={formData.enabled}
+                    onChange={handleStatusChange}
+                  />
+                  <span>{formData.enabled ? "Activo" : "Inactivo"}</span>
+                </div>
+              </FormField>
             </div>
           </div>
         )}

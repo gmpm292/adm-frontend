@@ -14,7 +14,7 @@ export const PrintingStatus: React.FC<PrintingStatusProps> = ({
   if (isPrinting) {
     return (
       <div className="flex align-items-center gap-2">
-        <ProgressSpinner style={{ width: "20px", height: "20px" }} />
+        <ProgressSpinner strokeWidth="4" className="w-2rem h-2rem" />
         <span>Imprimiendo...</span>
       </div>
     );

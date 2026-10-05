@@ -7,7 +7,9 @@ import { InputSwitch } from 'primereact/inputswitch';
 import { useMutation, useQuery } from '@apollo/client';
 import { GET_CURRENCY_BY_CODE, UPDATE_CURRENCY } from '../graphql/queries';
 import { Toast } from 'primereact/toast';
+import { Message } from 'primereact/message';
 import SecurityEntitySelector from '../../../../components/SecurityEntitySelector/SecurityEntitySelector';
+import { FormField } from '../../../../components/ui';
 
 export const CurrencyEditForm = ({ currencyCode, visible, onHide, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -99,98 +101,105 @@ export const CurrencyEditForm = ({ currencyCode, visible, onHide, onSuccess }) =
   };
 
   const footer = (
-    <div>
-      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} className="p-button-text" />
+    <>
+      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} severity="secondary" />
       <Button label="Guardar" icon="pi pi-check" onClick={handleSubmit} autoFocus />
-    </div>
+    </>
   );
 
   return (
     <>
       <Toast ref={toast} />
-      <Dialog 
-        header="Editar Moneda" 
-        visible={visible} 
-        style={{ width: '50vw' }} 
-        footer={footer} 
+      <Dialog
+        header="Editar Moneda"
+        visible={visible}
+        className="w-full md:w-8 lg:w-6"
+        footer={footer}
         onHide={onHide}
       >
         {loading ? (
-          <p>Cargando...</p>
+          <p className="text-color-secondary">Cargando...</p>
         ) : error ? (
-          <p>Error al cargar moneda</p>
+          <Message severity="error" text="Error al cargar moneda" className="w-full" />
         ) : (
-          <div className="p-fluid">
-            <div className="p-field">
-              <label htmlFor="code">Código</label>
-              <InputText 
-                id="code" 
-                name="code" 
-                value={formData.code} 
-                onChange={handleChange} 
-                disabled
-              />
-            </div>
-
-            <div className="p-field">
-              <label htmlFor="name">Nombre*</label>
-              <InputText 
-                id="name" 
-                name="name" 
-                value={formData.name} 
-                onChange={handleChange} 
-                required
-              />
-            </div>
-
-            <div className="p-field">
-              <label htmlFor="symbol">Símbolo*</label>
-              <InputText 
-                id="symbol" 
-                name="symbol" 
-                value={formData.symbol} 
-                onChange={handleChange} 
-                required
-              />
-            </div>
-
-            <div className="p-field">
-              <label htmlFor="exchangeRateToCUP">Tasa de cambio (CUP)*</label>
-              <InputNumber
-                id="exchangeRateToCUP"
-                name="exchangeRateToCUP"
-                value={formData.exchangeRateToCUP}
-                onValueChange={handleNumberChange}
-                mode="decimal"
-                min={0}
-                max={1000}
-                required
-              />
-            </div>
-
-            <div className="p-field">
-              <label htmlFor="isActive">Estado</label>
-              <div className="flex align-items-center">
-                <InputSwitch
-                  id="isActive"
-                  checked={formData.isActive}
-                  onChange={handleStatusChange}
+          <div className="formgrid grid">
+            <div className="col-12 md:col-6">
+              <FormField label="Código" htmlFor="code">
+                <InputText
+                  id="code"
+                  name="code"
+                  value={formData.code}
+                  onChange={handleChange}
+                  disabled
                 />
-                <span className="ml-2">
-                  {formData.isActive ? 'Activo' : 'Inactivo'}
-                </span>
-              </div>
+              </FormField>
             </div>
 
-            <SecurityEntitySelector
-              onSelectionChange={handleSecurityEntitiesChange}
-              initialValues={{
-                businessId: formData.businessId,
-                officeId: formData.officeId,
-                departmentId: formData.departmentId,
-                teamId: formData.teamId
-              }}
-            />
+            <div className="col-12 md:col-6">
+              <FormField label="Nombre" htmlFor="name" required>
+                <InputText
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
+              </FormField>
+            </div>
+
+            <div className="col-12 md:col-6">
+              <FormField label="Símbolo" htmlFor="symbol" required>
+                <InputText
+                  id="symbol"
+                  name="symbol"
+                  value={formData.symbol}
+                  onChange={handleChange}
+                  required
+                />
+              </FormField>
+            </div>
+
+            <div className="col-12 md:col-6">
+              <FormField label="Tasa de cambio (CUP)" htmlFor="exchangeRateToCUP" required>
+                <InputNumber
+                  id="exchangeRateToCUP"
+                  name="exchangeRateToCUP"
+                  value={formData.exchangeRateToCUP}
+                  onValueChange={handleNumberChange}
+                  mode="decimal"
+                  min={0}
+                  max={1000}
+                  required
+                />
+              </FormField>
+            </div>
+
+            <div className="col-12">
+              <FormField label="Estado" htmlFor="isActive">
+                <div className="flex align-items-center gap-2">
+                  <InputSwitch
+                    id="isActive"
+                    checked={formData.isActive}
+                    onChange={handleStatusChange}
+                  />
+                  <span>
+                    {formData.isActive ? 'Activo' : 'Inactivo'}
+                  </span>
+                </div>
+              </FormField>
+            </div>
+
+            <div className="col-12">
+              <SecurityEntitySelector
+                onSelectionChange={handleSecurityEntitiesChange}
+                initialValues={{
+                  businessId: formData.businessId,
+                  officeId: formData.officeId,
+                  departmentId: formData.departmentId,
+                  teamId: formData.teamId
+                }}
+              />
+            </div>
           </div>
         )}
       </Dialog>

@@ -6,6 +6,7 @@ import { Dropdown } from "primereact/dropdown";
 import { useMutation } from "@apollo/client";
 import { CREATE_CONFIG } from "../graphql/queries";
 import { Toast } from "primereact/toast";
+import { FormField } from "../../../components/ui";
 
 const visibilityOptions = [
   { label: "Público", value: "PUBLIC" },
@@ -89,12 +90,12 @@ export const ConfigCreateForm = ({ visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Crear"
@@ -102,7 +103,7 @@ export const ConfigCreateForm = ({ visible, onHide, onSuccess }) => {
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -111,80 +112,86 @@ export const ConfigCreateForm = ({ visible, onHide, onSuccess }) => {
       <Dialog
         header="Crear Nueva Configuración"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
       >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="group">Grupo*</label>
-            <InputText
-              id="group"
-              name="group"
-              value={formData.group}
-              onChange={handleChange}
-              required
-            />
+        <div className="formgrid grid">
+          <div className="col-12 md:col-6">
+            <FormField label="Grupo" htmlFor="group" required>
+              <InputText
+                id="group"
+                name="group"
+                value={formData.group}
+                onChange={handleChange}
+                required
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="description">Descripción</label>
-            <InputText
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Descripción" htmlFor="description">
+              <InputText
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="category">Categoría*</label>
-            <Dropdown
-              id="category"
-              value={formData.category}
-              options={categoryOptions}
-              onChange={(e) => handleDropdownChange(e, "category")}
-              optionLabel="label"
-              placeholder="Seleccione categoría"
-              required
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Categoría" htmlFor="category" required>
+              <Dropdown
+                id="category"
+                value={formData.category}
+                options={categoryOptions}
+                onChange={(e) => handleDropdownChange(e, "category")}
+                optionLabel="label"
+                placeholder="Seleccione categoría"
+                required
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="values">Valores (JSON)*</label>
-            <InputText
-              id="values"
-              name="values"
-              value={formData.values}
-              onChange={handleChange}
-              required
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Valores (JSON)" htmlFor="values" required>
+              <InputText
+                id="values"
+                name="values"
+                value={formData.values}
+                onChange={handleChange}
+                required
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="configVisibility">Visibilidad*</label>
-            <Dropdown
-              id="configVisibility"
-              value={formData.configVisibility}
-              options={visibilityOptions}
-              onChange={(e) => handleDropdownChange(e, "configVisibility")}
-              optionLabel="label"
-              placeholder="Seleccione visibilidad"
-              required
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Visibilidad" htmlFor="configVisibility" required>
+              <Dropdown
+                id="configVisibility"
+                value={formData.configVisibility}
+                options={visibilityOptions}
+                onChange={(e) => handleDropdownChange(e, "configVisibility")}
+                optionLabel="label"
+                placeholder="Seleccione visibilidad"
+                required
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="configStatus">Estado*</label>
-            <Dropdown
-              id="configStatus"
-              value={formData.configStatus}
-              options={statusOptions}
-              onChange={(e) => handleDropdownChange(e, "configStatus")}
-              optionLabel="label"
-              placeholder="Seleccione estado"
-              required
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Estado" htmlFor="configStatus" required>
+              <Dropdown
+                id="configStatus"
+                value={formData.configStatus}
+                options={statusOptions}
+                onChange={(e) => handleDropdownChange(e, "configStatus")}
+                optionLabel="label"
+                placeholder="Seleccione estado"
+                required
+              />
+            </FormField>
           </div>
         </div>
       </Dialog>

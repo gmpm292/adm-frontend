@@ -6,6 +6,7 @@ import { Dropdown } from "primereact/dropdown";
 import { useMutation, useQuery } from "@apollo/client";
 import { GET_TEAM_BY_ID, UPDATE_TEAM } from "../graphql/queries";
 import { Toast } from "primereact/toast";
+import { FormField } from "../../../../components/ui";
 
 const teamTypes = [
   { label: "Trabajo de campo", value: "FIELDWORK" },
@@ -90,12 +91,12 @@ export const TeamEditForm = ({ teamId, visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Guardar"
@@ -103,7 +104,7 @@ export const TeamEditForm = ({ teamId, visible, onHide, onSuccess }) => {
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -112,7 +113,7 @@ export const TeamEditForm = ({ teamId, visible, onHide, onSuccess }) => {
       <Dialog
         header="Editar Equipo"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
       >
@@ -121,68 +122,53 @@ export const TeamEditForm = ({ teamId, visible, onHide, onSuccess }) => {
         ) : error ? (
           <p>Error al cargar equipo</p>
         ) : (
-          <div className="p-fluid">
-            <div className="p-field">
-              <label htmlFor="teamType">Tipo*</label>
-              <Dropdown
-                id="teamType"
-                value={formData.teamType}
-                options={teamTypes}
-                onChange={handleTeamTypeChange}
-                optionLabel="label"
-                placeholder="Seleccione tipo"
-                required
-              />
+          <div className="formgrid grid">
+            <div className="col-12 md:col-6">
+              <FormField label="Tipo" htmlFor="teamType" required>
+                <Dropdown
+                  id="teamType"
+                  value={formData.teamType}
+                  options={teamTypes}
+                  onChange={handleTeamTypeChange}
+                  optionLabel="label"
+                  placeholder="Seleccione tipo"
+                  required
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="name">Nombre*</label>
-              <InputText
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Nombre del equipo"
-                required
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Nombre" htmlFor="name" required>
+                <InputText
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Nombre del equipo"
+                  required
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="description">Descripción</label>
-              <InputText
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Descripción del equipo"
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Descripción" htmlFor="description">
+                <InputText
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder="Descripción del equipo"
+                />
+              </FormField>
             </div>
 
-            {/* <div className="p-field">
-              <label>Empresa</label>
-              <InputText
-                value={formData.business?.name || "No asignada"}
-                readOnly
-                className="readonly-input"
-              />
-            </div>
-
-            <div className="p-field">
-              <label>Oficina</label>
-              <InputText
-                value={formData.office?.name || "No asignada"}
-                readOnly
-                className="readonly-input"
-              />
-            </div> */}
-
-            <div className="p-field">
-              <label>Departamento</label>
-              <InputText
-                value={formData.department?.name || "No asignado"}
-                readOnly
-                className="readonly-input"
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Departamento">
+                <InputText
+                  value={formData.department?.name || "No asignado"}
+                  readOnly
+                />
+              </FormField>
             </div>
           </div>
         )}

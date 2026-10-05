@@ -217,7 +217,7 @@ const workerInfoBodyTemplate = (rowData: any) => {
 
   return (
     <div className="flex align-items-start">
-      <div className="worker-avatar-small mr-2 mt-1">
+      <div className="flex align-items-center justify-content-center w-2rem h-2rem border-circle surface-100 text-color-secondary mr-2 mt-1">
         <i className="pi pi-user text-sm"></i>
       </div>
       <div className="flex-1">
@@ -244,8 +244,7 @@ const workerInfoBodyTemplate = (rowData: any) => {
             <div className="flex align-items-center gap-1">
               <i className="pi pi-envelope text-xs text-color-secondary"></i>
               <span
-                className="text-xs text-color-secondary truncate"
-                style={{ maxWidth: "150px" }}
+                className="text-xs text-color-secondary inline-block max-w-10rem white-space-nowrap overflow-hidden text-overflow-ellipsis"
               >
                 {contactInfo.email}
               </span>
@@ -315,9 +314,8 @@ const workScheduleBodyTemplate = (rowData: any) => {
       </div>
       {schedule.notes && (
         <div
-          className="text-xs text-color-secondary truncate"
+          className="text-xs text-color-secondary max-w-10rem white-space-nowrap overflow-hidden text-overflow-ellipsis"
           title={schedule.notes}
-          style={{ maxWidth: "150px" }}
         >
           <i className="pi pi-file"></i> {schedule.notes.substring(0, 30)}...
         </div>
@@ -522,7 +520,8 @@ export function AttendanceTable() {
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
           tooltip="Editar registro"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
@@ -531,7 +530,9 @@ export function AttendanceTable() {
         {rowData.deletedAt ? (
           <Button
             icon="pi pi-undo"
-            className="p-button-rounded p-button-text p-button-success"
+            text
+            rounded
+            severity="success"
             tooltip="Restaurar registro"
             tooltipOptions={{ position: "top" }}
             onClick={() => handleRestore(rowData.id)}
@@ -539,7 +540,9 @@ export function AttendanceTable() {
         ) : (
           <Button
             icon="pi pi-trash"
-            className="p-button-rounded p-button-text p-button-danger"
+            text
+            rounded
+            severity="danger"
             tooltip="Eliminar registro"
             tooltipOptions={{ position: "top" }}
             onClick={() => handleRemove(rowData.id)}
@@ -548,7 +551,9 @@ export function AttendanceTable() {
         )}
         <Button
           icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
+          text
+          rounded
+          severity="info"
           tooltip="Ver detalles"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleViewDetails(rowData.id)}
@@ -564,7 +569,7 @@ export function AttendanceTable() {
       body: workerInfoBodyTemplate,
       sortable: true,
       filter: true,
-      width: "300px",
+      className: "w-20rem",
     },
     {
       field: "attendanceDate",
@@ -572,7 +577,7 @@ export function AttendanceTable() {
       body: dateBodyTemplate,
       sortable: true,
       filter: true,
-      width: "120px",
+      className: "w-9rem",
     },
     {
       field: "checkInTime",
@@ -580,7 +585,7 @@ export function AttendanceTable() {
       body: (rowData: any) => timeBodyTemplate(rowData, "checkInTime"),
       sortable: true,
       filter: true,
-      width: "100px",
+      className: "w-7rem",
     },
     {
       field: "checkOutTime",
@@ -588,7 +593,7 @@ export function AttendanceTable() {
       body: (rowData: any) => timeBodyTemplate(rowData, "checkOutTime"),
       sortable: true,
       filter: true,
-      width: "100px",
+      className: "w-7rem",
     },
     {
       field: "status",
@@ -596,7 +601,7 @@ export function AttendanceTable() {
       body: statusBodyTemplate,
       sortable: true,
       filter: true,
-      width: "130px",
+      className: "w-9rem",
     },
     {
       field: "hoursWorked",
@@ -604,7 +609,7 @@ export function AttendanceTable() {
       body: hoursBodyTemplate,
       sortable: true,
       filter: true,
-      width: "80px",
+      className: "w-6rem",
     },
     {
       field: "isPaid",
@@ -612,7 +617,7 @@ export function AttendanceTable() {
       body: paidBodyTemplate,
       sortable: true,
       filter: true,
-      width: "80px",
+      className: "w-6rem",
     },
     {
       field: "isHoliday",
@@ -620,7 +625,7 @@ export function AttendanceTable() {
       body: holidayBodyTemplate,
       sortable: true,
       filter: true,
-      width: "90px",
+      className: "w-7rem",
       visible: false,
     },
     {
@@ -629,7 +634,7 @@ export function AttendanceTable() {
       body: locationBodyTemplate,
       sortable: true,
       filter: true,
-      width: "180px",
+      className: "w-13rem",
     },
     {
       field: "workSchedule.startDate",
@@ -637,7 +642,7 @@ export function AttendanceTable() {
       body: workScheduleBodyTemplate,
       sortable: true,
       filter: true,
-      width: "150px",
+      className: "w-11rem",
       visible: false,
     },
   ];
@@ -647,17 +652,7 @@ export function AttendanceTable() {
       icon="pi pi-plus"
       label="Nuevo Registro"
       onClick={() => setCreateDialogVisible(true)}
-      severity="success"
     />
-  );
-
-  const header = (
-    <div className="flex justify-content-between align-items-center">
-      <div className="flex align-items-center gap-2">
-        <i className="pi pi-user-clock text-primary text-2xl"></i>
-      </div>
-      {addButton}
-    </div>
   );
 
   return (
@@ -687,7 +682,7 @@ export function AttendanceTable() {
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        header={header}
+        header={addButton}
         showDeleteFilter={true}
         initialSorts={defaultSorts}
         initialFilters={defaultFilters}
@@ -695,8 +690,7 @@ export function AttendanceTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "12rem" }}
-          bodyStyle={{ textAlign: "center" }}
+          headerClassName="w-12rem"
           exportable={false}
         />
       </GenericDataTable>

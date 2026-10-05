@@ -9,6 +9,7 @@ import { useMutation, useLazyQuery } from "@apollo/client";
 import { CREATE_SALE } from "../graphql/queries";
 import { Toast } from "primereact/toast";
 import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
+import { FormField } from "../../../../components/ui";
 import { GET_CUSTOMERS } from "../../customer/graphql/queries";
 import { GET_WORKERS } from "../../../payroll/worker/graphql/queries"; // Nueva importación
 
@@ -135,12 +136,12 @@ export const SaleCreateForm = ({ visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Crear"
@@ -148,7 +149,7 @@ export const SaleCreateForm = ({ visible, onHide, onSuccess }) => {
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -157,11 +158,11 @@ export const SaleCreateForm = ({ visible, onHide, onSuccess }) => {
       <Dialog
         header="Crear Nueva Venta"
         visible={visible}
-        style={{ width: "70vw" }}
+        className="w-full md:w-8 xl:w-6"
         footer={footer}
         onHide={onHide}
       >
-        <div className="p-fluid grid">
+        <div className="formgrid grid">
           {/* <div className="field col-12 md:col-6">
             <label htmlFor="effectiveDate">Fecha*</label>
             <Calendar
@@ -176,60 +177,64 @@ export const SaleCreateForm = ({ visible, onHide, onSuccess }) => {
             />
           </div> */}
 
-          <div className="field col-12 md:col-6">
-            <label htmlFor="paymentMethod">Método de Pago*</label>
-            <Dropdown
-              id="paymentMethod"
-              value={formData.paymentMethod}
-              options={paymentMethods}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, paymentMethod: e.value }))
-              }
-              optionLabel="label"
-              placeholder="Seleccione método"
-              required
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Método de Pago" htmlFor="paymentMethod" required>
+              <Dropdown
+                id="paymentMethod"
+                value={formData.paymentMethod}
+                options={paymentMethods}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, paymentMethod: e.value }))
+                }
+                optionLabel="label"
+                placeholder="Seleccione método"
+                required
+              />
+            </FormField>
           </div>
 
-          <div className="field col-12 md:col-6">
-            <label htmlFor="salesWorkerId">Vendedor*</label>
-            <Dropdown
-              id="salesWorkerId"
-              value={formData.salesWorkerId}
-              options={workers}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, salesWorkerId: e.value }))
-              }
-              optionLabel="label"
-              placeholder="Seleccione vendedor"
-              filter
-              required
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Vendedor" htmlFor="salesWorkerId" required>
+              <Dropdown
+                id="salesWorkerId"
+                value={formData.salesWorkerId}
+                options={workers}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, salesWorkerId: e.value }))
+                }
+                optionLabel="label"
+                placeholder="Seleccione vendedor"
+                filter
+                required
+              />
+            </FormField>
           </div>
 
-          <div className="field col-12 md:col-6">
-            <label htmlFor="invoiceNumber">Número de Factura</label>
-            <InputText
-              id="invoiceNumber"
-              name="invoiceNumber"
-              value={formData.invoiceNumber}
-              onChange={handleChange}
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Número de Factura" htmlFor="invoiceNumber">
+              <InputText
+                id="invoiceNumber"
+                name="invoiceNumber"
+                value={formData.invoiceNumber}
+                onChange={handleChange}
+              />
+            </FormField>
           </div>
 
-          <div className="field col-12 md:col-6">
-            <label htmlFor="customerId">Cliente</label>
-            <Dropdown
-              id="customerId"
-              value={formData.customerId}
-              options={customers}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, customerId: e.value }))
-              }
-              optionLabel="label"
-              placeholder="Seleccione cliente"
-              filter
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Cliente" htmlFor="customerId">
+              <Dropdown
+                id="customerId"
+                value={formData.customerId}
+                options={customers}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, customerId: e.value }))
+                }
+                optionLabel="label"
+                placeholder="Seleccione cliente"
+                filter
+              />
+            </FormField>
           </div>
 
           <div className="col-12">

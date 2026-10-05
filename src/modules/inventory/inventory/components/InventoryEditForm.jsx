@@ -6,7 +6,7 @@ import { InputNumber } from "primereact/inputnumber";
 import { useMutation, useQuery } from "@apollo/client";
 import { GET_INVENTORY_BY_ID, UPDATE_INVENTORY } from "../graphql/queries";
 import { Toast } from "primereact/toast";
-import { ProductSelector } from "../../product/components/ProductSelector";
+import { FormField } from "../../../../components/ui";
 
 export const InventoryEditForm = ({
   inventoryId,
@@ -85,12 +85,12 @@ export const InventoryEditForm = ({
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Guardar"
@@ -98,7 +98,7 @@ export const InventoryEditForm = ({
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -107,7 +107,7 @@ export const InventoryEditForm = ({
       <Dialog
         header="Editar Inventario"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
       >
@@ -116,7 +116,7 @@ export const InventoryEditForm = ({
         ) : error ? (
           <p>Error al cargar inventario</p>
         ) : (
-          <div className="p-fluid">
+          <div className="formgrid grid p-fluid">
             {/* <div className="p-field">
               <label htmlFor="productId">Producto</label>
               <ProductSelector
@@ -137,26 +137,28 @@ export const InventoryEditForm = ({
               />
             </div> */}
 
-            <div className="p-field">
-              <label htmlFor="minStock">Stock Mínimo</label>
-              <InputNumber
-                id="minStock"
-                name="minStock"
-                value={formData.minStock}
-                onValueChange={handleNumberChange}
-                mode="decimal"
-                min={0}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Stock Mínimo" htmlFor="minStock">
+                <InputNumber
+                  inputId="minStock"
+                  name="minStock"
+                  value={formData.minStock}
+                  onValueChange={handleNumberChange}
+                  mode="decimal"
+                  min={0}
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="location">Ubicación</label>
-              <InputText
-                id="location"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Ubicación" htmlFor="location">
+                <InputText
+                  id="location"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
           </div>
         )}

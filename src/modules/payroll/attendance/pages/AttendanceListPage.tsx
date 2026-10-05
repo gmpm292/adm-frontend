@@ -1,16 +1,17 @@
 // attendance/pages/AttendanceListPage.tsx
 import React from "react";
-import { Card } from "primereact/card";
-import "../styles/AttendanceList.css";
+import { PageHeader } from "../../../../components/ui";
 import AttendanceTable from "../components/AttendanceTable";
 
 export function AttendanceListPage() {
   return (
-    <div className="attendance-list-page">
-      <Card title="Gestión de Asistencia">
-        <AttendanceTable />
-      </Card>
-    </div>
+    <>
+      <PageHeader
+        title="Asistencia"
+        subtitle="Registra y consulta la asistencia diaria de los trabajadores."
+      />
+      <AttendanceTable />
+    </>
   );
 }
 

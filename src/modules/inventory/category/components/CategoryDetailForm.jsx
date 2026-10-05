@@ -4,6 +4,7 @@ import { useLazyQuery } from "@apollo/client";
 import { GET_CATEGORY_BY_ID } from "../graphql/queries";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { formatDate } from "../../../../utils/dateUtils";
+import { DetailField } from "../../components/DetailField";
 
 export function CategoryDetailForm({ categoryId, visible, onHide }) {
   const [getCategory, { data, loading }] = useLazyQuery(GET_CATEGORY_BY_ID, {
@@ -24,41 +25,38 @@ export function CategoryDetailForm({ categoryId, visible, onHide }) {
     <Dialog
       header="Detalles de la Categoría"
       visible={visible}
-      style={{ width: "600px" }}
+      className="w-full md:w-8 lg:w-6"
       onHide={onHide}
       modal
     >
       {loading ? (
-        <div className="flex justify-center">
+        <div className="flex justify-content-center">
           <ProgressSpinner />
         </div>
       ) : category ? (
-        <div className="p-fluid">
-          <div className="field">
-            <b>Nombre:</b> {category.name}
-          </div>
-          <div className="field">
-            <b>Descripción:</b> {category.description || "N/A"}
-          </div>
-          <div className="field">
-            <b>Fecha de creación:</b> {formatDate(category.createdAt)}
-          </div>
-          <div className="field">
-            <b>Última actualización:</b> {formatDate(category.updatedAt)}
-          </div>
-
-          <div className="field">
-            <b>Negocio:</b> {category.business?.name || "N/A"}
-          </div>
-          <div className="field">
-            <b>Oficina:</b> {category.office?.name || "N/A"}
-          </div>
-          <div className="field">
-            <b>Departamento:</b> {category.department?.name || "N/A"}
-          </div>
-          <div className="field">
-            <b>Equipo:</b> {category.team?.name || "N/A"}
-          </div>
+        <div className="grid">
+          <DetailField label="Nombre">{category.name}</DetailField>
+          <DetailField label="Descripción">
+            {category.description || "N/A"}
+          </DetailField>
+          <DetailField label="Fecha de creación">
+            {formatDate(category.createdAt)}
+          </DetailField>
+          <DetailField label="Última actualización">
+            {formatDate(category.updatedAt)}
+          </DetailField>
+          <DetailField label="Negocio">
+            {category.business?.name || "N/A"}
+          </DetailField>
+          <DetailField label="Oficina">
+            {category.office?.name || "N/A"}
+          </DetailField>
+          <DetailField label="Departamento">
+            {category.department?.name || "N/A"}
+          </DetailField>
+          <DetailField label="Equipo">
+            {category.team?.name || "N/A"}
+          </DetailField>
         </div>
       ) : (
         <p>No se encontró información de la categoría.</p>

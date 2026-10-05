@@ -22,20 +22,16 @@ export const ValidatePaymentButton = ({
     }
   };
 
-  const getButtonClass = () => {
-    const baseClass = `p-button-${size}`;
-    if (variant === "outlined")
-      return `p-button-outlined p-button-help ${baseClass}`;
-    if (variant === "text") return `p-button-text p-button-help ${baseClass}`;
-    return `p-button-help ${baseClass}`;
-  };
-
   return (
     <>
       <Button
         label={label}
         icon={icon}
-        className={getButtonClass()}
+        size={variant === "text" ? undefined : size}
+        severity="help"
+        outlined={variant === "outlined"}
+        text={variant === "text"}
+        rounded={variant === "text"}
         onClick={() => setShowDialog(true)}
         disabled={disabled}
         tooltip={tooltip}

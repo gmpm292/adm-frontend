@@ -8,6 +8,7 @@ import { InputSwitch } from "primereact/inputswitch";
 import { useMutation } from "@apollo/client";
 import { CREATE_UNIT_OF_MEASURE } from "../graphql/queries";
 import { Toast } from "primereact/toast";
+import { FormField } from "../../../../components/ui";
 import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
 
 // Opciones de categoría
@@ -99,12 +100,12 @@ export const UnitOfMeasureCreateForm = ({ visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Crear"
@@ -112,7 +113,7 @@ export const UnitOfMeasureCreateForm = ({ visible, onHide, onSuccess }) => {
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -121,78 +122,85 @@ export const UnitOfMeasureCreateForm = ({ visible, onHide, onSuccess }) => {
       <Dialog
         header="Crear Nueva Unidad de Medida"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
         modal
       >
-        <div className="p-fluid">
-          <div className="field">
-            <label htmlFor="name">Nombre*</label>
-            <InputText
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              autoFocus
-            />
-          </div>
-
-          <div className="field">
-            <label htmlFor="symbol">Símbolo*</label>
-            <InputText
-              id="symbol"
-              name="symbol"
-              value={formData.symbol}
-              onChange={handleChange}
-              required
-              tooltip="Ej: kg, L, m, unidad"
-              tooltipOptions={{ position: "top" }}
-            />
-          </div>
-
-          <div className="field">
-            <label htmlFor="category">Categoría</label>
-            <Dropdown
-              id="category"
-              value={formData.category}
-              options={categoryOptions}
-              onChange={handleDropdownChange}
-              placeholder="Seleccione una categoría"
-              showClear
-            />
-          </div>
-
-          <div className="field">
-            <label htmlFor="description">Descripción</label>
-            <InputTextarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows={3}
-              autoResize
-            />
-          </div>
-
-          <div className="field">
-            <label htmlFor="isActive">Estado</label>
-            <div className="flex align-items-center">
-              <InputSwitch
-                id="isActive"
-                checked={formData.isActive}
-                onChange={handleStatusChange}
+        <div className="formgrid grid p-fluid">
+          <div className="col-12 md:col-6">
+            <FormField label="Nombre" htmlFor="name" required>
+              <InputText
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                autoFocus
               />
-              <span className="ml-2">
-                {formData.isActive ? "Activo" : "Inactivo"}
-              </span>
-            </div>
+            </FormField>
           </div>
 
-          <SecurityEntitySelector
-            onSelectionChange={handleSecurityEntitiesChange}
-          />
+          <div className="col-12 md:col-6">
+            <FormField label="Símbolo" htmlFor="symbol" required>
+              <InputText
+                id="symbol"
+                name="symbol"
+                value={formData.symbol}
+                onChange={handleChange}
+                required
+                tooltip="Ej: kg, L, m, unidad"
+                tooltipOptions={{ position: "top" }}
+              />
+            </FormField>
+          </div>
+
+          <div className="col-12 md:col-6">
+            <FormField label="Categoría" htmlFor="category">
+              <Dropdown
+                id="category"
+                value={formData.category}
+                options={categoryOptions}
+                onChange={handleDropdownChange}
+                placeholder="Seleccione una categoría"
+                showClear
+              />
+            </FormField>
+          </div>
+
+          <div className="col-12 md:col-6">
+            <FormField label="Estado" htmlFor="isActive">
+              <div className="flex align-items-center">
+                <InputSwitch
+                  id="isActive"
+                  checked={formData.isActive}
+                  onChange={handleStatusChange}
+                />
+                <span className="ml-2">
+                  {formData.isActive ? "Activo" : "Inactivo"}
+                </span>
+              </div>
+            </FormField>
+          </div>
+
+          <div className="col-12">
+            <FormField label="Descripción" htmlFor="description">
+              <InputTextarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows={3}
+                autoResize
+              />
+            </FormField>
+          </div>
+
+          <div className="col-12">
+            <SecurityEntitySelector
+              onSelectionChange={handleSecurityEntitiesChange}
+            />
+          </div>
         </div>
       </Dialog>
     </>

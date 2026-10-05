@@ -6,17 +6,17 @@ import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
+import { Tag } from "primereact/tag";
 import { PaymentRuleEditForm } from "./PaymentRuleEditForm";
 import { PaymentRuleCreateForm } from "./PaymentRuleCreateForm";
 import { PaymentRuleDetailForm } from "./PaymentRuleDetailForm";
 
 const statusBodyTemplate = (rowData) => {
   return (
-    <span
-      className={`badge status-${rowData.isActive ? "active" : "inactive"}`}
-    >
-      {rowData.isActive ? "Activo" : "Inactivo"}
-    </span>
+    <Tag
+      severity={rowData.isActive ? "success" : "danger"}
+      value={rowData.isActive ? "Activo" : "Inactivo"}
+    />
   );
 };
 
@@ -71,11 +71,10 @@ const currencyBodyTemplate = (rowData) => {
 
 const distributeProfitsBodyTemplate = (rowData) => {
   return (
-    <span
-      className={`badge status-${rowData.distributeProfits ? "active" : "inactive"}`}
-    >
-      {rowData.distributeProfits ? "Sí" : "No"}
-    </span>
+    <Tag
+      severity={rowData.distributeProfits ? "success" : "danger"}
+      value={rowData.distributeProfits ? "Sí" : "No"}
+    />
   );
 };
 
@@ -207,21 +206,26 @@ export function PaymentRuleTable() {
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
           tooltip="Editar"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
         <Button
           icon="pi pi-trash"
-          className="p-button-rounded p-button-text p-button-danger"
+          text
+          rounded
+          severity="danger"
           tooltip="Eliminar"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleDelete(rowData.id)}
         />
         <Button
           icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
+          text
+          rounded
+          severity="info"
           tooltip="Ver detalles"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleViewDetails(rowData.id)}
@@ -318,8 +322,7 @@ export function PaymentRuleTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "10rem" }}
-          bodyStyle={{ textAlign: "center" }}
+          headerClassName="w-10rem"
         />
       </GenericDataTable>
 

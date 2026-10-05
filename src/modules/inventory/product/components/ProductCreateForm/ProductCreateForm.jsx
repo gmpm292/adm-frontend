@@ -3,6 +3,7 @@ import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { useMutation } from "@apollo/client";
 import { Toast } from "primereact/toast";
+import { Message } from "primereact/message";
 import { useProductForm } from "./hooks/useProductForm";
 import { BasicInfoPanel } from "./components/BasicInfoPanel";
 import { AttributesPanel } from "./components/AttributesPanel";
@@ -34,7 +35,6 @@ export const ProductCreateForm = ({ visible, onHide, onSuccess }) => {
     currencyOptions,
     availableFixedPriceCurrencies,
     officeOptions,
-    officesLoading,
     handleSecurityEntitiesChange,
     handleChange,
     handleNumberChange,
@@ -48,7 +48,6 @@ export const ProductCreateForm = ({ visible, onHide, onSuccess }) => {
     handleAddFixedPrice,
     handleRemoveFixedPrice,
     resetForm,
-    selectedMaterial,
   } = useProductForm(visible);
 
   const handleToggle = (index) => {
@@ -198,12 +197,12 @@ export const ProductCreateForm = ({ visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Crear"
@@ -212,7 +211,7 @@ export const ProductCreateForm = ({ visible, onHide, onSuccess }) => {
         autoFocus
         disabled={currenciesLoading}
       />
-    </div>
+    </>
   );
 
   return (
@@ -221,16 +220,18 @@ export const ProductCreateForm = ({ visible, onHide, onSuccess }) => {
       <Dialog
         header="Crear Nuevo Producto"
         visible={visible}
-        style={{ width: "70vw" }}
+        className="w-full lg:w-8"
         footer={footer}
         onHide={onHide}
         resizable
         draggable
       >
         {currenciesError && (
-          <div className="p-message p-message-error">
-            Error al cargar las monedas: {currenciesError.message}
-          </div>
+          <Message
+            severity="error"
+            text={`Error al cargar las monedas: ${currenciesError.message}`}
+            className="w-full mb-3"
+          />
         )}
 
         <div className="p-fluid">
@@ -276,6 +277,7 @@ export const ProductCreateForm = ({ visible, onHide, onSuccess }) => {
 
           <SalesRulesPanel
             formData={formData}
+            setFormData={setFormData}
             openPanel={openPanel}
             handleToggle={() => handleToggle(3)}
             currencyOptions={currencyOptions}

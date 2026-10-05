@@ -6,7 +6,9 @@ import { InputNumber } from "primereact/inputnumber";
 import { useMutation } from "@apollo/client";
 import { CREATE_INVENTORY } from "../graphql/queries";
 import { Toast } from "primereact/toast";
+import { Divider } from "primereact/divider";
 import { ProductSelector } from "../../product/components/ProductSelector";
+import { FormField } from "../../../../components/ui";
 import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
 
 export const InventoryCreateForm = ({ visible, onHide, onSuccess }) => {
@@ -94,12 +96,12 @@ export const InventoryCreateForm = ({ visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Crear"
@@ -107,7 +109,7 @@ export const InventoryCreateForm = ({ visible, onHide, onSuccess }) => {
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -116,57 +118,60 @@ export const InventoryCreateForm = ({ visible, onHide, onSuccess }) => {
       <Dialog
         header="Crear Nuevo Inventario"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
       >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="productId">Producto*</label>
-            <ProductSelector
-              onProductSelect={handleProductSelect}
-              selectedProductId={formData.productId}
-            />
+        <div className="formgrid grid p-fluid">
+          <div className="col-12">
+            <FormField label="Producto" htmlFor="productId" required>
+              <ProductSelector
+                onProductSelect={handleProductSelect}
+                selectedProductId={formData.productId}
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="currentStock">Stock Actual*</label>
-            <InputNumber
-              id="currentStock"
-              name="currentStock"
-              value={formData.currentStock}
-              onValueChange={handleNumberChange}
-              mode="decimal"
-              min={0}
-              required
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Stock Actual" htmlFor="currentStock" required>
+              <InputNumber
+                inputId="currentStock"
+                name="currentStock"
+                value={formData.currentStock}
+                onValueChange={handleNumberChange}
+                mode="decimal"
+                min={0}
+                required
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="minStock">Stock Mínimo</label>
-            <InputNumber
-              id="minStock"
-              name="minStock"
-              value={formData.minStock}
-              onValueChange={handleNumberChange}
-              mode="decimal"
-              min={0}
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Stock Mínimo" htmlFor="minStock">
+              <InputNumber
+                inputId="minStock"
+                name="minStock"
+                value={formData.minStock}
+                onValueChange={handleNumberChange}
+                mode="decimal"
+                min={0}
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="location">Ubicación</label>
-            <InputText
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-            />
+          <div className="col-12">
+            <FormField label="Ubicación" htmlFor="location">
+              <InputText
+                id="location"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+              />
+            </FormField>
           </div>
 
-          <hr className="my-4" />
-
-          <div className="p-field">
+          <div className="col-12">
+            <Divider />
             <SecurityEntitySelector
               onSelectionChange={handleSecurityEntitiesChange}
             />

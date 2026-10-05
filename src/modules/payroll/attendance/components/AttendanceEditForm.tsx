@@ -8,6 +8,9 @@ import { InputTextarea } from "primereact/inputtextarea";
 import { Checkbox } from "primereact/checkbox";
 import { useQuery, useMutation } from "@apollo/client";
 import { Toast } from "primereact/toast";
+import { Tag } from "primereact/tag";
+import { Message } from "primereact/message";
+import { FormField, EmptyState } from "../../../../components/ui";
 import { GET_ATTENDANCE_BY_ID, UPDATE_ATTENDANCE } from "../graphql/queries";
 import { deepClean } from "../../../../utils/deepClean";
 
@@ -313,12 +316,12 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
   };
 
   const footer = (
-    <div className="flex justify-content-end gap-2">
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
         disabled={mutationLoading}
       />
       <Button
@@ -328,7 +331,7 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
         loading={mutationLoading}
         disabled={queryLoading}
       />
-    </div>
+    </>
   );
 
   if (!attendanceId) return null;
@@ -342,27 +345,27 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
       <Dialog
         header="Editar Registro de Asistencia"
         visible={visible}
-        style={{ width: "50vw", minWidth: "300px" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
         modal
       >
         {queryLoading ? (
           <div className="flex justify-content-center align-items-center py-5">
-            <i className="pi pi-spin pi-spinner text-4xl"></i>
+            <i className="pi pi-spin pi-spinner text-4xl text-color-secondary"></i>
           </div>
         ) : attendance ? (
-          <div className="p-fluid grid">
+          <div className="formgrid grid">
             {/* Información unificada del trabajador, fecha y ubicación */}
             <div className="col-12 mb-4">
-              <div className="border-round border-1 surface-border p-3 bg-blue-50">
+              <div className="border-round border-1 surface-border p-3 surface-50">
                 <div className="grid">
                   {/* Información del trabajador y fecha */}
                   <div className="col-12 md:col-6">
                     <div className="flex align-items-center gap-3 mb-3">
                       <div className="flex-shrink-0">
-                        <div className="w-3rem h-3rem border-circle bg-blue-100 flex align-items-center justify-content-center">
-                          <i className="pi pi-user text-blue-500 text-xl"></i>
+                        <div className="w-3rem h-3rem border-circle bg-primary-100 flex align-items-center justify-content-center">
+                          <i className="pi pi-user text-primary text-xl"></i>
                         </div>
                       </div>
                       <div className="flex-1">
@@ -370,12 +373,11 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
                           {workerName}
                         </div>
                         <div className="flex flex-wrap gap-2 mt-1">
-                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                            {attendance.worker?.workerType || "N/A"}
-                          </span>
-                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                            <i className="pi pi-calendar mr-1"></i>
-                            {new Date(
+                          <Tag severity="info" value={attendance.worker?.workerType || "N/A"} />
+                          <Tag
+                            severity="success"
+                            icon="pi pi-calendar"
+                            value={new Date(
                               attendance.attendanceDate,
                             ).toLocaleDateString("es-ES", {
                               weekday: "short",
@@ -383,7 +385,7 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
                               month: "short",
                               year: "numeric",
                             })}
-                          </span>
+                          />
                         </div>
                         {attendance.worker?.user?.email && (
                           <div className="text-xs text-color-secondary mt-1">
@@ -404,7 +406,7 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
                       </div>
                       <div className="grid">
                         {attendance.business?.name && (
-                          <div className="col-6">
+                          <div className="col-12 md:col-6">
                             <div className="text-xs text-color-secondary flex align-items-center gap-1">
                               <i className="pi pi-building text-xs"></i>
                               Business:
@@ -415,7 +417,7 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
                           </div>
                         )}
                         {attendance.office?.name && (
-                          <div className="col-6">
+                          <div className="col-12 md:col-6">
                             <div className="text-xs text-color-secondary flex align-items-center gap-1">
                               <i className="pi pi-map text-xs"></i>
                               Oficina:
@@ -426,7 +428,7 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
                           </div>
                         )}
                         {attendance.department?.name && (
-                          <div className="col-6">
+                          <div className="col-12 md:col-6">
                             <div className="text-xs text-color-secondary flex align-items-center gap-1">
                               <i className="pi pi-sitemap text-xs"></i>
                               Depto.:
@@ -437,7 +439,7 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
                           </div>
                         )}
                         {attendance.team?.name && (
-                          <div className="col-6">
+                          <div className="col-12 md:col-6">
                             <div className="text-xs text-color-secondary flex align-items-center gap-1">
                               <i className="pi pi-users text-xs"></i>
                               Equipo:
@@ -457,41 +459,35 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
                   <div className="flex flex-wrap gap-3">
                     <div className="flex align-items-center gap-2">
                       <span className="text-xs font-semibold">Estado:</span>
-                      <span
-                        className={`text-xs px-2 py-1 rounded ${
+                      <Tag
+                        severity={
                           formData.status === "present"
-                            ? "bg-green-100 text-green-800"
+                            ? "success"
                             : formData.status === "absent"
-                              ? "bg-red-100 text-red-800"
+                              ? "danger"
                               : formData.status.includes("late") ||
                                   formData.status === "early_departure"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-blue-100 text-blue-800"
-                        }`}
-                      >
-                        {statusOptions.find(
-                          (opt) => opt.value === formData.status,
-                        )?.label || formData.status}
-                      </span>
+                                ? "warning"
+                                : "info"
+                        }
+                        value={
+                          statusOptions.find(
+                            (opt) => opt.value === formData.status,
+                          )?.label || formData.status
+                        }
+                      />
                     </div>
                     <div className="flex align-items-center gap-2">
                       <span className="text-xs font-semibold">Pagado:</span>
-                      <span
-                        className={`text-xs px-2 py-1 rounded ${
-                          formData.isPaid
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {formData.isPaid ? "Sí" : "No"}
-                      </span>
+                      <Tag
+                        severity={formData.isPaid ? "success" : "warning"}
+                        value={formData.isPaid ? "Sí" : "No"}
+                      />
                     </div>
                     {formData.isHoliday && (
                       <div className="flex align-items-center gap-2">
                         <span className="text-xs font-semibold">Festivo:</span>
-                        <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                          Sí
-                        </span>
+                        <Tag severity="info" value="Sí" />
                       </div>
                     )}
                   </div>
@@ -500,15 +496,15 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
             </div>
 
             {/* Campos editables */}
-            <div className="col-6">
-              <div className="field">
-                <label htmlFor="checkInTime" className="block mb-2">
-                  Hora de Entrada (HH:mm)
-                  {errors.checkInTime && (
-                    <small className="p-error ml-2">{errors.checkInTime}</small>
-                  )}
-                </label>
+            <div className="col-12 md:col-6">
+              <FormField
+                label="Hora de Entrada (HH:mm)"
+                htmlFor="checkInTime"
+                hint="Formato 24h (ej: 08:30, 14:00)"
+                error={errors.checkInTime}
+              >
                 <InputText
+                  invalid={Boolean(errors.checkInTime)}
                   id="checkInTime"
                   value={formData.checkInTime || ""}
                   onChange={(e) =>
@@ -519,23 +515,17 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
                   disabled={mutationLoading || attendance.isPaid}
                   maxLength={5}
                 />
-                <small className="text-color-secondary">
-                  Formato 24h (ej: 08:30, 14:00)
-                </small>
-              </div>
+              </FormField>
             </div>
 
-            <div className="col-6">
-              <div className="field">
-                <label htmlFor="checkOutTime" className="block mb-2">
-                  Hora de Salida (HH:mm)
-                  {errors.checkOutTime && (
-                    <small className="p-error ml-2">
-                      {errors.checkOutTime}
-                    </small>
-                  )}
-                </label>
+            <div className="col-12 md:col-6">
+              <FormField
+                label="Hora de Salida (HH:mm)"
+                htmlFor="checkOutTime"
+                error={errors.checkOutTime}
+              >
                 <InputText
+                  invalid={Boolean(errors.checkOutTime)}
                   id="checkOutTime"
                   value={formData.checkOutTime || ""}
                   onChange={(e) =>
@@ -546,14 +536,11 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
                   disabled={mutationLoading || attendance.isPaid}
                   maxLength={5}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="col-6">
-              <div className="field">
-                <label htmlFor="status" className="block mb-2">
-                  Estado
-                </label>
+            <div className="col-12 md:col-6">
+              <FormField label="Estado" htmlFor="status">
                 <Dropdown
                   id="status"
                   value={formData.status}
@@ -563,14 +550,19 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
                   className="w-full"
                   disabled={mutationLoading || attendance.isPaid}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="col-6">
-              <div className="field">
-                <label htmlFor="hoursWorked" className="block mb-2">
-                  Horas Trabajadas
-                </label>
+            <div className="col-12 md:col-6">
+              <FormField
+                label="Horas Trabajadas"
+                htmlFor="hoursWorked"
+                hint={
+                  formData.checkInTime && formData.checkOutTime
+                    ? "Calculado automáticamente"
+                    : "Ingrese manualmente"
+                }
+              >
                 <InputNumber
                   id="hoursWorked"
                   value={formData.hoursWorked}
@@ -581,16 +573,11 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
                   readOnly
                   disabled={mutationLoading || attendance.isPaid}
                 />
-                <small className="text-color-secondary">
-                  {formData.checkInTime && formData.checkOutTime
-                    ? "Calculado automáticamente"
-                    : "Ingrese manualmente"}
-                </small>
-              </div>
+              </FormField>
             </div>
 
-            <div className="col-6">
-              <div className="field flex align-items-center">
+            <div className="col-12 md:col-6">
+              <div className="flex align-items-center mb-4">
                 <Checkbox
                   id="isHoliday"
                   checked={formData.isHoliday}
@@ -603,8 +590,8 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
               </div>
             </div>
 
-            <div className="col-6">
-              <div className="field flex align-items-center">
+            <div className="col-12 md:col-6">
+              <div className="flex align-items-center mb-4">
                 <Checkbox
                   id="isPaid"
                   checked={formData.isPaid}
@@ -618,10 +605,7 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
             </div>
 
             <div className="col-12">
-              <div className="field">
-                <label htmlFor="notes" className="block mb-2">
-                  Notas
-                </label>
+              <FormField label="Notas" htmlFor="notes">
                 <InputTextarea
                   id="notes"
                   value={formData.notes || ""}
@@ -633,44 +617,34 @@ export const AttendanceEditForm: React.FC<AttendanceEditFormProps> = ({
                   disabled={mutationLoading || attendance.isPaid}
                   placeholder="Observaciones adicionales..."
                 />
-              </div>
+              </FormField>
             </div>
 
             {attendance.isPaid && (
-              <div className="col-12 mt-3">
-                <div className="p-3 border-round border-1 surface-border bg-yellow-50">
-                  <div className="flex align-items-center">
-                    <i className="pi pi-info-circle text-yellow-500 mr-2"></i>
-                    <span className="text-sm">
-                      Este registro ya ha sido marcado como pagado. Algunos
-                      campos están bloqueados para edición.
-                    </span>
-                  </div>
-                </div>
+              <div className="col-12 mb-3">
+                <Message
+                  severity="warn"
+                  className="w-full"
+                  text="Este registro ya ha sido marcado como pagado. Algunos campos están bloqueados para edición."
+                />
               </div>
             )}
 
             {/* Indicador de cambios */}
             {dirtyFields.size > 0 && (
-              <div className="col-12 mt-3">
-                <div className="p-2 border-round border-1 surface-border bg-blue-50">
-                  <div className="flex align-items-center text-sm">
-                    <i className="pi pi-info-circle text-blue-500 mr-2"></i>
-                    <span>
-                      {dirtyFields.size} campo
-                      {dirtyFields.size !== 1 ? "s" : ""} modificado
-                      {dirtyFields.size !== 1 ? "s" : ""}
-                    </span>
-                  </div>
-                </div>
+              <div className="col-12">
+                <Message
+                  severity="info"
+                  className="w-full"
+                  text={`${dirtyFields.size} campo${dirtyFields.size !== 1 ? "s" : ""} modificado${dirtyFields.size !== 1 ? "s" : ""}`}
+                />
               </div>
             )}
           </div>
         ) : (
-          <div className="text-center py-5">
-            <i className="pi pi-exclamation-triangle text-4xl text-color-secondary"></i>
-            <p className="mt-3">No se encontró el registro de asistencia</p>
-          </div>
+          <EmptyState icon="pi pi-exclamation-triangle">
+            <p>No se encontró el registro de asistencia</p>
+          </EmptyState>
         )}
       </Dialog>
     </>

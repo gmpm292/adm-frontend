@@ -1,14 +1,15 @@
 import React from 'react';
-import { Card } from 'primereact/card';
+import { PageHeader } from '../../../components/ui';
 import { UserTable } from '../components/UserTable';
-import '../styles/UserList.css';
 
 export function UserListPage() {
     return (
-        <div className="user-list-page">
-            <Card title="Gestión de Usuarios">
-                <UserTable />
-            </Card>
-        </div>
+        <>
+            <PageHeader
+                title="Usuarios"
+                subtitle="Crea cuentas, asigna roles y controla el acceso de cada persona."
+            />
+            <UserTable />
+        </>
     );
 }

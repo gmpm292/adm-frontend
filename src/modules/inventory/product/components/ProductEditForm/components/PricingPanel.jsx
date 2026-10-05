@@ -1,13 +1,15 @@
-import React from 'react';
-import { Panel } from 'primereact/panel';
-import { InputNumber } from 'primereact/inputnumber';
-import { MultiSelect } from 'primereact/multiselect';
-import { Dropdown } from 'primereact/dropdown';
-import { Button } from 'primereact/button';
-import { CurrencyInput } from '../../../../../../components/CurrencyInput/CurrencyInput';
+import React from "react";
+import { Panel } from "primereact/panel";
+import { InputNumber } from "primereact/inputnumber";
+import { MultiSelect } from "primereact/multiselect";
+import { Dropdown } from "primereact/dropdown";
+import { Button } from "primereact/button";
+import { CurrencyInput } from "../../../../../../components/CurrencyInput/CurrencyInput";
+import { FormField } from "../../../../../../components/ui";
 
 export const PricingPanel = ({
   formData,
+  setFormData,
   openPanel,
   handleToggle,
   currenciesLoading,
@@ -17,7 +19,7 @@ export const PricingPanel = ({
   fixedPrice,
   setFixedPrice,
   handleAddFixedPrice,
-  handleRemoveFixedPrice
+  handleRemoveFixedPrice,
 }) => (
   <Panel
     header="Costos y Precios"
@@ -25,8 +27,8 @@ export const PricingPanel = ({
     collapsed={openPanel !== 2}
     onToggle={handleToggle}
   >
-    <div className="p-grid p-fluid">
-      <div className="p-col-12 p-md-6">
+    <div className="formgrid grid">
+      <div className="col-12 md:col-6">
         <CurrencyInput
           id="costPrice"
           name="costPrice"
@@ -39,16 +41,12 @@ export const PricingPanel = ({
           }
           currencyOptions={currencyOptions}
           disabled={currenciesLoading}
-          placeholder={
-            currenciesLoading ? "Cargando..." : "Ingrese precio"
-          }
-          currencyPlaceholder={
-            currenciesLoading ? "Cargando..." : "Moneda"
-          }
+          placeholder={currenciesLoading ? "Cargando..." : "Ingrese precio"}
+          currencyPlaceholder={currenciesLoading ? "Cargando..." : "Moneda"}
           required
         />
       </div>
-      <div className="p-col-12 p-md-6">
+      <div className="col-12 md:col-6">
         <CurrencyInput
           id="basePrice"
           name="basePrice"
@@ -61,18 +59,13 @@ export const PricingPanel = ({
           }
           currencyOptions={currencyOptions}
           disabled={currenciesLoading}
-          placeholder={
-            currenciesLoading ? "Cargando..." : "Ingrese precio"
-          }
-          currencyPlaceholder={
-            currenciesLoading ? "Cargando..." : "Moneda"
-          }
+          placeholder={currenciesLoading ? "Cargando..." : "Ingrese precio"}
+          currencyPlaceholder={currenciesLoading ? "Cargando..." : "Moneda"}
           required
         />
       </div>
-      <div className="p-col-12">
-        <div className="p-field">
-          <label>Monedas Aceptadas*</label>
+      <div className="col-12">
+        <FormField label="Monedas Aceptadas" required>
           <MultiSelect
             value={formData.acceptedCurrencies}
             options={currencyOptions}
@@ -83,27 +76,23 @@ export const PricingPanel = ({
               }))
             }
             placeholder={
-              currenciesLoading
-                ? "Cargando monedas..."
-                : "Seleccione monedas"
+              currenciesLoading ? "Cargando monedas..." : "Seleccione monedas"
             }
             display="chip"
             disabled={currenciesLoading}
             required
           />
-        </div>
+        </FormField>
       </div>
-      <div className="p-col-12 p-md-6">
-        <div className="p-field">
-          <label htmlFor="exchangeRateMargin">
-            Margen sobre tipo de cambio (%)
-          </label>
+      <div className="col-12 md:col-6">
+        <FormField
+          label="Margen sobre tipo de cambio (%)"
+          htmlFor="exchangeRateMargin"
+        >
           <InputNumber
-            id="exchangeRateMargin"
+            inputId="exchangeRateMargin"
             value={formData.exchangeRateMargin}
-            onValueChange={(e) =>
-              handleNumberChange(e, "exchangeRateMargin")
-            }
+            onValueChange={(e) => handleNumberChange(e, "exchangeRateMargin")}
             mode="decimal"
             min={0}
             max={100}
@@ -111,31 +100,29 @@ export const PricingPanel = ({
             suffix="%"
             disabled={currenciesLoading}
           />
-        </div>
+        </FormField>
       </div>
-      <div className="p-col-12 p-md-6">
-        <div className="p-field">
-          <label htmlFor="decimalPlaces">Decimales para redondeo</label>
+      <div className="col-12 md:col-6">
+        <FormField label="Decimales para redondeo" htmlFor="decimalPlaces">
           <InputNumber
-            id="decimalPlaces"
+            inputId="decimalPlaces"
             value={formData.decimalPlaces}
-            onValueChange={(e) =>
-              handleNumberChange(e, "decimalPlaces")
-            }
+            onValueChange={(e) => handleNumberChange(e, "decimalPlaces")}
             mode="decimal"
             min={0}
             max={6}
             disabled={currenciesLoading}
           />
-        </div>
+        </FormField>
       </div>
 
-      <div className="p-col-12">
-        <div className="p-field">
-          <label>Precios Fijos en Otras Monedas</label>
-          <div className="p-grid p-fluid">
-            <div className="p-col-12 p-md-4">
-              <label htmlFor="fixedPriceCurrency">Moneda</label>
+      <div className="col-12">
+        <span className="block font-semibold mb-3">
+          Precios Fijos en Otras Monedas
+        </span>
+        <div className="formgrid grid">
+          <div className="col-12 md:col-4">
+            <FormField label="Moneda" htmlFor="fixedPriceCurrency">
               <Dropdown
                 id="fixedPriceCurrency"
                 value={fixedPrice.currency}
@@ -149,12 +136,13 @@ export const PricingPanel = ({
                 placeholder="Seleccione moneda"
                 disabled={availableFixedPriceCurrencies.length === 0}
               />
-            </div>
-            <div className="p-col-12 p-md-4">
-              <label htmlFor="fixedPriceAmount">Precio</label>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-4">
+            <FormField label="Precio" htmlFor="fixedPriceAmount">
               {fixedPrice.currency ? (
                 <InputNumber
-                  id="fixedPriceAmount"
+                  inputId="fixedPriceAmount"
                   value={fixedPrice.amount}
                   onValueChange={(e) =>
                     setFixedPrice((prev) => ({
@@ -168,7 +156,7 @@ export const PricingPanel = ({
                 />
               ) : (
                 <InputNumber
-                  id="fixedPriceAmount"
+                  inputId="fixedPriceAmount"
                   value={fixedPrice.amount}
                   onValueChange={(e) =>
                     setFixedPrice((prev) => ({
@@ -181,29 +169,25 @@ export const PricingPanel = ({
                   placeholder="Seleccione moneda primero"
                 />
               )}
-            </div>
-            <div className="p-col-12 p-md-4">
-              <div className="p-field" style={{ paddingTop: "1.5rem" }}>
-                <Button
-                  label="Agregar"
-                  icon="pi pi-plus"
-                  onClick={handleAddFixedPrice}
-                  disabled={
-                    !fixedPrice.currency || fixedPrice.amount === null
-                  }
-                />
-              </div>
-            </div>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-4 flex align-items-end">
+            <Button
+              label="Agregar"
+              icon="pi pi-plus"
+              severity="secondary"
+              className="mb-3"
+              onClick={handleAddFixedPrice}
+              disabled={!fixedPrice.currency || fixedPrice.amount === null}
+            />
           </div>
         </div>
         {formData.fixedPrices.length > 0 && (
-          <div className="p-grid">
+          <div className="grid">
             {formData.fixedPrices.map((price, index) => (
-              <div className="p-col-12 p-md-6" key={index}>
+              <div className="col-12 md:col-6" key={index}>
                 <div className="p-inputgroup">
-                  <span className="p-inputgroup-addon">
-                    {price.currency}
-                  </span>
+                  <span className="p-inputgroup-addon">{price.currency}</span>
                   <InputNumber
                     value={price.amount}
                     mode="currency"
@@ -213,7 +197,7 @@ export const PricingPanel = ({
                   />
                   <Button
                     icon="pi pi-trash"
-                    className="p-button-danger"
+                    severity="danger"
                     onClick={() => handleRemoveFixedPrice(index)}
                   />
                 </div>

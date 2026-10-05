@@ -1,7 +1,7 @@
 import React from "react";
 import { InputNumber } from "primereact/inputnumber";
 import { Dropdown } from "primereact/dropdown";
-import { classNames } from "primereact/utils";
+import { FormField } from "../ui";
 
 export const CurrencyInput = ({
   value,
@@ -25,42 +25,37 @@ export const CurrencyInput = ({
   dropdownWidth = "30%",
 }) => {
   return (
-    <div className={classNames("currency-input", className)}>
-      {label && (
-        <label htmlFor={id}>
-          {label}
-          {required && <span className="required-asterisk">*</span>}
-        </label>
-      )}
-
-      <div className="p-inputgroup">
-        <InputNumber
-          id={id}
-          name={name}
-          value={value}
-          onValueChange={onValueChange}
-          mode={mode}
-          currency={"USD"}
-          min={min}
-          max={max}
-          placeholder={placeholder}
-          disabled={disabled}
-          className="currency-input-number"
-          style={{ width: inputWidth }}
-        />
-        <Dropdown
-          value={currency}
-          options={currencyOptions}
-          onChange={onCurrencyChange}
-          optionLabel="label"
-          optionValue="value"
-          placeholder={currencyPlaceholder}
-          disabled={disabled || !currencyOptions?.length}
-          className="currency-dropdown"
-          style={{ width: dropdownWidth }}
-          showClear={showClear}
-        />
-      </div>
+    <div className={className || undefined}>
+      <FormField label={label} htmlFor={id} required={required}>
+        <div className="p-inputgroup">
+          <InputNumber
+            id={id}
+            name={name}
+            value={value}
+            onValueChange={onValueChange}
+            mode={mode}
+            currency={"USD"}
+            min={min}
+            max={max}
+            placeholder={placeholder}
+            disabled={disabled}
+            // eslint-disable-next-line no-restricted-syntax -- valor calculado en tiempo de ejecución
+            style={{ width: inputWidth }}
+          />
+          <Dropdown
+            value={currency}
+            options={currencyOptions}
+            onChange={onCurrencyChange}
+            optionLabel="label"
+            optionValue="value"
+            placeholder={currencyPlaceholder}
+            disabled={disabled || !currencyOptions?.length}
+            // eslint-disable-next-line no-restricted-syntax -- valor calculado en tiempo de ejecución
+            style={{ width: dropdownWidth }}
+            showClear={showClear}
+          />
+        </div>
+      </FormField>
     </div>
   );
 };

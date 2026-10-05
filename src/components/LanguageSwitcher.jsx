@@ -19,7 +19,7 @@ export const LanguageSwitcher = () => {
       options={languageOptions}
       onChange={(e) => setCurrentLanguage(e.value)}
       optionLabel="name"
-      style={{ width: '120px' }}
+      className="w-8rem"
     />
   );
 };

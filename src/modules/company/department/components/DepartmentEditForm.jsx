@@ -8,6 +8,7 @@ import { Toast } from "primereact/toast";
 import { useRef } from "react";
 
 import { GET_DEPARTMENT_BY_ID, UPDATE_DEPARTMENT } from "../graphql/queries";
+import { FormField } from "../../../../components/ui";
 
 const departmentTypes = [
   { label: "Económico", value: "ECONOMIC" },
@@ -80,12 +81,12 @@ export const DepartmentEditForm = ({ departmentId, visible, onHide, onSuccess })
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Guardar"
@@ -93,7 +94,7 @@ export const DepartmentEditForm = ({ departmentId, visible, onHide, onSuccess })
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -102,7 +103,7 @@ export const DepartmentEditForm = ({ departmentId, visible, onHide, onSuccess })
       <Dialog
         header="Editar Departamento"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
       >
@@ -111,49 +112,53 @@ export const DepartmentEditForm = ({ departmentId, visible, onHide, onSuccess })
         ) : error ? (
           <p>Error al cargar departamento</p>
         ) : (
-          <div className="p-fluid">
-            <div className="p-field">
-              <label htmlFor="departmentType">Tipo*</label>
-              <Dropdown
-                id="departmentType"
-                value={formData.departmentType}
-                options={departmentTypes}
-                onChange={handleDepartmentTypeChange}
-                optionLabel="label"
-                placeholder="Seleccione tipo"
-                required
-              />
+          <div className="formgrid grid">
+            <div className="col-12 md:col-6">
+              <FormField label="Tipo" htmlFor="departmentType" required>
+                <Dropdown
+                  id="departmentType"
+                  value={formData.departmentType}
+                  options={departmentTypes}
+                  onChange={handleDepartmentTypeChange}
+                  optionLabel="label"
+                  placeholder="Seleccione tipo"
+                  required
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="name">Nombre*</label>
-              <InputText
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Nombre" htmlFor="name" required>
+                <InputText
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="description">Descripción</label>
-              <InputText
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Descripción" htmlFor="description">
+                <InputText
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="address">Dirección</label>
-              <InputText
-                id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Dirección" htmlFor="address">
+                <InputText
+                  id="address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
           </div>
         )}

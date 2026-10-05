@@ -1,9 +1,8 @@
 import React from "react";
 import { useParams } from "react-router-dom";
-import { Card } from "primereact/card";
 import { SaleDetailTable } from "../components/SaleDetailTable";
-import "../styles/SaleDetailList.css";
 import { SaleDetailGeneralTable } from "../components/SaleDetailGeneralTable";
+import { PageHeader } from "../../../../components/ui";
 
 export function SaleDetailListPage() {
   const { saleId } = useParams();
@@ -11,20 +10,24 @@ export function SaleDetailListPage() {
   // Vista general cuando no hay saleId (accedido desde el menú)
   if (!saleId) {
     return (
-      <div className="sale-detail-list-page">
-        <Card title="Todos los Detalles de Ventas">
-          <SaleDetailGeneralTable />
-        </Card>
-      </div>
+      <>
+        <PageHeader
+          title="Detalles de ventas"
+          subtitle="Consulta los productos vendidos en todas las ventas."
+        />
+        <SaleDetailGeneralTable />
+      </>
     );
   }
 
   // Vista específica de una venta
   return (
-    <div className="sale-detail-list-page">
-      <Card title={`Detalles de Venta #${saleId}`}>
-        <SaleDetailTable saleId={parseInt(saleId)} />
-      </Card>
-    </div>
+    <>
+      <PageHeader
+        title={`Detalles de venta #${saleId}`}
+        subtitle="Productos incluidos en esta venta."
+      />
+      <SaleDetailTable saleId={parseInt(saleId)} />
+    </>
   );
 }

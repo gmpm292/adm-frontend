@@ -6,6 +6,7 @@ import { useMutation } from "@apollo/client";
 import { CREATE_CUSTOMER } from "../graphql/queries";
 import { Toast } from "primereact/toast";
 import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
+import { FormField } from "../../../../components/ui";
 
 export const CustomerCreateForm = ({ visible, onHide, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -81,12 +82,12 @@ export const CustomerCreateForm = ({ visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Crear"
@@ -94,7 +95,7 @@ export const CustomerCreateForm = ({ visible, onHide, onSuccess }) => {
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -103,45 +104,50 @@ export const CustomerCreateForm = ({ visible, onHide, onSuccess }) => {
       <Dialog
         header="Crear Nuevo Cliente"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 xl:w-6"
         footer={footer}
         onHide={onHide}
       >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="name">Nombre*</label>
-            <InputText
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
+        <div className="formgrid grid">
+          <div className="col-12">
+            <FormField label="Nombre" htmlFor="name" required>
+              <InputText
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="email">Email</label>
-            <InputText
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Email" htmlFor="email">
+              <InputText
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="phone">Teléfono</label>
-            <InputText
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Teléfono" htmlFor="phone">
+              <InputText
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+              />
+            </FormField>
           </div>
 
-          <SecurityEntitySelector
-            onSelectionChange={handleSecurityEntitiesChange}
-          />
+          <div className="col-12">
+            <SecurityEntitySelector
+              onSelectionChange={handleSecurityEntitiesChange}
+            />
+          </div>
         </div>
       </Dialog>
     </>

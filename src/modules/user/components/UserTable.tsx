@@ -1,8 +1,15 @@
 import React, { useCallback, useState, useRef } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
 import { GET_USERS, DELETE_USERS, RESTORE_USERS } from "../graphql/queries";
-import { REQUEST_PASSWORD_CHANGE_FOR_ANOTHER_USER } from "../../auth/graphql/queries";
+import {
+  REQUEST_PASSWORD_CHANGE_FOR_ANOTHER_USER,
+  ENABLE_2FA,
+  DISABLE_2FA,
+  RESET_2FA_SETTINGS,
+} from "../../auth/graphql/queries";
 import { Calendar } from "primereact/calendar";
+import { Menu } from "primereact/menu";
+import { Tag } from "primereact/tag";
 
 import GenericDataTable from "../../../components/BaseTable/index";
 import { Column } from "primereact/column";
@@ -21,11 +28,27 @@ import {
   PrimeReactFilters,
 } from "../../../components/BaseTable/types";
 
+// Cuenta del sistema: su verificación en dos pasos no se administra desde aquí
+const SYSTEM_USER_EMAIL = "system@admin.com";
+
 const statusBodyTemplate = (rowData) => {
   return (
-    <span className={`badge status-${rowData.enabled ? "active" : "inactive"}`}>
-      {rowData.enabled ? "Activo" : "Inactivo"}
-    </span>
+    <Tag
+      severity={rowData.enabled ? "success" : "danger"}
+      value={rowData.enabled ? "Activo" : "Inactivo"}
+    />
+  );
+};
+
+const twoFactorBodyTemplate = (rowData) => {
+  if (!rowData.isTwoFactorEnabled) {
+    return <Tag severity="info" value="No" />;
+  }
+
+  return rowData.isTwoFactorConfigured ? (
+    <Tag severity="success" value="Activa" />
+  ) : (
+    <Tag severity="warning" value="Pendiente de configurar" />
   );
 };
 
@@ -99,6 +122,11 @@ export function UserTable() {
   const [requestPasswordChangeForAnorherUser] = useMutation(
     REQUEST_PASSWORD_CHANGE_FOR_ANOTHER_USER,
   );
+  const [enableTwoFactor] = useMutation(ENABLE_2FA);
+  const [disableTwoFactor] = useMutation(DISABLE_2FA);
+  const [resetTwoFactor] = useMutation(RESET_2FA_SETTINGS);
+  const twoFactorMenu = useRef(null);
+  const [twoFactorUser, setTwoFactorUser] = useState(null);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [editDialogVisible, setEditDialogVisible] = useState(false);
   const [createDialogVisible, setCreateDialogVisible] = useState(false);
@@ -313,13 +341,98 @@ export function UserTable() {
     });
   };
 
+  const confirmTwoFactorAction = ({ message, successDetail, mutate, userId }) => {
+    confirmDialog({
+      message,
+      header: "Confirmación",
+      icon: "pi pi-exclamation-triangle",
+      accept: async () => {
+        try {
+          await mutate({ variables: { id: userId } });
+
+          toast.current.show({
+            severity: "success",
+            summary: "Éxito",
+            detail: successDetail,
+            life: 3000,
+          });
+
+          handleRefresh();
+        } catch (err) {
+          toast.current.show({
+            severity: "error",
+            summary: "Error",
+            detail: err.message,
+            life: 3000,
+          });
+        }
+      },
+    });
+  };
+
+  // Opciones del menú de verificación en dos pasos según el estado del usuario
+  const getTwoFactorMenuItems = (user) => {
+    if (!user) return [];
+
+    const items = [];
+
+    if (!user.isTwoFactorEnabled) {
+      items.push({
+        label: "Exigir verificación en dos pasos",
+        icon: "pi pi-lock",
+        command: () =>
+          confirmTwoFactorAction({
+            message: `¿Estás seguro de que deseas exigir la verificación en dos pasos a ${user.email}?`,
+            successDetail: "Verificación en dos pasos exigida correctamente",
+            mutate: enableTwoFactor,
+            userId: user.id,
+          }),
+      });
+    } else {
+      items.push({
+        label: "Dejar de exigirla",
+        icon: "pi pi-lock-open",
+        command: () =>
+          confirmTwoFactorAction({
+            message: `¿Estás seguro de que deseas dejar de exigir la verificación en dos pasos a ${user.email}?`,
+            successDetail: "La verificación en dos pasos ya no se exige",
+            mutate: disableTwoFactor,
+            userId: user.id,
+          }),
+      });
+
+      if (user.isTwoFactorConfigured) {
+        items.push({
+          label: "Restablecer dispositivo",
+          icon: "pi pi-mobile",
+          command: () =>
+            confirmTwoFactorAction({
+              message: `¿Estás seguro de que deseas restablecer el dispositivo de verificación de ${user.email}? Tendrá que configurarlo de nuevo.`,
+              successDetail: "Dispositivo de verificación restablecido correctamente",
+              mutate: resetTwoFactor,
+              userId: user.id,
+            }),
+        });
+      }
+    }
+
+    return items;
+  };
+
+  const handleTwoFactorMenu = (event, user) => {
+    setTwoFactorUser(user);
+    twoFactorMenu.current.toggle(event);
+  };
+
   const actionBodyTemplate = (rowData) => {
     if (rowData.deletedAt) {
       return (
         <div className="actions-column">
           <Button
             icon="pi pi-history"
-            className="p-button-rounded p-button-text p-button-success"
+            text
+            rounded
+            severity="success"
             tooltip="Restaurar usuario"
             tooltipOptions={{ position: "top" }}
             onClick={() => handleRestore(rowData.id)}
@@ -332,39 +445,61 @@ export function UserTable() {
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
+          severity="secondary"
           tooltip="Editar usuario"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
         <Button
           icon="pi pi-trash"
-          className="p-button-rounded p-button-text p-button-danger"
+          text
+          rounded
+          severity="danger"
           tooltip="Eliminar usuario"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleDelete(rowData.id)}
         />
         <Button
           icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
+          text
+          rounded
+          severity="info"
           tooltip="Ver detalles"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleViewDetails(rowData.id)}
         />
         <Button
           icon="pi pi-envelope"
-          className="p-button-rounded p-button-text p-button-help"
+          text
+          rounded
+          severity="help"
           tooltip="Solicitar cambio de contraseña (envía correo)"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleRequestPasswordChange(rowData.email)}
         />
         <Button
           icon="pi pi-key"
-          className="p-button-rounded p-button-text p-button-warning"
+          text
+          rounded
+          severity="warning"
           tooltip="Cambiar contraseña directamente"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleDirectPasswordChange(rowData.email)}
         />
+        {rowData.email !== SYSTEM_USER_EMAIL && (
+          <Button
+            icon="pi pi-shield"
+            text
+            rounded
+            severity="secondary"
+            tooltip="Verificación en dos pasos"
+            tooltipOptions={{ position: "top" }}
+            aria-haspopup
+            onClick={(event) => handleTwoFactorMenu(event, rowData)}
+          />
+        )}
       </div>
     );
   };
@@ -415,6 +550,13 @@ export function UserTable() {
       filterMatchModeOptions: [FilterMatchMode.EQUALS],
     },
     {
+      field: "isTwoFactorEnabled",
+      header: "2FA",
+      sortable: false,
+      visible: false,
+      body: twoFactorBodyTemplate,
+    },
+    {
       field: "createdAt",
       header: "Fecha de creación",
       sortable: true,
@@ -459,6 +601,11 @@ export function UserTable() {
     <>
       <Toast ref={toast} />
       <ConfirmDialog />
+      <Menu
+        model={getTwoFactorMenuItems(twoFactorUser)}
+        popup
+        ref={twoFactorMenu}
+      />
 
       <GenericDataTable
         columns={columns}
@@ -481,8 +628,7 @@ export function UserTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "10rem" }}
-          bodyStyle={{ textAlign: "center" }}
+          headerClassName="w-16rem"
         />
       </GenericDataTable>
 

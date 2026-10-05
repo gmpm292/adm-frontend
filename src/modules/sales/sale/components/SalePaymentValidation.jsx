@@ -7,6 +7,7 @@ import { useMutation } from "@apollo/client";
 import { VALIDATE_SALE_PAYMENTS } from "../graphql/queries";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Message } from "primereact/message";
+import { FormField } from "../../../../components/ui";
 import { CurrencyAmountInput } from "../../../payroll/currency/components/CurrencyAmountInput";
 import CurrencyDropdown from "../../../payroll/currency/components/CurrencyDropdown";
 
@@ -170,12 +171,12 @@ export const SalePaymentValidation = ({
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={handleClose}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Validar Pago"
@@ -183,7 +184,7 @@ export const SalePaymentValidation = ({
         onClick={handleValidate}
         disabled={validating}
       />
-    </div>
+    </>
   );
 
   const totalAmount = payments.reduce(
@@ -205,15 +206,15 @@ export const SalePaymentValidation = ({
       <Dialog
         header="Validar Pago de Venta"
         visible={visible}
-        style={{ width: "750px" }}
+        className="w-full md:w-8 xl:w-6"
         footer={footer}
         onHide={handleClose}
         modal
       >
-        <div className="p-fluid">
+        <div>
           <div className="mb-4">
-            <h4>Pagos</h4>
-            <p className="text-sm text-color-secondary">
+            <h4 className="mt-0 mb-1">Pagos</h4>
+            <p className="m-0 text-sm text-color-secondary">
               Agregue los diferentes pagos que recibirá para esta venta
             </p>
           </div>
@@ -221,51 +222,63 @@ export const SalePaymentValidation = ({
           {payments.map((payment, index) => (
             <div
               key={index}
-              className="mb-4 p-3 border-round border-1 surface-border"
+              className="mb-4 p-3 border-round border-1 surface-border surface-50"
             >
               <div className="flex justify-content-between align-items-center mb-3">
                 <h5 className="m-0">Pago {index + 1}</h5>
                 {payments.length > 1 && (
                   <Button
                     icon="pi pi-times"
-                    className="p-button-danger p-button-text p-button-sm"
+                    text
+                    rounded
+                    severity="danger"
+                    size="small"
                     onClick={() => handleRemovePayment(index)}
                     tooltip="Eliminar pago"
                   />
                 )}
               </div>
 
-              <div className="grid">
+              <div className="formgrid grid">
                 <div className="col-12 md:col-7">
-                  <label htmlFor={`amount-${index}`}>Monto y Moneda*</label>
-                  <CurrencyAmountInput
-                    amount={payment.amount}
-                    onAmountChange={(amount, currencyData) =>
-                      handleAmountChange(index, amount, currencyData)
-                    }
-                    currencyCode={payment.currency}
-                    onCurrencyChange={(currencyCode, currencyData) =>
-                      handleCurrencyChange(index, currencyCode, currencyData)
-                    }
-                    placeholder="Ingrese el monto"
-                    showCurrencyDetails={false}
+                  <FormField
+                    label="Monto y Moneda"
+                    htmlFor={`amount-${index}`}
                     required
-                    className="mb-2"
-                  />
+                  >
+                    <CurrencyAmountInput
+                      amount={payment.amount}
+                      onAmountChange={(amount, currencyData) =>
+                        handleAmountChange(index, amount, currencyData)
+                      }
+                      currencyCode={payment.currency}
+                      onCurrencyChange={(currencyCode, currencyData) =>
+                        handleCurrencyChange(index, currencyCode, currencyData)
+                      }
+                      placeholder="Ingrese el monto"
+                      showCurrencyDetails={false}
+                      required
+                    />
+                  </FormField>
                 </div>
 
                 <div className="col-12 md:col-5">
-                  <label htmlFor={`method-${index}`}>Método de Pago*</label>
-                  <Dropdown
-                    id={`method-${index}`}
-                    value={payment.paymentMethod}
-                    options={paymentMethods}
-                    onChange={(e) => handlePaymentMethodChange(index, e.value)}
-                    optionLabel="label"
-                    placeholder="Seleccione método"
-                    className="w-full"
+                  <FormField
+                    label="Método de Pago"
+                    htmlFor={`method-${index}`}
                     required
-                  />
+                  >
+                    <Dropdown
+                      id={`method-${index}`}
+                      value={payment.paymentMethod}
+                      options={paymentMethods}
+                      onChange={(e) => handlePaymentMethodChange(index, e.value)}
+                      optionLabel="label"
+                      placeholder="Seleccione método"
+                      className="w-full"
+                      required
+                    />
+                  </FormField>
                 </div>
               </div>
             </div>
@@ -276,12 +289,12 @@ export const SalePaymentValidation = ({
               icon="pi pi-plus"
               label="Agregar Otro Pago"
               onClick={handleAddPayment}
-              className="p-button-outlined"
+              severity="secondary"
             />
           </div>
 
           {/* Resumen de pagos */}
-          <div className="p-3 border-round border-1 surface-border bg-gray-50">
+          <div className="p-3 border-round border-1 surface-border surface-50">
             <h5 className="mt-0 mb-3">Resumen de Pagos</h5>
 
             {/* Totales por moneda */}
@@ -305,7 +318,7 @@ export const SalePaymentValidation = ({
             )}
 
             {/* Total general */}
-            <div className="flex justify-content-between align-items-center border-top-1 pt-2">
+            <div className="flex justify-content-between align-items-center border-top-1 surface-border pt-2">
               <span className="font-bold">Total General:</span>
               <span className="font-bold text-xl">
                 {totalAmount.toLocaleString("en-US", {
@@ -319,6 +332,7 @@ export const SalePaymentValidation = ({
           {validationResult && (
             <div className="mt-4">
               <Message
+                className="w-full"
                 severity={validationResult.valid ? "success" : "error"}
                 text={
                   validationResult.valid
@@ -330,8 +344,8 @@ export const SalePaymentValidation = ({
               />
 
               {validationResult.valid && (
-                <div className="mt-2 p-2 border-round bg-green-50 border-1 border-green-200">
-                  <div className="text-sm text-green-700">
+                <div className="mt-2 p-2 border-round border-1 surface-border surface-50">
+                  <div className="text-sm">
                     <div className="flex justify-content-between">
                       <span>Total validado en {baseCurrency}:</span>
                       <span className="font-bold">
@@ -351,28 +365,26 @@ export const SalePaymentValidation = ({
           )}
 
           {validating && (
-            <div className="flex justify-content-center align-items-center mt-3">
-              <ProgressSpinner style={{ width: "30px", height: "30px" }} />
-              <span className="ml-2">Validando pagos...</span>
+            <div className="flex justify-content-center align-items-center gap-2 mt-3 text-color-secondary">
+              <ProgressSpinner className="w-2rem h-2rem m-0" />
+              <span>Validando pagos...</span>
             </div>
           )}
 
           {/* Información adicional */}
-          <div className="mt-3 p-2 border-round border-1 surface-border bg-blue-50">
-            <div className="flex align-items-start">
-              <i className="pi pi-info-circle text-blue-500 mr-2 mt-1"></i>
-              <div className="text-sm text-blue-700">
-                <p className="mt-0 mb-1">
-                  <strong>Nota:</strong> El sistema validará que los pagos
-                  cubran el total de la venta considerando las monedas aceptadas
-                  por los productos.
-                </p>
-                <p className="m-0">
-                  <strong>Moneda base:</strong> {baseCurrency}
-                </p>
-              </div>
-            </div>
-          </div>
+          <Message
+            severity="info"
+            className="w-full mt-3"
+            text={
+              <span className="text-sm">
+                <strong>Nota:</strong> El sistema validará que los pagos cubran
+                el total de la venta considerando las monedas aceptadas por los
+                productos.
+                <br />
+                <strong>Moneda base:</strong> {baseCurrency}
+              </span>
+            }
+          />
         </div>
       </Dialog>
     </>

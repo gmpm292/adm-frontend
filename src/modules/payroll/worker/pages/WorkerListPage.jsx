@@ -1,14 +1,15 @@
 import React from 'react';
-import { Card } from 'primereact/card';
+import { PageHeader } from '../../../../components/ui';
 import { WorkerTable } from '../components/WorkerTable';
-import '../styles/WorkerList.css';
 
 export function WorkerListPage() {
   return (
-    <div className="worker-list-page">
-      <Card title="Gestión de Trabajadores">
-        <WorkerTable />
-      </Card>
-    </div>
+    <>
+      <PageHeader
+        title="Trabajadores"
+        subtitle="Gestiona los trabajadores, su tipo, salario base y ubicación en la empresa."
+      />
+      <WorkerTable />
+    </>
   );
 }

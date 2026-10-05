@@ -4,6 +4,7 @@ import { useLazyQuery } from "@apollo/client";
 import { GET_UNIT_OF_MEASURE } from "../graphql/queries";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Tag } from "primereact/tag";
+import { DetailField } from "../../components/DetailField";
 
 const categoryMap = {
   peso: { label: "Peso", color: "info" },
@@ -47,7 +48,7 @@ export const UnitOfMeasureDetailForm = ({ unitId, visible, onHide }) => {
     <Dialog
       header="Detalles de la Unidad de Medida"
       visible={visible}
-      style={{ width: "600px" }}
+      className="w-full md:w-8 lg:w-6"
       onHide={onHide}
       modal
     >
@@ -56,94 +57,63 @@ export const UnitOfMeasureDetailForm = ({ unitId, visible, onHide }) => {
           <ProgressSpinner />
         </div>
       ) : unit ? (
-        <div className="p-fluid">
-          <div className="field">
-            <label className="font-bold">Nombre:</label>
-            <div>{unit.name}</div>
-          </div>
+        <div className="grid">
+          <DetailField label="Nombre">{unit.name}</DetailField>
 
-          <div className="field">
-            <label className="font-bold">Símbolo:</label>
-            <div>
-              <span className="font-mono text-xl">{unit.symbol}</span>
-            </div>
-          </div>
+          <DetailField label="Símbolo">
+            <span className="text-xl">{unit.symbol}</span>
+          </DetailField>
 
-          <div className="field">
-            <label className="font-bold">Categoría:</label>
-            <div>
-              {unit.category ? (
-                <Tag
-                  value={categoryMap[unit.category]?.label || unit.category}
-                  severity={categoryMap[unit.category]?.color || "info"}
-                  rounded
-                />
-              ) : (
-                "Sin categoría"
-              )}
-            </div>
-          </div>
+          <DetailField label="Categoría">
+            {unit.category ? (
+              <Tag
+                value={categoryMap[unit.category]?.label || unit.category}
+                severity={categoryMap[unit.category]?.color || "info"}
+                rounded
+              />
+            ) : (
+              "Sin categoría"
+            )}
+          </DetailField>
 
-          <div className="field">
-            <label className="font-bold">Descripción:</label>
-            <div>{unit.description || "Sin descripción"}</div>
-          </div>
+          <DetailField label="Estado">
+            <Tag
+              severity={unit.isActive ? "success" : "danger"}
+              value={unit.isActive ? "Activo" : "Inactivo"}
+            />
+          </DetailField>
 
-          <div className="field">
-            <label className="font-bold">Estado:</label>
-            <div>
-              <span
-                className={`badge status-${unit.isActive ? "active" : "inactive"}`}
-              >
-                {unit.isActive ? "Activo" : "Inactivo"}
-              </span>
-            </div>
-          </div>
+          <DetailField label="Descripción" className="col-12">
+            {unit.description || "Sin descripción"}
+          </DetailField>
 
-          <div className="field">
-            <label className="font-bold">Ámbitos:</label>
-            <div className="ml-2">
-              <div>
-                <b>Business:</b> {unit.business?.name || "N/A"}
-              </div>
-              <div>
-                <b>Oficina:</b> {unit.office?.name || "N/A"}
-              </div>
-              <div>
-                <b>Departamento:</b> {unit.department?.name || "N/A"}
-              </div>
-              <div>
-                <b>Equipo:</b> {unit.team?.name || "N/A"}
-              </div>
-            </div>
-          </div>
+          <DetailField label="Business">
+            {unit.business?.name || "N/A"}
+          </DetailField>
+          <DetailField label="Oficina">
+            {unit.office?.name || "N/A"}
+          </DetailField>
+          <DetailField label="Departamento">
+            {unit.department?.name || "N/A"}
+          </DetailField>
+          <DetailField label="Equipo">{unit.team?.name || "N/A"}</DetailField>
 
-          <div className="field">
-            <label className="font-bold">Fechas:</label>
-            <div className="ml-2">
-              <div>
-                <b>Creado:</b> {formatDate(unit.createdAt)}
-              </div>
-              <div>
-                <b>Actualizado:</b> {formatDate(unit.updatedAt)}
-              </div>
-              {unit.deletedAt && (
-                <div>
-                  <b>Eliminado:</b> {formatDate(unit.deletedAt)}
-                </div>
-              )}
-            </div>
-          </div>
+          <DetailField label="Creado">{formatDate(unit.createdAt)}</DetailField>
+          <DetailField label="Actualizado">
+            {formatDate(unit.updatedAt)}
+          </DetailField>
+          {unit.deletedAt && (
+            <DetailField label="Eliminado">
+              {formatDate(unit.deletedAt)}
+            </DetailField>
+          )}
 
           {unit.materialCosts && unit.materialCosts.length > 0 && (
-            <div className="field">
-              <label className="font-bold">Usada en materiales:</label>
-              <div className="ml-2">
-                {unit.materialCosts.map((mc) => (
-                  <div key={mc.id}>• {mc.name}</div>
-                ))}
-              </div>
-            </div>
+            <DetailField label="Usada en materiales" className="col-12">
+              {unit.materialCosts.map((mc) => (
+                <div key={mc.id}>• {mc.name}</div>
+              ))}
+            </DetailField>
           )}
         </div>
       ) : (

@@ -6,6 +6,8 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { useLazyQuery } from "@apollo/client";
 import { GET_CUSTOMERS } from "../../customer/graphql/queries";
+import { Message } from "primereact/message";
+import { FormField } from "../../../../components/ui";
 
 export const CustomerSearchSection = ({ onSelectCustomer, onBack }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -167,7 +169,7 @@ export const CustomerSearchSection = ({ onSelectCustomer, onBack }) => {
       <Button
         label={isSelected ? "Seleccionado" : "Seleccionar"}
         icon={isSelected ? "pi pi-check" : "pi pi-check-circle"}
-        className={isSelected ? "p-button-success" : "p-button-outlined"}
+        severity={isSelected ? "success" : "secondary"}
         onClick={() => handleSelectCustomer(rowData)}
         size="small"
       />
@@ -179,14 +181,14 @@ export const CustomerSearchSection = ({ onSelectCustomer, onBack }) => {
     return (
       <div>
         {rowData.email && (
-          <div className="customer-contact">
-            <i className="pi pi-envelope mr-2 text-gray-500"></i>
+          <div>
+            <i className="pi pi-envelope mr-2 text-color-secondary"></i>
             {rowData.email}
           </div>
         )}
         {rowData.phone && (
-          <div className="customer-contact text-sm text-gray-600">
-            <i className="pi pi-phone mr-2 text-gray-500"></i>
+          <div className="text-sm text-color-secondary">
+            <i className="pi pi-phone mr-2"></i>
             {rowData.phone}
           </div>
         )}
@@ -198,15 +200,15 @@ export const CustomerSearchSection = ({ onSelectCustomer, onBack }) => {
   const infoBodyTemplate = (rowData) => {
     const additionalInfo = rowData.additionalInfo || {};
     return (
-      <div className="customer-additional-info">
+      <div>
         {additionalInfo.ci && (
           <div className="text-sm mb-1">
-            <i className="pi pi-id-card mr-2 text-gray-500"></i>
+            <i className="pi pi-id-card mr-2 text-color-secondary"></i>
             CI: {additionalInfo.ci}
           </div>
         )}
         {rowData.loyaltyPoints > 0 && (
-          <div className="text-sm text-green-600">
+          <div className="text-sm text-color-secondary">
             <i className="pi pi-star mr-2"></i>
             Puntos: {rowData.loyaltyPoints}
           </div>
@@ -221,7 +223,7 @@ export const CustomerSearchSection = ({ onSelectCustomer, onBack }) => {
       <div>
         <div className="font-semibold">{rowData.fullName || rowData.name}</div>
         {rowData.business?.name && (
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-color-secondary">
             <i className="pi pi-building mr-1"></i>
             {rowData.business.name}
           </div>
@@ -231,162 +233,129 @@ export const CustomerSearchSection = ({ onSelectCustomer, onBack }) => {
   };
 
   return (
-    <div className="customer-search-section">
-      <Card title="Buscar Cliente Existente">
-        {/* Barra de búsqueda */}
-        <div className="search-bar p-fluid">
-          <div className="p-grid">
-            <div className="p-col-12 md:p-col-6">
-              <div className="p-field">
-                <label htmlFor="search">Buscar</label>
-                <InputText
-                  id="search"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Ingrese nombre del cliente..."
-                  onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-                />
-              </div>
-            </div>
-            <div className="p-col-12 md:p-col-6">
-              <div
-                className="p-field flex gap-2"
-                style={{ paddingTop: "1.8rem" }}
-              >
-                <Button
-                  label="Buscar"
-                  icon="pi pi-search"
-                  onClick={handleSearch}
-                  loading={loading}
-                  className="p-button-primary"
-                />
-                <Button
-                  label="Limpiar"
-                  icon="pi pi-times"
-                  onClick={handleClearSearch}
-                  className="p-button-secondary"
-                  disabled={
-                    !searchTerm && Object.keys(lazyState.filters).length === 0
-                  }
-                />
-                <Button
-                  label="Usar Cliente Seleccionado"
-                  icon="pi pi-check"
-                  className="p-button-primary"
-                  onClick={handleConfirmSelection}
-                  disabled={!selectedCustomer}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Información de resultados */}
-        {totalRecords > 0 && (
-          <div className="search-info mb-2">
-            <small className="text-gray-600">
-              Mostrando {customers.length} de {totalRecords} clientes
-              {searchTerm && ` para "${searchTerm}"`}
-            </small>
-          </div>
-        )}
-
-        {/* Resultados */}
-        <div className="search-results">
-          <DataTable
-            value={customers}
-            loading={loading}
-            selectionMode="single"
-            selection={selectedCustomer}
-            onSelectionChange={(e) => setSelectedCustomer(e.value)}
-            dataKey="id"
-            emptyMessage="No se encontraron clientes"
-            className="p-datatable-sm"
-            paginator
-            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-            rows={lazyState.rows}
-            first={lazyState.first}
-            totalRecords={totalRecords}
-            onPage={onPage}
-            onSort={onSort}
-            sortField={lazyState.sortField}
-            sortOrder={lazyState.sortOrder}
-            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} clientes"
-            rowsPerPageOptions={[5, 10, 20, 50]}
-          >
-            <Column
-              selectionMode="single"
-              headerStyle={{ width: "3rem" }}
-              bodyStyle={{ textAlign: "center" }}
-            ></Column>
-            <Column
-              field="name"
-              header="Nombre"
-              sortable
-              body={nameBodyTemplate}
-              style={{ minWidth: "200px" }}
-            ></Column>
-            <Column
-              header="Contacto"
-              body={contactBodyTemplate}
-              style={{ minWidth: "180px" }}
-            ></Column>
-            <Column
-              header="Información"
-              body={infoBodyTemplate}
-              style={{ minWidth: "150px" }}
-            ></Column>
-            <Column
-              body={actionBodyTemplate}
-              header="Acción"
-              style={{ width: "140px" }}
-              bodyStyle={{ textAlign: "center" }}
-            ></Column>
-          </DataTable>
-        </div>
-
-        {/* Acciones inferiores - Original */}
-        <div className="search-actions mt-3">
-          <div className="flex justify-content-between align-items-center">
-            <Button
-              label="Volver"
-              icon="pi pi-arrow-left"
-              className="p-button-text"
-              onClick={onBack}
+    <Card title="Buscar Cliente Existente">
+      {/* Barra de búsqueda */}
+      <div className="formgrid grid align-items-end">
+        <div className="col-12 md:col-6">
+          <FormField label="Buscar" htmlFor="search">
+            <InputText
+              id="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Ingrese nombre del cliente..."
+              onKeyPress={(e) => e.key === "Enter" && handleSearch()}
             />
-
-            <div className="flex gap-2 align-items-center">
-              {selectedCustomer && (
-                <div className="selected-customer-info mr-3">
-                  <span className="text-green-600 font-semibold">
-                    <i className="pi pi-check-circle mr-2"></i>
-                    {selectedCustomer.name} seleccionado
-                  </span>
-                </div>
-              )}
-              <Button
-                label="Usar Cliente Seleccionado"
-                icon="pi pi-check"
-                className="p-button-primary"
-                onClick={handleConfirmSelection}
-                disabled={!selectedCustomer}
-              />
-            </div>
-          </div>
+          </FormField>
         </div>
-
-        {/* Información de ayuda */}
-        <div
-          className="search-help mt-3 p-3 border-round"
-          style={{ backgroundColor: "#f8f9fa" }}
-        >
-          <small className="text-secondary">
-            <i className="pi pi-info-circle mr-2"></i>
-            Selecciona un cliente existente de la lista. Puedes buscar por
-            nombre, ordenar los resultados y navegar entre páginas.
-          </small>
+        <div className="col-12 md:col-6 mb-4 flex flex-wrap gap-2">
+          <Button
+            label="Buscar"
+            icon="pi pi-search"
+            onClick={handleSearch}
+            loading={loading}
+            severity="secondary"
+          />
+          <Button
+            label="Limpiar"
+            icon="pi pi-times"
+            onClick={handleClearSearch}
+            severity="secondary"
+            text
+            disabled={
+              !searchTerm && Object.keys(lazyState.filters).length === 0
+            }
+          />
+          <Button
+            label="Usar Cliente Seleccionado"
+            icon="pi pi-check"
+            severity="secondary"
+            onClick={handleConfirmSelection}
+            disabled={!selectedCustomer}
+          />
         </div>
-      </Card>
-    </div>
+      </div>
+
+      {/* Información de resultados */}
+      {totalRecords > 0 && (
+        <small className="block mb-2 text-color-secondary">
+          Mostrando {customers.length} de {totalRecords} clientes
+          {searchTerm && ` para "${searchTerm}"`}
+        </small>
+      )}
+
+      {/* Resultados */}
+      <DataTable
+        value={customers}
+        loading={loading}
+        selectionMode="single"
+        selection={selectedCustomer}
+        onSelectionChange={(e) => setSelectedCustomer(e.value)}
+        dataKey="id"
+        emptyMessage="No se encontraron clientes"
+        size="small"
+        paginator
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+        rows={lazyState.rows}
+        first={lazyState.first}
+        totalRecords={totalRecords}
+        onPage={onPage}
+        onSort={onSort}
+        sortField={lazyState.sortField}
+        sortOrder={lazyState.sortOrder}
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} clientes"
+        rowsPerPageOptions={[5, 10, 20, 50]}
+      >
+        <Column
+          selectionMode="single"
+          className="w-3rem text-center"
+        ></Column>
+        <Column
+          field="name"
+          header="Nombre"
+          sortable
+          body={nameBodyTemplate}
+        ></Column>
+        <Column header="Contacto" body={contactBodyTemplate}></Column>
+        <Column header="Información" body={infoBodyTemplate}></Column>
+        <Column
+          body={actionBodyTemplate}
+          header="Acción"
+          className="w-12rem text-center"
+        ></Column>
+      </DataTable>
+
+      {/* Acciones inferiores - Original */}
+      <div className="flex flex-wrap justify-content-between align-items-center gap-2 mt-3 pt-3 border-top-1 surface-border">
+        <Button
+          label="Volver"
+          icon="pi pi-arrow-left"
+          text
+          severity="secondary"
+          onClick={onBack}
+        />
+
+        <div className="flex flex-wrap gap-3 align-items-center">
+          {selectedCustomer && (
+            <span className="font-semibold">
+              <i className="pi pi-check-circle mr-2"></i>
+              {selectedCustomer.name} seleccionado
+            </span>
+          )}
+          <Button
+            label="Usar Cliente Seleccionado"
+            icon="pi pi-check"
+            onClick={handleConfirmSelection}
+            disabled={!selectedCustomer}
+          />
+        </div>
+      </div>
+
+      {/* Información de ayuda */}
+      <Message
+        severity="info"
+        className="w-full mt-3"
+        text="Selecciona un cliente existente de la lista. Puedes buscar por nombre, ordenar los resultados y navegar entre páginas."
+      />
+    </Card>
   );
 };

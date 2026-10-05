@@ -1,14 +1,15 @@
 import React from 'react';
-import { Card } from 'primereact/card';
+import { PageHeader } from '../../../../components/ui';
 import { WorkScheduleTable } from '../components/WorkScheduleTable';
-import '../styles/WorkScheduleList.css';
 
 export function WorkScheduleListPage() {
     return (
-        <div className="work-schedule-list-page">
-            <Card title="Gestión de Horarios Laborales">
-                <WorkScheduleTable />
-            </Card>
-        </div>
+        <>
+            <PageHeader
+                title="Horarios laborales"
+                subtitle="Define los periodos y días de trabajo de cada oficina."
+            />
+            <WorkScheduleTable />
+        </>
     );
 }

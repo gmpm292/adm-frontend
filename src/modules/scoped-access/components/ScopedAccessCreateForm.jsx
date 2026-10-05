@@ -9,6 +9,7 @@ import { CREATE_SCOPED_ACCESS } from "../graphql/queries";
 import { Toast } from "primereact/toast";
 import { GET_BUSINESSES } from "../../company/business/graphql/queries";
 import { GET_ROLE_GUARDS } from "../../role-guard/graphql/queries";
+import { FormField } from "../../../components/ui";
 
 // Niveles de acceso disponibles
 const ACCESS_LEVELS = [
@@ -111,12 +112,12 @@ export const ScopedAccessCreateForm = ({ visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Crear"
@@ -124,7 +125,7 @@ export const ScopedAccessCreateForm = ({ visible, onHide, onSuccess }) => {
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   const businesses = businessesData?.businesses?.data || [];
@@ -136,63 +137,63 @@ export const ScopedAccessCreateForm = ({ visible, onHide, onSuccess }) => {
       <Dialog
         header="Crear Nuevo Nivel de Acceso"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
       >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="businessId">Negocio *</label>
-            <Dropdown
-              id="businessId"
-              value={formData.businessId}
-              options={businesses}
-              onChange={(e) => handleChange("businessId", e.value)}
-              optionLabel="name"
-              optionValue="id"
-              placeholder="Seleccione un negocio"
-              className="w-full"
-            />
+        <div className="formgrid grid">
+          <div className="col-12 md:col-6">
+            <FormField label="Negocio" htmlFor="businessId" required>
+              <Dropdown
+                id="businessId"
+                value={formData.businessId}
+                options={businesses}
+                onChange={(e) => handleChange("businessId", e.value)}
+                optionLabel="name"
+                optionValue="id"
+                placeholder="Seleccione un negocio"
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="roleGuardId">Operación *</label>
-            <Dropdown
-              id="roleGuardId"
-              value={formData.roleGuardId}
-              options={roleGuards}
-              onChange={(e) => handleChange("roleGuardId", e.value)}
-              optionLabel="queryOrEndPointURL"
-              optionValue="id"
-              placeholder="Seleccione una operación"
-              className="w-full"
-              filter
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Operación" htmlFor="roleGuardId" required>
+              <Dropdown
+                id="roleGuardId"
+                value={formData.roleGuardId}
+                options={roleGuards}
+                onChange={(e) => handleChange("roleGuardId", e.value)}
+                optionLabel="queryOrEndPointURL"
+                optionValue="id"
+                placeholder="Seleccione una operación"
+                filter
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="accessLevels">Niveles de Acceso *</label>
-            <MultiSelect
-              id="accessLevels"
-              value={formData.accessLevels}
-              options={ACCESS_LEVELS}
-              onChange={(e) => handleChange("accessLevels", e.value)}
-              placeholder="Seleccione niveles de acceso"
-              display="chip"
-              className="w-full"
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Niveles de Acceso" htmlFor="accessLevels" required>
+              <MultiSelect
+                id="accessLevels"
+                value={formData.accessLevels}
+                options={ACCESS_LEVELS}
+                onChange={(e) => handleChange("accessLevels", e.value)}
+                placeholder="Seleccione niveles de acceso"
+                display="chip"
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="entityStatus">Estado</label>
-            <Dropdown
-              id="entityStatus"
-              value={formData.entityStatus}
-              options={ENTITY_STATUS}
-              onChange={(e) => handleChange("entityStatus", e.value)}
-              placeholder="Seleccione estado"
-              className="w-full"
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Estado" htmlFor="entityStatus">
+              <Dropdown
+                id="entityStatus"
+                value={formData.entityStatus}
+                options={ENTITY_STATUS}
+                onChange={(e) => handleChange("entityStatus", e.value)}
+                placeholder="Seleccione estado"
+              />
+            </FormField>
           </div>
         </div>
       </Dialog>

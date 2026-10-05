@@ -10,6 +10,8 @@ import {
   UPDATE_PAYMENT_RULE,
 } from "../graphql/queries";
 import { Toast } from "primereact/toast";
+import { Message } from "primereact/message";
+import { FormField } from "../../../../components/ui";
 import { FixedAmountCondition } from "../conditions/FixedAmountCondition";
 import { PercentageCondition } from "../conditions/PercentageCondition";
 import { PriceRangeCondition } from "../conditions/PriceRangeCondition";
@@ -363,12 +365,12 @@ export const PaymentRuleEditForm = ({
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Guardar"
@@ -376,7 +378,7 @@ export const PaymentRuleEditForm = ({
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -385,18 +387,21 @@ export const PaymentRuleEditForm = ({
       <Dialog
         header="Editar Regla de Pago"
         visible={visible}
-        style={{ width: "70vw" }}
+        className="w-full md:w-10 lg:w-8"
         footer={footer}
         onHide={onHide}
       >
         {loading ? (
-          <p>Cargando...</p>
+          <p className="text-color-secondary">Cargando...</p>
         ) : error ? (
-          <p>Error al cargar regla de pago</p>
+          <Message
+            severity="error"
+            text="Error al cargar regla de pago"
+            className="w-full"
+          />
         ) : (
           <div className="p-fluid">
-            <div className="p-field">
-              <label htmlFor="name">Nombre*</label>
+            <FormField label="Nombre" htmlFor="name" required>
               <InputText
                 id="name"
                 name="name"
@@ -404,22 +409,20 @@ export const PaymentRuleEditForm = ({
                 onChange={handleChange}
                 required
               />
-            </div>
+            </FormField>
 
-            <div className="p-field">
-              <label htmlFor="description">Descripción</label>
+            <FormField label="Descripción" htmlFor="description">
               <InputText
                 id="description"
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
               />
-            </div>
+            </FormField>
 
-            <div className="p-grid">
-              <div className="p-col-12 p-md-4">
-                <div className="p-field">
-                  <label htmlFor="paymentType">Tipo de Pago*</label>
+            <div className="formgrid grid">
+              <div className="col-12 md:col-4">
+                <FormField label="Tipo de Pago" htmlFor="paymentType" required>
                   <Dropdown
                     id="paymentType"
                     value={formData.paymentType}
@@ -429,11 +432,10 @@ export const PaymentRuleEditForm = ({
                     placeholder="Seleccione"
                     required
                   />
-                </div>
+                </FormField>
               </div>
-              <div className="p-col-12 p-md-4">
-                <div className="p-field">
-                  <label htmlFor="workerType">Tipo de Trabajador*</label>
+              <div className="col-12 md:col-4">
+                <FormField label="Tipo de Trabajador" htmlFor="workerType" required>
                   <Dropdown
                     id="workerType"
                     value={formData.workerType}
@@ -443,12 +445,11 @@ export const PaymentRuleEditForm = ({
                     placeholder="Seleccione"
                     required
                   />
-                </div>
+                </FormField>
               </div>
               {formData.workerType === "OTHER" && (
-                <div className="p-col-12 p-md-4">
-                  <div className="p-field">
-                    <label htmlFor="otherType">Especificar Tipo*</label>
+                <div className="col-12 md:col-4">
+                  <FormField label="Especificar Tipo" htmlFor="otherType" required>
                     <InputText
                       id="otherType"
                       name="otherType"
@@ -457,13 +458,12 @@ export const PaymentRuleEditForm = ({
                       placeholder="Especifique el tipo de trabajador"
                       required
                     />
-                  </div>
+                  </FormField>
                 </div>
               )}
               {formData.workerType !== "OTHER" && (
-                <div className="p-col-12 p-md-4">
-                  <div className="p-field">
-                    <label htmlFor="isActive">Estado</label>
+                <div className="col-12 md:col-4">
+                  <FormField label="Estado" htmlFor="isActive">
                     <div className="flex align-items-center">
                       <InputSwitch
                         id="isActive"
@@ -474,12 +474,11 @@ export const PaymentRuleEditForm = ({
                         {formData.isActive ? "Activo" : "Inactivo"}
                       </span>
                     </div>
-                  </div>
+                  </FormField>
                 </div>
               )}
-              <div className="p-col-12 p-md-4">
-                <div className="p-field">
-                  <label htmlFor="paymentCurrency">Moneda de Pago*</label>
+              <div className="col-12 md:col-4">
+                <FormField label="Moneda de Pago" htmlFor="paymentCurrency" required>
                   <Dropdown
                     id="paymentCurrency"
                     value={formData.paymentCurrency}
@@ -489,11 +488,10 @@ export const PaymentRuleEditForm = ({
                     placeholder="Seleccione"
                     required
                   />
-                </div>
+                </FormField>
               </div>
-              <div className="p-col-12 p-md-4">
-                <div className="p-field">
-                  <label htmlFor="scope">Ámbito*</label>
+              <div className="col-12 md:col-4">
+                <FormField label="Ámbito" htmlFor="scope" required>
                   <Dropdown
                     id="scope"
                     value={formData.scope}
@@ -503,13 +501,10 @@ export const PaymentRuleEditForm = ({
                     placeholder="Seleccione"
                     required
                   />
-                </div>
+                </FormField>
               </div>
-              <div className="p-col-12 p-md-4">
-                <div className="p-field">
-                  <label htmlFor="distributeProfits">
-                    Distribuir Beneficios
-                  </label>
+              <div className="col-12 md:col-4">
+                <FormField label="Distribuir Beneficios" htmlFor="distributeProfits">
                   <div className="flex align-items-center">
                     <InputSwitch
                       id="distributeProfits"
@@ -520,7 +515,7 @@ export const PaymentRuleEditForm = ({
                       {formData.distributeProfits ? "Sí" : "No"}
                     </span>
                   </div>
-                </div>
+                </FormField>
               </div>
             </div>
 
@@ -535,13 +530,14 @@ export const PaymentRuleEditForm = ({
             />
 
             {formData.paymentType === "PRICE_RANGE" && (
-              <div className="p-field">
-                <div className="flex justify-content-between align-items-center">
-                  <label>Rangos de Precio</label>
+              <div className="mb-4">
+                <div className="flex justify-content-between align-items-center mb-3">
+                  <span className="font-medium">Rangos de Precio</span>
                   <Button
                     label="Agregar Rango"
                     icon="pi pi-plus"
-                    className="p-button-sm"
+                    size="small"
+                    severity="secondary"
                     onClick={handleAddPriceRange}
                   />
                 </div>
@@ -563,13 +559,14 @@ export const PaymentRuleEditForm = ({
             )}
 
             {formData.paymentType === "SALE_QUANTITY" && (
-              <div className="p-field">
-                <div className="flex justify-content-between align-items-center">
-                  <label>Condiciones de Cantidad de Ventas</label>
+              <div className="mb-4">
+                <div className="flex justify-content-between align-items-center mb-3">
+                  <span className="font-medium">Condiciones de Cantidad de Ventas</span>
                   <Button
                     label="Agregar Condición"
                     icon="pi pi-plus"
-                    className="p-button-sm"
+                    size="small"
+                    severity="secondary"
                     onClick={handleAddSaleQuantity}
                   />
                 </div>
@@ -585,8 +582,7 @@ export const PaymentRuleEditForm = ({
             )}
 
             {formData.paymentType === "FIXED_AMOUNT" && (
-              <div className="p-field">
-                <label>Monto Fijo</label>
+              <FormField label="Monto Fijo">
                 <FixedAmountCondition
                   condition={
                     formData.conditions.fixedAmount || {
@@ -595,12 +591,11 @@ export const PaymentRuleEditForm = ({
                   }
                   onChange={handleFixedAmountChange}
                 />
-              </div>
+              </FormField>
             )}
 
             {formData.paymentType === "PERCENTAGE" && (
-              <div className="p-field">
-                <label>Porcentaje</label>
+              <FormField label="Porcentaje">
                 <PercentageCondition
                   condition={
                     formData.conditions.percentage || {
@@ -609,7 +604,7 @@ export const PaymentRuleEditForm = ({
                   }
                   onChange={handlePercentageChange}
                 />
-              </div>
+              </FormField>
             )}
           </div>
         )}

@@ -1,14 +1,15 @@
 import React from 'react';
-import { Card } from 'primereact/card';
+import { PageHeader } from '../../../../components/ui';
 import { PayrollPeriodTable } from '../components/PayrollPeriodTable';
-import '../styles/PayrollPeriodList.css';
 
 export function PayrollPeriodListPage() {
     return (
-        <div className="payroll-period-list-page">
-            <Card title="Gestión de Períodos de Nómina">
-                <PayrollPeriodTable />
-            </Card>
-        </div>
+        <>
+            <PageHeader
+                title="Períodos de nómina"
+                subtitle="Crea, calcula y cierra los períodos en los que se liquidan los pagos."
+            />
+            <PayrollPeriodTable />
+        </>
     );
 }
