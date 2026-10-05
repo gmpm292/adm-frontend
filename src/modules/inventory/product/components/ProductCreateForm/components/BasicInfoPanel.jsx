@@ -7,6 +7,7 @@ import { Checkbox } from "primereact/checkbox";
 import { CategorySelector } from "../../../../category/components/CategorySelector";
 import MaterialCostDropdown from "../../../../../payroll/material-cost/components/MaterialCostDropdown";
 import UnitOfMeasureDropdown from "../../../../unit-of-measure/components/UnitOfMeasureDropdown";
+import { FormField } from "../../../../../../components/ui";
 
 export const BasicInfoPanel = ({
   formData,
@@ -18,7 +19,6 @@ export const BasicInfoPanel = ({
   handleMaterialCostChange,
   handleSecurityEntitiesChange,
   handleMaterialCostSelect,
-  setFormData,
 }) => {
   // Garantía: por defecto true y 30 días
   const [hasWarranty, setHasWarranty] = useState(() => {
@@ -104,19 +104,17 @@ export const BasicInfoPanel = ({
       collapsed={openPanel !== 0}
       onToggle={handleToggle}
     >
-      <div className="p-grid p-fluid">
-        <div className="p-col-12 p-md-6">
-          <div className="p-field">
-            <label htmlFor="categoryId">Categoría*</label>
+      <div className="formgrid grid">
+        <div className="col-12 md:col-6">
+          <FormField label="Categoría" htmlFor="categoryId" required>
             <CategorySelector
               onCategorySelect={handleCategorySelection}
               selectedCategoryId={formData.categoryId}
             />
-          </div>
+          </FormField>
         </div>
-        <div className="p-col-12 p-md-6">
-          <div className="p-field">
-            <label htmlFor="name">Nombre*</label>
+        <div className="col-12 md:col-6">
+          <FormField label="Nombre" htmlFor="name" required>
             <InputText
               id="name"
               name="name"
@@ -124,22 +122,20 @@ export const BasicInfoPanel = ({
               onChange={handleChange}
               required
             />
-          </div>
+          </FormField>
         </div>
-        <div className="p-col-12 p-md-6">
-          <div className="p-field">
-            <label htmlFor="materialCostId">Material (Costo)</label>
+        <div className="col-12 md:col-6">
+          <FormField label="Material (Costo)" htmlFor="materialCostId">
             <MaterialCostDropdown
               value={formData.materialCostId}
               onChange={handleMaterialCostSelection}
               placeholder="Seleccione material (opcional)"
               showClear
             />
-          </div>
+          </FormField>
         </div>
-        <div className="p-col-12 p-md-6">
-          <div className="p-field">
-            <label htmlFor="unitOfMeasureId">Unidad de Medida*</label>
+        <div className="col-12 md:col-6">
+          <FormField label="Unidad de Medida" htmlFor="unitOfMeasureId" required>
             <UnitOfMeasureDropdown
               value={formData.unitOfMeasureId}
               onChange={handleUnitOfMeasureChange}
@@ -147,13 +143,12 @@ export const BasicInfoPanel = ({
               required
               disabled={!!formData.materialCostId} // Se inhabilita si hay material seleccionado
             />
-          </div>
+          </FormField>
         </div>
-        <div className="p-col-12 p-md-6">
-          <div className="p-field">
-            <label htmlFor="quantity">Cantidad</label>
+        <div className="col-12 md:col-6">
+          <FormField label="Cantidad" htmlFor="quantity">
             <InputNumber
-              id="quantity"
+              inputId="quantity"
               value={quantity}
               onValueChange={(e) => setQuantity(e.value || 1)}
               min={1}
@@ -165,11 +160,11 @@ export const BasicInfoPanel = ({
               mode="decimal"
               className="w-full"
             />
-          </div>
+          </FormField>
         </div>
-        <div className="p-col-12 p-md-6">
-          <div className="p-field">
-            <div className="flex align-items-center mb-2">
+        <div className="col-12 md:col-6">
+          <FormField>
+            <div className="flex align-items-center">
               <Checkbox
                 inputId="hasWarranty"
                 checked={hasWarranty}
@@ -209,7 +204,7 @@ export const BasicInfoPanel = ({
                 />
               </div>
             )}
-          </div>
+          </FormField>
         </div>
       </div>
     </Panel>

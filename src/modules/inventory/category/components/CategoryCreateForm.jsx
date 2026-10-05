@@ -5,6 +5,7 @@ import { InputText } from "primereact/inputtext";
 import { useMutation } from "@apollo/client";
 import { CREATE_CATEGORY } from "../graphql/queries";
 import { Toast } from "primereact/toast";
+import { FormField } from "../../../../components/ui";
 import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
 
 export const CategoryCreateForm = ({ visible, onHide, onSuccess }) => {
@@ -78,12 +79,12 @@ export const CategoryCreateForm = ({ visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Crear"
@@ -91,7 +92,7 @@ export const CategoryCreateForm = ({ visible, onHide, onSuccess }) => {
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -100,35 +101,39 @@ export const CategoryCreateForm = ({ visible, onHide, onSuccess }) => {
       <Dialog
         header="Crear Nueva Categoría"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
       >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="name">Nombre*</label>
-            <InputText
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
+        <div className="formgrid grid p-fluid">
+          <div className="col-12 md:col-6">
+            <FormField label="Nombre" htmlFor="name" required>
+              <InputText
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="description">Descripción</label>
-            <InputText
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Descripción" htmlFor="description">
+              <InputText
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+              />
+            </FormField>
           </div>
 
-          <SecurityEntitySelector
-            onSelectionChange={handleSecurityEntitiesChange}
-          />
+          <div className="col-12">
+            <SecurityEntitySelector
+              onSelectionChange={handleSecurityEntitiesChange}
+            />
+          </div>
         </div>
       </Dialog>
     </>

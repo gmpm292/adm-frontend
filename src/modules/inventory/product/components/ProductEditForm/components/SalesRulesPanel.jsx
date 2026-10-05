@@ -1,19 +1,21 @@
-import React from 'react';
-import { Panel } from 'primereact/panel';
-import { InputNumber } from 'primereact/inputnumber';
-import { MultiSelect } from 'primereact/multiselect';
-import { Button } from 'primereact/button';
-import { Chips } from 'primereact/chips';
+import React from "react";
+import { Panel } from "primereact/panel";
+import { InputNumber } from "primereact/inputnumber";
+import { MultiSelect } from "primereact/multiselect";
+import { Button } from "primereact/button";
+import { Chips } from "primereact/chips";
+import { FormField } from "../../../../../../components/ui";
 
 export const SalesRulesPanel = ({
   formData,
+  setFormData,
   openPanel,
   handleToggle,
   currencyOptions,
   bulkDiscount,
   setBulkDiscount,
   handleAddBulkDiscount,
-  handleRemoveBulkDiscount
+  handleRemoveBulkDiscount,
 }) => (
   <Panel
     header="Reglas de Venta"
@@ -21,12 +23,11 @@ export const SalesRulesPanel = ({
     collapsed={openPanel !== 3}
     onToggle={handleToggle}
   >
-    <div className="p-grid p-fluid">
-      <div className="p-col-12 p-md-6">
-        <div className="p-field">
-          <label htmlFor="minQuantity">Cantidad mínima</label>
+    <div className="formgrid grid">
+      <div className="col-12 md:col-6">
+        <FormField label="Cantidad mínima" htmlFor="minQuantity">
           <InputNumber
-            id="minQuantity"
+            inputId="minQuantity"
             value={formData.saleRules.minQuantity}
             onValueChange={(e) =>
               setFormData((prev) => ({
@@ -40,13 +41,12 @@ export const SalesRulesPanel = ({
             mode="decimal"
             min={0}
           />
-        </div>
+        </FormField>
       </div>
-      <div className="p-col-12 p-md-6">
-        <div className="p-field">
-          <label htmlFor="maxQuantity">Cantidad máxima</label>
+      <div className="col-12 md:col-6">
+        <FormField label="Cantidad máxima" htmlFor="maxQuantity">
           <InputNumber
-            id="maxQuantity"
+            inputId="maxQuantity"
             value={formData.saleRules.maxQuantity}
             onValueChange={(e) =>
               setFormData((prev) => ({
@@ -60,16 +60,15 @@ export const SalesRulesPanel = ({
             mode="decimal"
             min={0}
           />
-        </div>
+        </FormField>
       </div>
-      <div className="p-col-12">
-        <div className="p-field">
-          <label>Descuentos por volumen</label>
-          <div className="p-grid p-fluid">
-            <div className="p-col-12 p-md-3">
-              <label htmlFor="bulkMinQty">Cantidad mínima</label>
+      <div className="col-12">
+        <span className="block font-semibold mb-3">Descuentos por volumen</span>
+        <div className="formgrid grid">
+          <div className="col-12 md:col-3">
+            <FormField label="Cantidad mínima" htmlFor="bulkMinQty">
               <InputNumber
-                id="bulkMinQty"
+                inputId="bulkMinQty"
                 value={bulkDiscount.minQty}
                 onValueChange={(e) =>
                   setBulkDiscount((prev) => ({
@@ -80,11 +79,12 @@ export const SalesRulesPanel = ({
                 mode="decimal"
                 min={1}
               />
-            </div>
-            <div className="p-col-12 p-md-3">
-              <label htmlFor="bulkDiscount">Descuento (%)</label>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-3">
+            <FormField label="Descuento (%)" htmlFor="bulkDiscount">
               <InputNumber
-                id="bulkDiscount"
+                inputId="bulkDiscount"
                 value={bulkDiscount.discount}
                 onValueChange={(e) =>
                   setBulkDiscount((prev) => ({
@@ -97,9 +97,10 @@ export const SalesRulesPanel = ({
                 max={100}
                 suffix="%"
               />
-            </div>
-            <div className="p-col-12 p-md-4">
-              <label htmlFor="bulkCurrencies">Monedas aplicables</label>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-4">
+            <FormField label="Monedas aplicables" htmlFor="bulkCurrencies">
               <MultiSelect
                 id="bulkCurrencies"
                 value={bulkDiscount.applicableCurrencies}
@@ -113,27 +114,27 @@ export const SalesRulesPanel = ({
                 placeholder="Seleccione monedas"
                 display="chip"
               />
-            </div>
-            <div className="p-col-12 p-md-2">
-              <div className="p-field" style={{ paddingTop: "1.5rem" }}>
-                <Button
-                  label="Agregar"
-                  icon="pi pi-plus"
-                  onClick={handleAddBulkDiscount}
-                  disabled={
-                    !bulkDiscount.minQty ||
-                    !bulkDiscount.discount ||
-                    bulkDiscount.applicableCurrencies.length === 0
-                  }
-                />
-              </div>
-            </div>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-2 flex align-items-end">
+            <Button
+              label="Agregar"
+              icon="pi pi-plus"
+              severity="secondary"
+              className="mb-3"
+              onClick={handleAddBulkDiscount}
+              disabled={
+                !bulkDiscount.minQty ||
+                !bulkDiscount.discount ||
+                bulkDiscount.applicableCurrencies.length === 0
+              }
+            />
           </div>
         </div>
         {formData.saleRules.bulkDiscounts.length > 0 && (
-          <div className="p-grid">
+          <div className="grid">
             {formData.saleRules.bulkDiscounts.map((discount, index) => (
-              <div className="p-col-12" key={index}>
+              <div className="col-12" key={index}>
                 <div className="p-inputgroup">
                   <span className="p-inputgroup-addon">
                     Mín: {discount.minQty}
@@ -141,13 +142,10 @@ export const SalesRulesPanel = ({
                   <span className="p-inputgroup-addon">
                     Desc: {discount.discount}%
                   </span>
-                  <Chips
-                    value={discount.applicableCurrencies}
-                    disabled
-                  />
+                  <Chips value={discount.applicableCurrencies} disabled />
                   <Button
                     icon="pi pi-trash"
-                    className="p-button-danger"
+                    severity="danger"
                     onClick={() => handleRemoveBulkDiscount(index)}
                   />
                 </div>

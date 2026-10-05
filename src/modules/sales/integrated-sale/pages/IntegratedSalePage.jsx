@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Card } from "primereact/card";
 import { Toast } from "primereact/toast";
 import { Button } from "primereact/button";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { useMutation, useLazyQuery } from "@apollo/client";
 import { TabView, TabPanel } from "primereact/tabview";
+import { SelectButton } from "primereact/selectbutton";
+import { Tag } from "primereact/tag";
 
-import "../styles/IntegratedSalePage.css";
+import { PageHeader, EmptyState } from "../../../../components/ui";
 
 import { CustomerSection } from "../components/CustomerSection";
 import { CustomerSearchSection } from "../components/CustomerSearchSection";
@@ -26,6 +27,22 @@ import {
 
 // Clave única para localStorage
 const PENDING_SALES_STORAGE_KEY = "integrated_sales_pending_sales";
+
+const CUSTOMER_MODE_OPTIONS = [
+  { label: "Buscar Cliente Existente", value: "search", icon: "pi pi-search" },
+  { label: "Crear Nuevo Cliente", value: "create", icon: "pi pi-user-plus" },
+];
+
+const customerModeTemplate = (option) => (
+  <span className="flex align-items-center gap-2">
+    <i className={option.icon} />
+    <span>{option.label}</span>
+  </span>
+);
+
+const STEP_HEADER_CLASS =
+  "flex flex-wrap align-items-center justify-content-between gap-3 mb-4 pb-3 border-bottom-1 surface-border";
+const STEP_TITLE_CLASS = "m-0 text-lg font-semibold text-900";
 
 export function IntegratedSalePage() {
   const { user } = useAuthContext();
@@ -64,8 +81,8 @@ export function IntegratedSalePage() {
     },
   });
 
-  const currentUserBusinessId = user?.businessId;
-  const currentUserOfficeId = user?.officeId;
+  const currentUserBusinessId = user?.business?.id ?? user?.businessId;
+  const currentUserOfficeId = user?.office?.id ?? user?.officeId;
   const currentUserRoles = user?.role || [];
   const isAdministrativeUser = ["SUPER", "PRINCIPAL"].some((role) =>
     currentUserRoles.includes(role),
@@ -410,51 +427,6 @@ export function IntegratedSalePage() {
     }
   };
 
-  const handleFinalizeWithDelivery = async () => {
-    try {
-      const saleId = getSaleId();
-
-      if (saleId) {
-        // La venta ya existe: actualizar datos generales
-        await updateSaleGeneralData();
-
-        toast.current.show({
-          severity: "success",
-          summary: "Venta actualizada",
-          detail: "Venta con mensajería finalizada correctamente",
-          life: 2000,
-        });
-      } else {
-        // La venta no existe: crearla en backend
-        await handleCreateSale();
-
-        toast.current.show({
-          severity: "success",
-          summary: "Venta creada",
-          detail: "Venta con mensajería creada y finalizada correctamente",
-          life: 2000,
-        });
-      }
-
-      // Volver a la ventana inicial (resetear todo)
-      handleNewSale();
-
-      toast.current.show({
-        severity: "success",
-        summary: "Venta completada",
-        detail: "La venta ha sido procesada. Puede iniciar una nueva venta.",
-        life: 3000,
-      });
-    } catch (error) {
-      toast.current.show({
-        severity: "error",
-        summary: "Error",
-        detail: error.message,
-        life: 5000,
-      });
-    }
-  };
-
   const handleNewSale = () => {
     setCurrentSale({
       id: Date.now().toString(),
@@ -685,206 +657,185 @@ export function IntegratedSalePage() {
 
   const isEditingExistingSale = createdSaleId || currentSale?.createdSaleId;
 
+  const editingSaleNumber = createdSaleId || currentSale?.createdSaleId;
+
   return (
-    <div className="integrated-sale-page">
+    <>
       <Toast ref={toast} />
       <ConfirmDialog />
 
-      <Card title="Venta Integrada - Gestión Completa">
-        <div className="sale-management-header">
-          <div className="header-actions">
-            <Button
-              label="Nueva Venta"
-              icon="pi pi-plus"
-              className="p-button-primary"
-              onClick={handleNewSale}
-            />
-            <Button
-              label="Guardar como Pendiente"
-              icon="pi pi-save"
-              className="p-button-help"
-              onClick={handleSaveAsPending}
-              disabled={!currentSale}
-            />
-            <Button
-              label="Atender Otro Cliente"
-              icon="pi pi-users"
-              className="p-button-warning"
-              onClick={handleAttendAnotherCustomer}
-              disabled={!currentSale}
-              tooltip="Guarda la venta actual y comienza una nueva"
-            />
-          </div>
-        </div>
+      <PageHeader
+        title="Venta integrada"
+        subtitle="Atiende al cliente de principio a fin: cliente, productos y pago."
+      >
+        <Button
+          label="Guardar como Pendiente"
+          icon="pi pi-save"
+          severity="secondary"
+          onClick={handleSaveAsPending}
+          disabled={!currentSale}
+        />
+        <Button
+          label="Atender Otro Cliente"
+          icon="pi pi-users"
+          severity="secondary"
+          onClick={handleAttendAnotherCustomer}
+          disabled={!currentSale}
+          tooltip="Guarda la venta actual y comienza una nueva"
+        />
+        <Button label="Nueva Venta" icon="pi pi-plus" onClick={handleNewSale} />
+      </PageHeader>
 
-        <TabView
-          activeIndex={activeTab}
-          onTabChange={(e) => setActiveTab(e.index)}
-        >
-          <TabPanel header="Venta Actual">
-            {currentSale ? (
-              <div className="sale-process">
-                {currentSale.currentStep === 1 && (
-                  <div className="customer-step">
-                    <div className="step-header">
-                      <h3>Paso 1: Selección del Cliente</h3>
-                      {isEditingExistingSale && (
-                        <div className="edit-badge">
-                          <i className="pi pi-pencil text-blue-500 mr-2"></i>
-                          <span>Editando venta existente</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="customer-mode-selector">
-                      <div className="mode-buttons">
-                        <Button
-                          label="Buscar Cliente Existente"
-                          icon="pi pi-search"
-                          className={
-                            customerSearchMode
-                              ? "p-button-primary"
-                              : "p-button-outlined"
-                          }
-                          onClick={() => handleCustomerModeChange("search")}
-                        />
-                        <Button
-                          label="Crear Nuevo Cliente"
-                          icon="pi pi-user-plus"
-                          className={
-                            !customerSearchMode
-                              ? "p-button-primary"
-                              : "p-button-outlined"
-                          }
-                          onClick={() => handleCustomerModeChange("create")}
-                        />
-                      </div>
-                    </div>
-                    {customerSearchMode ? (
-                      <CustomerSearchSection
-                        onSelectCustomer={handleSelectExistingCustomer}
-                        onBack={() => setCustomerSearchMode(false)}
-                      />
-                    ) : (
-                      <CustomerSection
-                        initialData={currentSale.customerData}
-                        onSubmit={handleCustomerSubmit}
-                        onStepChange={() => {}}
+      <TabView
+        activeIndex={activeTab}
+        onTabChange={(e) => setActiveTab(e.index)}
+      >
+        <TabPanel header="Venta Actual">
+          {currentSale ? (
+            <>
+              {currentSale.currentStep === 1 && (
+                <>
+                  <div className={STEP_HEADER_CLASS}>
+                    <h3 className={STEP_TITLE_CLASS}>
+                      Paso 1: Selección del Cliente
+                    </h3>
+                    {isEditingExistingSale && (
+                      <Tag
+                        severity="info"
+                        icon="pi pi-pencil"
+                        value="Editando venta existente"
                       />
                     )}
                   </div>
-                )}
+                  <div className="flex justify-content-center mb-5">
+                    <SelectButton
+                      value={customerSearchMode ? "search" : "create"}
+                      options={CUSTOMER_MODE_OPTIONS}
+                      itemTemplate={customerModeTemplate}
+                      allowEmpty={false}
+                      onChange={(e) => handleCustomerModeChange(e.value)}
+                    />
+                  </div>
+                  {customerSearchMode ? (
+                    <CustomerSearchSection
+                      onSelectCustomer={handleSelectExistingCustomer}
+                      onBack={() => setCustomerSearchMode(false)}
+                    />
+                  ) : (
+                    <CustomerSection
+                      initialData={currentSale.customerData}
+                      onSubmit={handleCustomerSubmit}
+                      onStepChange={() => {}}
+                    />
+                  )}
+                </>
+              )}
 
-                {currentSale.currentStep === 2 && (
-                  <div className="step-content">
-                    <div className="step-header">
-                      <h3>Paso 2: Configurar Venta</h3>
+              {currentSale.currentStep === 2 && (
+                <>
+                  <div className={STEP_HEADER_CLASS}>
+                    <h3 className={STEP_TITLE_CLASS}>
+                      Paso 2: Configurar Venta
+                    </h3>
+                    {isEditingExistingSale && (
+                      <Tag
+                        severity="info"
+                        icon="pi pi-pencil"
+                        value={`Editando venta #${editingSaleNumber}`}
+                      />
+                    )}
+                  </div>
+                  <ProductSection
+                    onAddProduct={handleAddProduct}
+                    saleDetails={currentSale.saleDetails}
+                    onRemoveProduct={handleRemoveProduct}
+                    onUpdateQuantity={handleUpdateQuantity}
+                    customer={currentSale.customerData}
+                    selectedPublicists={currentSale.selectedPublicists}
+                    onPublicistsChange={handlePublicistsChange}
+                    selectedSeller={currentSale.selectedSeller}
+                    onSellerChange={handleSellerChange}
+                    paymentMethod={paymentMethod}
+                    onPaymentMethodChange={setPaymentMethod}
+                    sellers={sellers}
+                    currentUserBusinessId={currentUserBusinessId}
+                    currentUserOfficeId={currentUserOfficeId}
+                    isAdministrativeUser={isAdministrativeUser}
+                    hasDelivery={currentSale.hasDelivery}
+                    onHasDeliveryChange={handleHasDeliveryChange}
+                    deliveryWorkerId={currentSale.deliveryWorkerId}
+                    onDeliveryWorkerChange={handleDeliveryWorkerChange}
+                    deliveryNotes={currentSale.deliveryNotes}
+                    onDeliveryNotesChange={handleDeliveryNotesChange}
+                    deliveryWorkers={deliveryWorkers}
+                    onBackToCustomer={handleBackToCustomerSelection}
+                    onContinueToPayment={handleContinueToPayment}
+                    isEditingExistingSale={isEditingExistingSale}
+                    createdSaleId={createdSaleId || currentSale.createdSaleId}
+                  />
+                </>
+              )}
+
+              {currentSale.currentStep === 3 && (
+                <>
+                  <div className={STEP_HEADER_CLASS}>
+                    <div className="flex flex-wrap align-items-center gap-3">
+                      <Button
+                        icon="pi pi-arrow-left"
+                        text
+                        severity="secondary"
+                        onClick={handleBackToStep2}
+                        label="Modificar venta"
+                      />
                       {isEditingExistingSale && (
-                        <div className="edit-badge">
-                          <i className="pi pi-pencil text-blue-500 mr-2"></i>
-                          <span>
-                            Editando venta #
-                            {createdSaleId || currentSale.createdSaleId}
-                          </span>
-                        </div>
+                        <Tag
+                          severity="info"
+                          icon="pi pi-pencil"
+                          value={`Editando venta #${editingSaleNumber}`}
+                        />
                       )}
                     </div>
-                    <ProductSection
-                      onAddProduct={handleAddProduct}
-                      saleDetails={currentSale.saleDetails}
-                      onRemoveProduct={handleRemoveProduct}
-                      onUpdateQuantity={handleUpdateQuantity}
-                      customer={currentSale.customerData}
-                      selectedPublicists={currentSale.selectedPublicists}
-                      onPublicistsChange={handlePublicistsChange}
-                      selectedSeller={currentSale.selectedSeller}
-                      onSellerChange={handleSellerChange}
-                      paymentMethod={paymentMethod}
-                      onPaymentMethodChange={setPaymentMethod}
-                      sellers={sellers}
-                      currentUserBusinessId={currentUserBusinessId}
-                      currentUserOfficeId={currentUserOfficeId}
-                      isAdministrativeUser={isAdministrativeUser}
-                      hasDelivery={currentSale.hasDelivery}
-                      onHasDeliveryChange={handleHasDeliveryChange}
-                      deliveryWorkerId={currentSale.deliveryWorkerId}
-                      onDeliveryWorkerChange={handleDeliveryWorkerChange}
-                      deliveryNotes={currentSale.deliveryNotes}
-                      onDeliveryNotesChange={handleDeliveryNotesChange}
-                      deliveryWorkers={deliveryWorkers}
-                      onBackToCustomer={handleBackToCustomerSelection}
-                      onContinueToPayment={
-                        currentSale.hasDelivery
-                          ? handleFinalizeWithDelivery
-                          : handleContinueToPayment
-                      }
-                      isEditingExistingSale={isEditingExistingSale}
-                      createdSaleId={createdSaleId || currentSale.createdSaleId}
-                    />
+                    <h3 className={STEP_TITLE_CLASS}>Paso 3: Procesar Pago</h3>
                   </div>
-                )}
-
-                {currentSale.currentStep === 3 && (
-                  <div className="step-content">
-                    <div className="step-header">
-                      <div className="step-navigation">
-                        <Button
-                          icon="pi pi-arrow-left"
-                          className="p-button-text"
-                          onClick={handleBackToStep2}
-                          label="Modificar venta"
-                        />
-                        {isEditingExistingSale && (
-                          <div className="edit-badge">
-                            <i className="pi pi-pencil text-blue-500 mr-2"></i>
-                            <span>
-                              Editando venta #
-                              {createdSaleId || currentSale.createdSaleId}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <h3>Paso 3: Procesar Pago</h3>
-                    </div>
-                    <PaymentSection
-                      saleId={createdSaleId || currentSale.createdSaleId}
-                      totalAmount={totalAmount}
-                      baseCurrency="USD"
-                      onPaymentValidated={handlePaymentValidated}
-                      onBack={handleBackToStep2}
-                    />
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="no-sale-selected">
-                <div className="empty-state">
-                  <i className="pi pi-shopping-cart empty-icon"></i>
-                  <h3>No hay venta activa</h3>
-                  <p>
-                    Selecciona una venta pendiente o crea una nueva para
-                    comenzar
-                  </p>
-                  <Button
-                    label="Crear Nueva Venta"
-                    icon="pi pi-plus"
-                    className="p-button-primary"
-                    onClick={handleNewSale}
+                  <PaymentSection
+                    saleId={createdSaleId || currentSale.createdSaleId}
+                    totalAmount={totalAmount}
+                    baseCurrency="USD"
+                    onPaymentValidated={handlePaymentValidated}
+                    onBack={handleBackToStep2}
                   />
-                </div>
-              </div>
-            )}
-          </TabPanel>
+                </>
+              )}
+            </>
+          ) : (
+            <EmptyState
+              icon="pi pi-shopping-cart"
+              title="No hay venta activa"
+              actions={
+                <Button
+                  label="Crear Nueva Venta"
+                  icon="pi pi-plus"
+                  outlined
+                  onClick={handleNewSale}
+                />
+              }
+            >
+              <p className="m-0">
+                Selecciona una venta pendiente o crea una nueva para comenzar
+              </p>
+            </EmptyState>
+          )}
+        </TabPanel>
 
-          <TabPanel header={`Ventas Pendientes (${pendingSales.length})`}>
-            <PendingSalesManager
-              pendingSales={pendingSales}
-              onLoadSale={handleLoadPendingSale}
-              onDeleteSale={handleDeletePendingSale}
-              currentSaleId={currentSale?.id}
-            />
-          </TabPanel>
-        </TabView>
-      </Card>
-    </div>
+        <TabPanel header={`Ventas Pendientes (${pendingSales.length})`}>
+          <PendingSalesManager
+            pendingSales={pendingSales}
+            onLoadSale={handleLoadPendingSale}
+            onDeleteSale={handleDeletePendingSale}
+            currentSaleId={currentSale?.id}
+          />
+        </TabPanel>
+      </TabView>
+    </>
   );
 }

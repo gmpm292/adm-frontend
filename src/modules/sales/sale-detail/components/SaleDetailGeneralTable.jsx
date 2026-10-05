@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef } from "react";
+import React, { useCallback, useRef } from "react";
 import { useLazyQuery } from "@apollo/client";
 import { GET_SALE_DETAILS } from "../graphql/queries";
 import GenericDataTable from "../../../../components/BaseTable/index";
@@ -26,7 +26,7 @@ const formatCurrency = (value) => {
 
 const publicistsBodyTemplate = (rowData) => {
   if (!rowData.publicists || rowData.publicists.length === 0) {
-    return <span className="text-gray-400">Sin publicistas</span>;
+    return <span className="text-color-secondary">Sin publicistas</span>;
   }
 
   return (
@@ -118,7 +118,8 @@ export function SaleDetailGeneralTable() {
       <div className="actions-column">
         <Button
           icon="pi pi-external-link"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
           tooltip="Ver Detalles Completos"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleViewSaleDetails(rowData.sale.id)}
@@ -198,8 +199,7 @@ export function SaleDetailGeneralTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "8rem" }}
-          bodyStyle={{ textAlign: "center" }}
+          className="w-8rem"
         />
       </GenericDataTable>
     </>

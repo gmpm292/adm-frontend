@@ -4,9 +4,9 @@ import { Checkbox } from "primereact/checkbox";
 import { MultiSelect } from "primereact/multiselect";
 import { useLazyQuery } from "@apollo/client";
 import { GET_OFFICES } from "../../../../../../components/SecurityEntitySelector/queries";
+import { FormField } from "../../../../../../components/ui";
 
 export const InventoryCreationPanel = ({
-  formData,
   setFormData,
   openPanel,
   handleToggle,
@@ -69,9 +69,9 @@ export const InventoryCreationPanel = ({
       collapsed={openPanel !== 4}
       onToggle={handleToggle}
     >
-      <div className="p-grid p-fluid">
-        <div className="p-col-12">
-          <div className="p-field-checkbox">
+      <div className="formgrid grid">
+        <div className="col-12">
+          <div className="flex align-items-center mb-3">
             <Checkbox
               inputId="createInventory"
               checked={createInventory}
@@ -84,9 +84,13 @@ export const InventoryCreationPanel = ({
         </div>
 
         {createInventory && (
-          <div className="p-col-12">
-            <div className="p-field">
-              <label htmlFor="offices">Oficinas para crear inventario*</label>
+          <div className="col-12">
+            <FormField
+              label="Oficinas para crear inventario"
+              htmlFor="offices"
+              required
+              hint="Se creará un inventario en cada oficina seleccionada con: Stock Actual = 0, Stock Mínimo = 0, Ubicación = nombre de la oficina"
+            >
               <MultiSelect
                 id="offices"
                 value={selectedOffices}
@@ -104,25 +108,21 @@ export const InventoryCreationPanel = ({
                 className="w-full"
                 disabled={officesLoading}
               />
-              <small className="p-d-block p-mt-1">
-                Se creará un inventario en cada oficina seleccionada con: Stock
-                Actual = 0, Stock Mínimo = 0, Ubicación = nombre de la oficina
-              </small>
-            </div>
+            </FormField>
 
             {selectedOffices.length > 0 && (
-              <div className="p-mt-3">
+              <div className="mt-3">
                 <h4>Resumen de inventarios a crear:</h4>
-                <div className="p-grid">
+                <div className="grid">
                   {selectedOffices.map((officeId) => {
                     const office = officeOptions.find(
                       (opt) => opt.value === officeId,
                     );
                     return (
-                      <div key={officeId} className="p-col-12 p-md-6">
-                        <div className="p-card p-p-3">
-                          <h5>{office?.label}</h5>
-                          <p>
+                      <div key={officeId} className="col-12 md:col-6">
+                        <div className="surface-card border-1 surface-border border-round p-3">
+                          <h5 className="mt-0">{office?.label}</h5>
+                          <p className="m-0">
                             <strong>Stock Actual:</strong> 0<br />
                             <strong>Stock Mínimo:</strong> 0<br />
                             <strong>Ubicación:</strong> {office?.label}

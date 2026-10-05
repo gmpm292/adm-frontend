@@ -1,14 +1,15 @@
 import React from 'react';
-import { Card } from 'primereact/card';
 import { CustomerTable } from '../components/CustomerTable';
-import '../styles/CustomerList.css';
+import { PageHeader } from '../../../../components/ui';
 
 export function CustomerListPage() {
     return (
-        <div className="customer-list-page">
-            <Card title="Gestión de Clientes">
-                <CustomerTable />
-            </Card>
-        </div>
+        <>
+            <PageHeader
+                title="Clientes"
+                subtitle="Consulta, crea y actualiza los clientes de la empresa."
+            />
+            <CustomerTable />
+        </>
     );
 }

@@ -3,6 +3,7 @@ import { Dialog } from 'primereact/dialog';
 import { useLazyQuery } from '@apollo/client';
 import { GET_WORKER_BY_ID } from '../graphql/queries';
 import { ProgressSpinner } from 'primereact/progressspinner';
+import { FormField } from '../../../../components/ui';
 
 export const WorkerDetailForm = ({ workerId, visible, onHide }) => {
   const [getWorker, { data, loading }] = useLazyQuery(GET_WORKER_BY_ID, {
@@ -23,30 +24,74 @@ export const WorkerDetailForm = ({ workerId, visible, onHide }) => {
     <Dialog
       header="Detalles del Trabajador"
       visible={visible}
-      style={{ width: '600px' }}
+      className="w-full md:w-30rem"
       onHide={onHide}
       modal
     >
       {loading ? (
-        <div className="flex justify-center">
+        <div className="flex justify-content-center">
           <ProgressSpinner />
         </div>
       ) : worker ? (
-        <div className="p-fluid">
-          <div className="field"><b>Usuario:</b> {worker.user?.name} {worker.user?.lastName}</div>
-          <div className="field"><b>Email:</b> {worker.user?.email}</div>
-          <div className="field"><b>Tipo:</b> {worker.workerType}</div>
-          <div className="field"><b>Salario Base:</b> {worker.baseSalary}</div>
-          <div className="field"><b>Business:</b> {worker.business?.name || 'N/A'}</div>
-          <div className="field"><b>Oficina:</b> {worker.office?.name || 'N/A'}</div>
-          <div className="field"><b>Departamento:</b> {worker.department?.name || 'N/A'}</div>
-          <div className="field"><b>Equipo:</b> {worker.team?.name || 'N/A'}</div>
-          <div className="field"><b>Regla de Pago:</b> {worker.paymentRule?.name || 'N/A'}</div>
-          <div className="field"><b>Creado en:</b> {new Date(worker.createdAt).toLocaleString()}</div>
-          <div className="field"><b>Última actualización:</b> {new Date(worker.updatedAt).toLocaleString()}</div>
+        <div className="grid">
+          <div className="col-12 md:col-6">
+            <FormField label="Usuario">
+              <span>{worker.user?.name} {worker.user?.lastName}</span>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Email">
+              <span>{worker.user?.email}</span>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Tipo">
+              <span>{worker.workerType}</span>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Salario Base">
+              <span>{worker.baseSalary}</span>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Business">
+              <span>{worker.business?.name || 'N/A'}</span>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Oficina">
+              <span>{worker.office?.name || 'N/A'}</span>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Departamento">
+              <span>{worker.department?.name || 'N/A'}</span>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Equipo">
+              <span>{worker.team?.name || 'N/A'}</span>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Regla de Pago">
+              <span>{worker.paymentRule?.name || 'N/A'}</span>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Creado en">
+              <span>{new Date(worker.createdAt).toLocaleString()}</span>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Última actualización">
+              <span>{new Date(worker.updatedAt).toLocaleString()}</span>
+            </FormField>
+          </div>
         </div>
       ) : (
-        <p>No se encontró información del trabajador.</p>
+        <p className="text-color-secondary">No se encontró información del trabajador.</p>
       )}
     </Dialog>
   );

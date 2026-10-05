@@ -60,7 +60,7 @@ const PermissionGuard = ({
   if (hasAccess === null) {
     return (
       <div className="permission-guard-loading">
-        <i className="pi pi-spin pi-spinner" style={{ fontSize: "1rem" }}></i>
+        <i className="pi pi-spin pi-spinner text-base"></i>
       </div>
     );
   }

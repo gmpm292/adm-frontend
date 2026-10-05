@@ -1,37 +1,48 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ProgressSpinner } from "primereact/progressspinner";
-import { Toast } from "primereact/toast";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useMutation } from "@apollo/client";
 import { Password } from "primereact/password";
+import { Button } from "primereact/button";
+import { Message } from "primereact/message";
 import {
   CHANGE_PASSWORD,
   CHECK_CONFIRMATION_TOKEN,
 } from "../../auth/graphql/queries";
 import * as Yup from "yup";
 import { useFormik } from "formik";
-import denied from "../../../assets/images/denied-icon.jpg";
-import "../styles/ChangePassword.css";
+import {
+  AuthLayout,
+  FormField,
+  LoadingScreen,
+} from "../../../components/ui";
 
+const MIN_PASSWORD_LENGTH = 8;
+
+const validationSchema = Yup.object({
+  password: Yup.string()
+    .required("La contraseña es requerida")
+    .min(
+      MIN_PASSWORD_LENGTH,
+      `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`
+    ),
+  confirm: Yup.string()
+    .required("Confirma la contraseña")
+    .oneOf([Yup.ref("password")], "Las contraseñas no coinciden"),
+});
+
+/**
+ * Creación de una contraseña nueva a partir del enlace enviado por correo
+ */
 export const ChangePasswordForm = () => {
   const { confirmationToken } = useParams();
   const navigate = useNavigate();
-  const toast = useRef(null);
 
-  const [changePassword] = useMutation(CHANGE_PASSWORD);
+  const [changePassword, { error }] = useMutation(CHANGE_PASSWORD);
   const [checkToken] = useMutation(CHECK_CONFIRMATION_TOKEN);
 
-  const [loadingForm, setLoadingForm] = useState(false);
-  const [showForm, setShowForm] = useState(null);
-
-  const validationSchema = Yup.object({
-    password: Yup.string()
-      .required("Password is required")
-      .min(8, "Password must be at least 8 characters"),
-    confirm: Yup.string()
-      .required("Password confirmation is required")
-      .oneOf([Yup.ref("password")], "Passwords must match"),
-  });
+  // null: comprobando el enlace · true: válido · false: inválido o caducado
+  const [validLink, setValidLink] = useState(null);
+  const [done, setDone] = useState(false);
 
   const formik = useFormik({
     initialValues: {
@@ -41,8 +52,7 @@ export const ChangePasswordForm = () => {
     validationSchema,
     onSubmit: async (values) => {
       try {
-        setLoadingForm(true);
-        const { data } = await changePassword({
+        await changePassword({
           variables: {
             input: {
               confirmationToken,
@@ -50,167 +60,122 @@ export const ChangePasswordForm = () => {
             },
           },
         });
-
-        if (data?.changePassword) {
-          toast.current?.show({
-            severity: "success",
-            summary: "Success",
-            detail: "Your password has been successfully updated",
-            life: 2000,
-          });
-          setTimeout(() => navigate("/login"), 2000);
-        }
-      } catch (error) {
-        toast.current?.show({
-          severity: "error",
-          summary: "Error",
-          detail: error.message || "Failed to update password",
-          life: 3000,
-        });
-      } finally {
-        setLoadingForm(false);
+        setDone(true);
+      } catch (err) {
+        console.error("Error al cambiar la contraseña:", err);
       }
     },
   });
 
   useEffect(() => {
-    const verifyToken = async () => {
-      setLoadingForm(true);
-      try {
-        const { data } = await checkToken({
-          variables: {
-            input: { confirmationToken },
-          },
-        });
-
-        setShowForm(Boolean(data?.checkConfirmationToken));
-      } catch (error) {
-        console.error("verifyToken error", error);
-        setShowForm(false);
-
-        setTimeout(() => {
-          toast.current?.show({
-            severity: "error",
-            summary: "Invalid Token",
-            detail: "The token is not valid or has expired",
-            life: 3000,
-          });
-        }, 100);
-      } finally {
-        setLoadingForm(false);
-      }
-    };
-
-    if (confirmationToken) {
-      verifyToken();
-    } else {
-      setShowForm(false);
+    if (!confirmationToken) {
+      setValidLink(false);
+      return;
     }
+
+    checkToken({ variables: { input: { confirmationToken } } })
+      .then(({ data }) => setValidLink(Boolean(data?.checkConfirmationToken)))
+      .catch(() => setValidLink(false));
   }, [confirmationToken, checkToken]);
 
-  const cancel = () => {
-    navigate("/login");
-  };
+  const fieldError = (name) => formik.touched[name] && formik.errors[name];
 
-  if (loadingForm) {
+  if (validLink === null) {
+    return <LoadingScreen message="Comprobando el enlace..." />;
+  }
+
+  if (done) {
     return (
-      <div className="spinner-container">
-        <ProgressSpinner />
-      </div>
+      <AuthLayout
+        title="Contraseña actualizada"
+        subtitle="Ya puedes entrar con tu contraseña nueva."
+      >
+        <Button
+          label="Ir al inicio de sesión"
+          className="w-full"
+          onClick={() => navigate("/login")}
+        />
+      </AuthLayout>
+    );
+  }
+
+  if (!validLink) {
+    return (
+      <AuthLayout
+        title="Enlace no válido"
+        subtitle="Este enlace ya se usó o caducó. Solicita uno nuevo para crear tu contraseña."
+        footer={<Link to="/login">Volver al inicio de sesión</Link>}
+      >
+        <Button
+          label="Solicitar otro enlace"
+          className="w-full"
+          onClick={() => navigate("/forgot-password")}
+        />
+      </AuthLayout>
     );
   }
 
   return (
-    <>
-      <Toast ref={toast} />
+    <AuthLayout
+      title="Crea tu contraseña"
+      subtitle="Elige una contraseña nueva para tu cuenta."
+      footer={<Link to="/login">Volver al inicio de sesión</Link>}
+    >
+      <form onSubmit={formik.handleSubmit} noValidate>
+        <FormField
+          label="Contraseña nueva"
+          htmlFor="password"
+          hint={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres`}
+          error={fieldError("password")}
+        >
+          <Password
+            inputId="password"
+            name="password"
+            autoComplete="new-password"
+            value={formik.values.password}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            invalid={Boolean(fieldError("password"))}
+            feedback={false}
+            toggleMask
+          />
+        </FormField>
 
-      {showForm === true && (
-        <div className="change-password-page">
-          <div className="change-password-container">
-            <div className="change-password-header">
-              <h1 className="change-password-title">Change Password</h1>
-              <p className="change-password-subtitle">Set a new password for your account</p>
-            </div>
+        <FormField
+          label="Confirmar contraseña"
+          htmlFor="confirm"
+          error={fieldError("confirm")}
+        >
+          <Password
+            inputId="confirm"
+            name="confirm"
+            autoComplete="new-password"
+            value={formik.values.confirm}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            invalid={Boolean(fieldError("confirm"))}
+            feedback={false}
+            toggleMask
+          />
+        </FormField>
 
-            <form onSubmit={formik.handleSubmit}>
-              <div className="field">
-                <span className="p-float-label">
-                  <Password
-                    id="password"
-                    name="password"
-                    value={formik.values.password}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    toggleMask
-                    feedback={false}
-                    className={`${formik.touched.password && formik.errors.password ? "p-invalid" : ""}`}
-                    inputClassName="password-input"
-                  />
-                  <label htmlFor="password">New Password</label>
-                </span>
-                {formik.touched.password && formik.errors.password && (
-                  <small className="error-message">{formik.errors.password}</small>
-                )}
-              </div>
+        {error && (
+          <Message
+            severity="error"
+            text="No se pudo guardar la contraseña. Solicita un enlace nuevo e inténtalo otra vez."
+            className="w-full mb-4"
+          />
+        )}
 
-              <div className="field">
-                <span className="p-float-label">
-                  <Password
-                    id="confirm"
-                    name="confirm"
-                    value={formik.values.confirm}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    toggleMask
-                    feedback={false}
-                    className={`${formik.touched.confirm && formik.errors.confirm ? "p-invalid" : ""}`}
-                    inputClassName="password-input"
-                  />
-                  <label htmlFor="confirm">Confirm Password</label>
-                </span>
-                {formik.touched.confirm && formik.errors.confirm && (
-                  <small className="error-message">{formik.errors.confirm}</small>
-                )}
-              </div>
-
-              <div className="buttons-container">
-                <button
-                  type="button"
-                  onClick={cancel}
-                  className="cancel-button"
-                  disabled={formik.isSubmitting}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="submit-button"
-                  disabled={formik.isSubmitting}
-                >
-                  {formik.isSubmitting ? "Saving..." : "Save Changes"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showForm === false && (
-        <div className="invalid-token-page">
-          <div className="invalid-token-container">
-            <img src={denied} alt="Access Denied" className="denied-icon" />
-            <h2>Invalid or Expired Token</h2>
-            <p>Please request a new password reset link.</p>
-            <button
-              onClick={() => navigate("/login")}
-              className="login-button"
-            >
-              Go to Login
-            </button>
-          </div>
-        </div>
-      )}
-    </>
+        <Button
+          type="submit"
+          label="Guardar contraseña"
+          loading={formik.isSubmitting}
+          className="w-full"
+          disabled={formik.isSubmitting}
+        />
+      </form>
+    </AuthLayout>
   );
 };
 

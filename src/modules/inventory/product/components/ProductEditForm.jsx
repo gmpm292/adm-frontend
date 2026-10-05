@@ -8,6 +8,7 @@ import { GET_PRODUCT_BY_ID, UPDATE_PRODUCT } from "../graphql/queries";
 import { Toast } from "primereact/toast";
 import { CategorySelector } from "../../category/components/CategorySelector";
 //import { CategorySelector } from "../../category/components/CategorySelector";
+import { FormField } from "../../../../components/ui";
 
 export const ProductEditForm = ({ productId, visible, onHide, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -87,12 +88,12 @@ export const ProductEditForm = ({ productId, visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Guardar"
@@ -100,7 +101,7 @@ export const ProductEditForm = ({ productId, visible, onHide, onSuccess }) => {
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -109,7 +110,7 @@ export const ProductEditForm = ({ productId, visible, onHide, onSuccess }) => {
       <Dialog
         header="Editar Producto"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
       >
@@ -118,71 +119,77 @@ export const ProductEditForm = ({ productId, visible, onHide, onSuccess }) => {
         ) : error ? (
           <p>Error al cargar producto</p>
         ) : (
-          <div className="p-fluid">
-            <div className="p-field">
-              <label htmlFor="name">Nombre</label>
-              <InputText
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-              />
+          <div className="formgrid grid p-fluid">
+            <div className="col-12 md:col-6">
+              <FormField label="Nombre" htmlFor="name">
+                <InputText
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="unitOfMeasure">Unidad de Medida</label>
-              <InputText
-                id="unitOfMeasure"
-                name="unitOfMeasure"
-                value={formData.unitOfMeasure}
-                onChange={handleChange}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Unidad de Medida" htmlFor="unitOfMeasure">
+                <InputText
+                  id="unitOfMeasure"
+                  name="unitOfMeasure"
+                  value={formData.unitOfMeasure}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="categoryId">Categoría</label>
-              <CategorySelector
-                onCategorySelect={handleCategorySelect}
-                selectedCategoryId={formData.categoryId}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Categoría" htmlFor="categoryId">
+                <CategorySelector
+                  onCategorySelect={handleCategorySelect}
+                  selectedCategoryId={formData.categoryId}
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="costPrice">Precio Costo</label>
-              <InputNumber
-                id="costPrice"
-                name="costPrice"
-                value={formData.costPrice}
-                onValueChange={handleNumberChange}
-                mode="currency"
-                currency="USD"
-                locale="en-US"
-                min={0}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Garantía" htmlFor="warranty">
+                <InputText
+                  id="warranty"
+                  name="warranty"
+                  value={formData.warranty}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="salePrice">Precio Venta</label>
-              <InputNumber
-                id="salePrice"
-                name="salePrice"
-                value={formData.salePrice}
-                onValueChange={handleNumberChange}
-                mode="currency"
-                currency="USD"
-                locale="en-US"
-                min={0}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Precio Costo" htmlFor="costPrice">
+                <InputNumber
+                  inputId="costPrice"
+                  name="costPrice"
+                  value={formData.costPrice}
+                  onValueChange={handleNumberChange}
+                  mode="currency"
+                  currency="USD"
+                  locale="en-US"
+                  min={0}
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="warranty">Garantía</label>
-              <InputText
-                id="warranty"
-                name="warranty"
-                value={formData.warranty}
-                onChange={handleChange}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Precio Venta" htmlFor="salePrice">
+                <InputNumber
+                  inputId="salePrice"
+                  name="salePrice"
+                  value={formData.salePrice}
+                  onValueChange={handleNumberChange}
+                  mode="currency"
+                  currency="USD"
+                  locale="en-US"
+                  min={0}
+                />
+              </FormField>
             </div>
           </div>
         )}

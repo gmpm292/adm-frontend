@@ -20,21 +20,16 @@ export const MakeSaleButton = ({
     }
   };
 
-  const getButtonClass = () => {
-    const baseClass = `p-button-${size}`;
-    if (variant === "outlined")
-      return `p-button-outlined p-button-success ${baseClass}`;
-    if (variant === "text")
-      return `p-button-text p-button-success ${baseClass}`;
-    return `p-button-success ${baseClass}`;
-  };
-
   return (
     <>
       <Button
         label={label}
         icon={icon}
-        className={getButtonClass()}
+        size={variant === "text" ? undefined : size}
+        severity="success"
+        outlined={variant === "outlined"}
+        text={variant === "text"}
+        rounded={variant === "text"}
         onClick={() => setShowDialog(true)}
         disabled={disabled}
         tooltip="Procesar y finalizar la venta"

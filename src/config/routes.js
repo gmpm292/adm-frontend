@@ -2,12 +2,12 @@ export const routePermissions = {
   "/statistics/analytics": {
     permissions: [],
     requiredRoles: [],
-    title: "Análisis",
+    title: "Resumen",
   },
   "/statistics/sales": {
     permissions: [],
     requiredRoles: [],
-    title: "Ventas",
+    title: "Reporte de ventas",
   },
   "/users": {
     permissions: [],

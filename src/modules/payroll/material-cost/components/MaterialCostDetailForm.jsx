@@ -4,6 +4,7 @@ import { useLazyQuery } from "@apollo/client";
 import { GET_MATERIAL_COST } from "../graphql/queries";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Tag } from "primereact/tag";
+import { FormField } from "../../../../components/ui";
 
 export const MaterialCostDetailForm = ({ materialId, visible, onHide }) => {
   const [getMaterial, { data, loading }] = useLazyQuery(GET_MATERIAL_COST, {
@@ -40,7 +41,7 @@ export const MaterialCostDetailForm = ({ materialId, visible, onHide }) => {
     <Dialog
       header="Detalles del Material"
       visible={visible}
-      style={{ width: "600px" }}
+      className="w-full md:w-30rem"
       onHide={onHide}
       modal
     >
@@ -49,101 +50,101 @@ export const MaterialCostDetailForm = ({ materialId, visible, onHide }) => {
           <ProgressSpinner />
         </div>
       ) : material ? (
-        <div className="p-fluid">
-          <div className="field">
-            <label className="font-bold">Nombre:</label>
-            <div>{material.name}</div>
+        <div className="grid">
+          <div className="col-12">
+            <FormField label="Nombre">
+              <span>{material.name}</span>
+            </FormField>
           </div>
-
-          <div className="field">
-            <label className="font-bold">Descripción:</label>
-            <div>{material.description || "Sin descripción"}</div>
+          <div className="col-12">
+            <FormField label="Descripción">
+              <span>{material.description || "Sin descripción"}</span>
+            </FormField>
           </div>
-
-          <div className="field">
-            <label className="font-bold">Unidad de Medida:</label>
-            <div>
-              {material.unitOfMeasure?.name} ({material.unitOfMeasure?.symbol})
-              {material.unitOfMeasure?.category && (
+          <div className="col-12 md:col-6">
+            <FormField label="Unidad de Medida">
+              <div>
+                {material.unitOfMeasure?.name} ({material.unitOfMeasure?.symbol})
+                {material.unitOfMeasure?.category && (
+                  <Tag
+                    value={material.unitOfMeasure.category}
+                    severity="info"
+                    className="ml-2"
+                  />
+                )}
+              </div>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Estado">
+              <div>
                 <Tag
-                  value={material.unitOfMeasure.category}
-                  severity="info"
-                  rounded
-                  className="ml-2"
+                  severity={material.isActive ? "success" : "danger"}
+                  value={material.isActive ? "Activo" : "Inactivo"}
                 />
+              </div>
+            </FormField>
+          </div>
+          <div className="col-12">
+            <FormField label="Precio de Costo">
+              <div className="text-xl font-bold text-green-600">
+                {formatPrice(material.costPrice, material.currency)}
+              </div>
+              {material.currency?.exchangeRateToCUP && (
+                <div className="text-sm text-color-secondary">
+                  Tasa: 1 {material.currency.code} ={" "}
+                  {material.currency.exchangeRateToCUP} CUP
+                </div>
               )}
-            </div>
+            </FormField>
           </div>
-
-          <div className="field">
-            <label className="font-bold">Precio de Costo:</label>
-            <div className="text-xl font-bold text-green-600">
-              {formatPrice(material.costPrice, material.currency)}
-            </div>
-            {material.currency?.exchangeRateToCUP && (
-              <div className="text-sm text-color-secondary">
-                Tasa: 1 {material.currency.code} ={" "}
-                {material.currency.exchangeRateToCUP} CUP
-              </div>
-            )}
+          <div className="col-12 md:col-6">
+            <FormField label="Business">
+              <span>{material.business?.name || "N/A"}</span>
+            </FormField>
           </div>
-
-          <div className="field">
-            <label className="font-bold">Estado:</label>
-            <div>
-              <span
-                className={`badge status-${material.isActive ? "active" : "inactive"}`}
-              >
-                {material.isActive ? "Activo" : "Inactivo"}
-              </span>
-            </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Oficina">
+              <span>{material.office?.name || "N/A"}</span>
+            </FormField>
           </div>
-
-          <div className="field">
-            <label className="font-bold">Ámbitos:</label>
-            <div className="ml-2">
-              <div>
-                <b>Business:</b> {material.business?.name || "N/A"}
-              </div>
-              <div>
-                <b>Oficina:</b> {material.office?.name || "N/A"}
-              </div>
-              <div>
-                <b>Departamento:</b> {material.department?.name || "N/A"}
-              </div>
-              <div>
-                <b>Equipo:</b> {material.team?.name || "N/A"}
-              </div>
-            </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Departamento">
+              <span>{material.department?.name || "N/A"}</span>
+            </FormField>
           </div>
-
-          <div className="field">
-            <label className="font-bold">Fechas:</label>
-            <div className="ml-2">
-              <div>
-                <b>Creado:</b> {formatDate(material.createdAt)}
-              </div>
-              <div>
-                <b>Actualizado:</b> {formatDate(material.updatedAt)}
-              </div>
-            </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Equipo">
+              <span>{material.team?.name || "N/A"}</span>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Creado">
+              <span>{formatDate(material.createdAt)}</span>
+            </FormField>
+          </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Actualizado">
+              <span>{formatDate(material.updatedAt)}</span>
+            </FormField>
           </div>
 
           {material.products && material.products.length > 0 && (
-            <div className="field">
-              <label className="font-bold">Usado en productos:</label>
-              <div className="ml-2">
-                {material.products.map((product) => (
-                  <div key={product.id}>
-                    • {product.name} ({product.code})
-                  </div>
-                ))}
-              </div>
+            <div className="col-12">
+              <FormField label="Usado en productos">
+                <div>
+                  {material.products.map((product) => (
+                    <div key={product.id}>
+                      • {product.name} ({product.code})
+                    </div>
+                  ))}
+                </div>
+              </FormField>
             </div>
           )}
         </div>
       ) : (
-        <p className="text-center">No se encontró información del material.</p>
+        <p className="text-center text-color-secondary">No se encontró información del material.</p>
       )}
     </Dialog>
   );

@@ -1,9 +1,9 @@
 import React from "react";
-import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import { Badge } from "primereact/badge";
+import { Tag } from "primereact/tag";
+import { EmptyState } from "../../../../components/ui";
 
 export const PendingSalesManager = ({
   pendingSales,
@@ -44,10 +44,12 @@ export const PendingSalesManager = ({
     console.log("Cargando venta:", rowData); // Para debug
 
     return (
-      <div className="actions-column">
+      <div className="actions-column flex justify-content-end gap-1">
         <Button
           icon="pi pi-folder-open"
-          className="p-button-rounded p-button-text p-button-info"
+          text
+          rounded
+          severity="info"
           tooltip="Cargar venta"
           tooltipOptions={{ position: "top" }}
           onClick={() => onLoadSale(rowData)}
@@ -55,7 +57,9 @@ export const PendingSalesManager = ({
         />
         <Button
           icon="pi pi-trash"
-          className="p-button-rounded p-button-text p-button-danger"
+          text
+          rounded
+          severity="danger"
           tooltip="Eliminar venta"
           tooltipOptions={{ position: "top" }}
           onClick={() => onDeleteSale(rowData.id)}
@@ -72,21 +76,21 @@ export const PendingSalesManager = ({
             <strong>{rowData.customerData.fullName}</strong>
           </div>
           {rowData.customerData.ci && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-color-secondary">
               CI: {rowData.customerData.ci}
             </div>
           )}
         </div>
       );
     }
-    return <span className="text-gray-400">Sin cliente</span>;
+    return <span className="text-color-secondary">Sin cliente</span>;
   };
 
   const productsBodyTemplate = (rowData) => {
     return (
       <div>
         <div>{rowData.saleDetails.length} productos</div>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-color-secondary">
           Total: ${getTotalAmount(rowData).toFixed(2)}
         </div>
       </div>
@@ -95,7 +99,7 @@ export const PendingSalesManager = ({
 
   const statusBodyTemplate = (rowData) => {
     return (
-      <Badge
+      <Tag
         value={getStepName(rowData.currentStep)}
         severity={getStatusSeverity(rowData.currentStep)}
       />
@@ -111,49 +115,43 @@ export const PendingSalesManager = ({
       case 3:
         return "success";
       case 4:
-        return "help"; // Nuevo color para el paso de pago
+        return "info"; // Paso de pago
       default:
-        return "secondary";
+        return undefined;
     }
   };
 
   if (pendingSales.length === 0) {
     return (
-      <div className="no-pending-sales">
-        <div className="empty-state">
-          <i className="pi pi-inbox empty-icon"></i>
-          <h3>No hay ventas pendientes</h3>
-          <p>Las ventas que guardes como pendientes aparecerán aquí</p>
-        </div>
-      </div>
+      <EmptyState icon="pi pi-inbox" title="No hay ventas pendientes">
+        <p className="m-0">
+          Las ventas que guardes como pendientes aparecerán aquí
+        </p>
+      </EmptyState>
     );
   }
 
   return (
-    <div className="pending-sales-manager">
-      <Card title={`Ventas Pendientes (${pendingSales.length})`}>
-        <DataTable
-          value={pendingSales}
-          paginator
-          rows={10}
-          emptyMessage="No hay ventas pendientes"
-          className="p-datatable-sm"
-        >
-          <Column
-            field="createdAt"
-            header="Creada"
-            body={(rowData) => formatDate(rowData.createdAt)}
-          />
-          <Column header="Cliente" body={customerBodyTemplate} />
-          <Column header="Productos" body={productsBodyTemplate} />
-          <Column header="Estado" body={statusBodyTemplate} />
-          <Column
-            header="Acciones"
-            body={actionBodyTemplate}
-            style={{ width: "120px" }}
-          />
-        </DataTable>
-      </Card>
-    </div>
+    <DataTable
+      value={pendingSales}
+      paginator
+      rows={10}
+      emptyMessage="No hay ventas pendientes"
+      size="small"
+    >
+      <Column
+        field="createdAt"
+        header="Creada"
+        body={(rowData) => formatDate(rowData.createdAt)}
+      />
+      <Column header="Cliente" body={customerBodyTemplate} />
+      <Column header="Productos" body={productsBodyTemplate} />
+      <Column header="Estado" body={statusBodyTemplate} />
+      <Column
+        header="Acciones"
+        body={actionBodyTemplate}
+        className="w-8rem"
+      />
+    </DataTable>
   );
 };

@@ -1,14 +1,15 @@
 import React from 'react';
-import { Card } from 'primereact/card';
 import { SaleTable } from '../components/SaleTable';
-import '../styles/SaleList.css';
+import { PageHeader } from '../../../../components/ui';
 
 export function SaleListPage() {
     return (
-        <div className="sale-list-page">
-            <Card title="Gestión de Ventas">
-                <SaleTable />
-            </Card>
-        </div>
+        <>
+            <PageHeader
+                title="Ventas"
+                subtitle="Registra ventas, valida sus pagos y consulta su estado."
+            />
+            <SaleTable />
+        </>
     );
 }

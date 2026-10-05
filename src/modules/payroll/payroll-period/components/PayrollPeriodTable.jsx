@@ -48,7 +48,7 @@ const dateBodyTemplate = (rowData, field) => {
   return (
     <div className="flex flex-column">
       <span>{date.toLocaleDateString()}</span>
-      <small className="text-secondary">{date.toLocaleTimeString()}</small>
+      <small className="text-color-secondary">{date.toLocaleTimeString()}</small>
     </div>
   );
 };
@@ -88,7 +88,7 @@ const securityEntitiesBodyTemplate = (rowData) => {
       {entities.length > 0 ? (
         entities.map((entity, index) => <small key={index}>{entity}</small>)
       ) : (
-        <span className="text-secondary">—</span>
+        <span className="text-color-secondary">—</span>
       )}
     </div>
   );
@@ -148,14 +148,14 @@ const auditBodyTemplate = (rowData) => {
         <small>
           <strong>Creado:</strong> {createdBy.name || createdBy.email || `#${createdBy.id}`}
           <br />
-          <span className="text-secondary">{new Date(rowData.createdAt).toLocaleDateString()}</span>
+          <span className="text-color-secondary">{new Date(rowData.createdAt).toLocaleDateString()}</span>
         </small>
       )}
       {updatedBy && createdBy?.id !== updatedBy?.id && (
         <small>
           <strong>Actualizado:</strong> {updatedBy.name || updatedBy.email || `#${updatedBy.id}`}
           <br />
-          <span className="text-secondary">{new Date(rowData.updatedAt).toLocaleDateString()}</span>
+          <span className="text-color-secondary">{new Date(rowData.updatedAt).toLocaleDateString()}</span>
         </small>
       )}
     </div>
@@ -191,14 +191,14 @@ export function PayrollPeriodTable() {
         header: 'ID',
         body: idBodyTemplate,
         sortable: true,
-        style: { width: '80px' },
+        className: 'w-6rem',
       },
       {
         field: 'name',
         header: 'Nombre',
         sortable: true,
         filter: true,
-        style: { minWidth: '150px' },
+        className: 'w-11rem',
       },
       {
         field: 'description',
@@ -206,7 +206,7 @@ export function PayrollPeriodTable() {
         body: descriptionBodyTemplate,
         sortable: true,
         filter: true,
-        style: { minWidth: '200px' },
+        className: 'w-14rem',
         visible: false, // Oculta por defecto para no saturar
       },
       {
@@ -214,14 +214,14 @@ export function PayrollPeriodTable() {
         header: 'Período',
         body: dateRangeBodyTemplate,
         sortable: false,
-        style: { minWidth: '200px' },
+        className: 'w-14rem',
       },
       {
         field: 'startDate',
         header: 'Fecha Inicio',
         body: (rowData) => dateBodyTemplate(rowData, 'startDate'),
         sortable: true,
-        style: { width: '150px' },
+        className: 'w-11rem',
         visible: false,
       },
       {
@@ -229,7 +229,7 @@ export function PayrollPeriodTable() {
         header: 'Fecha Fin',
         body: (rowData) => dateBodyTemplate(rowData, 'endDate'),
         sortable: true,
-        style: { width: '150px' },
+        className: 'w-11rem',
         visible: false,
       },
       {
@@ -238,26 +238,26 @@ export function PayrollPeriodTable() {
         body: statusBodyTemplate,
         sortable: true,
         filter: true,
-        style: { width: '120px' },
+        className: 'w-9rem',
       },
       {
         field: 'entities',
         header: 'Organización',
         body: securityEntitiesBodyTemplate,
-        style: { minWidth: '150px' },
+        className: 'w-11rem',
       },
       {
         field: 'payments',
         header: 'Resumen de Pagos',
         body: paymentsSummaryBodyTemplate,
-        style: { minWidth: '200px' },
+        className: 'w-14rem',
       },
       {
         field: 'createdAt',
         header: 'Creado',
         body: (rowData) => dateBodyTemplate(rowData, 'createdAt'),
         sortable: true,
-        style: { width: '150px' },
+        className: 'w-11rem',
         visible: false,
       },
       {
@@ -265,14 +265,14 @@ export function PayrollPeriodTable() {
         header: 'Actualizado',
         body: (rowData) => dateBodyTemplate(rowData, 'updatedAt'),
         sortable: true,
-        style: { width: '150px' },
+        className: 'w-11rem',
         visible: false,
       },
       {
         field: 'audit',
         header: 'Auditoría',
         body: auditBodyTemplate,
-        style: { minWidth: '200px' },
+        className: 'w-14rem',
         visible: false,
       },
     ],
@@ -400,10 +400,12 @@ export function PayrollPeriodTable() {
 
   const actionBodyTemplate = (rowData) => {
     return (
-      <div className="actions-column" style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
+      <div className="actions-column">
         <Button
           icon="pi pi-chart-line"
-          className="p-button-rounded p-button-text p-button-success"
+          text
+          rounded
+          severity="success"
           tooltip="Calcular Pagos"
           tooltipOptions={{ position: 'top' }}
           onClick={() => handleCalculate(rowData)}
@@ -412,14 +414,17 @@ export function PayrollPeriodTable() {
           <>
             <Button
               icon="pi pi-pencil"
-              className="p-button-rounded p-button-text"
+              text
+              rounded
               tooltip="Editar"
               tooltipOptions={{ position: 'top' }}
               onClick={() => handleEdit(rowData.id)}
             />
             <Button
               icon="pi pi-lock"
-              className="p-button-rounded p-button-text p-button-warning"
+              text
+              rounded
+              severity="warning"
               tooltip="Cerrar período"
               tooltipOptions={{ position: 'top' }}
               onClick={() => handleClosePeriod(rowData.id)}
@@ -428,14 +433,18 @@ export function PayrollPeriodTable() {
         )}
         <Button
           icon="pi pi-trash"
-          className="p-button-rounded p-button-text p-button-danger"
+          text
+          rounded
+          severity="danger"
           tooltip="Eliminar"
           tooltipOptions={{ position: 'top' }}
           onClick={() => handleDelete(rowData.id)}
         />
         <Button
           icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
+          text
+          rounded
+          severity="info"
           tooltip="Ver detalles"
           tooltipOptions={{ position: 'top' }}
           onClick={() => handleViewDetails(rowData.id)}
@@ -478,8 +487,7 @@ export function PayrollPeriodTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: '12rem' }}
-          bodyStyle={{ textAlign: 'center' }}
+          headerClassName="w-12rem"
         />
       </GenericDataTable>
 

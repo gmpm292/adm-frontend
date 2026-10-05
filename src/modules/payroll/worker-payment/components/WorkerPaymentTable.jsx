@@ -72,11 +72,11 @@ const workerBodyTemplate = (rowData) => {
   return (
     <div className="flex flex-column">
       <span className="font-bold">{fullName}</span>
-      <small className="text-secondary">
+      <small className="text-color-secondary">
         Tipo: {workerType} | ID: {worker.id}
       </small>
       {worker.user && (
-        <small className="text-secondary">Usuario: {worker.user.email}</small>
+        <small className="text-color-secondary">Usuario: {worker.user.email}</small>
       )}
     </div>
   );
@@ -98,7 +98,7 @@ const amountBodyTemplate = (rowData) => {
         }).format(amount)}
       </span>
       {rowData.exchangeRate && rowData.exchangeRate !== 1 && (
-        <small className="text-secondary">Tasa: {rowData.exchangeRate}</small>
+        <small className="text-color-secondary">Tasa: {rowData.exchangeRate}</small>
       )}
     </div>
   );
@@ -156,7 +156,7 @@ const payrollPeriodBodyTemplate = (rowData) => {
   return (
     <div className="flex flex-column">
       <span className="font-medium">{period.name}</span>
-      <small className="text-secondary">ID: {period.id}</small>
+      <small className="text-color-secondary">ID: {period.id}</small>
     </div>
   );
 };
@@ -166,7 +166,7 @@ const payrollPeriodBodyTemplate = (rowData) => {
  */
 const saleBodyTemplate = (rowData) => {
   const sale = rowData.sale;
-  if (!sale) return <span className="text-secondary">Sin venta</span>;
+  if (!sale) return <span className="text-color-secondary">Sin venta</span>;
 
   const saleDate = sale.effectiveDate
     ? new Date(sale.effectiveDate).toLocaleDateString()
@@ -175,7 +175,7 @@ const saleBodyTemplate = (rowData) => {
   return (
     <div className="flex flex-column">
       <span className="font-medium">Venta #{sale.id}</span>
-      <small className="text-secondary">{saleDate}</small>
+      <small className="text-color-secondary">{saleDate}</small>
     </div>
   );
 };
@@ -210,7 +210,7 @@ const dateBodyTemplate = (rowData) => {
   return (
     <div className="flex flex-column">
       <span>{new Date(rowData.createdAt).toLocaleDateString()}</span>
-      <small className="text-secondary">
+      <small className="text-color-secondary">
         {new Date(rowData.createdAt).toLocaleTimeString()}
       </small>
     </div>
@@ -273,7 +273,7 @@ const securityEntitiesBodyTemplate = (rowData) => {
       {entities.length > 0 ? (
         entities.map((entity, index) => <small key={index}>{entity}</small>)
       ) : (
-        <span className="text-secondary">—</span>
+        <span className="text-color-secondary">—</span>
       )}
     </div>
   );
@@ -341,7 +341,7 @@ export function WorkerPaymentTable() {
         header: "ID",
         body: idBodyTemplate,
         sortable: true,
-        style: { width: "80px" },
+        className: "w-6rem",
       },
       {
         field: "worker",
@@ -350,14 +350,14 @@ export function WorkerPaymentTable() {
         sortable: true,
         filter: true,
         filterField: "worker.user.name",
-        style: { minWidth: "200px" },
+        className: "w-14rem",
       },
       {
         field: "amount",
         header: "Monto",
         body: amountBodyTemplate,
         sortable: true,
-        style: { width: "120px" },
+        className: "w-9rem",
       },
       {
         field: "paymentConcept",
@@ -365,7 +365,7 @@ export function WorkerPaymentTable() {
         body: paymentConceptBodyTemplate,
         sortable: true,
         filter: true,
-        style: { width: "120px" },
+        className: "w-9rem",
       },
       {
         field: "paymentMethod",
@@ -373,7 +373,7 @@ export function WorkerPaymentTable() {
         body: paymentMethodBodyTemplate,
         sortable: true,
         filter: true,
-        style: { width: "120px" },
+        className: "w-9rem",
       },
       {
         field: "paidStatus",
@@ -381,14 +381,14 @@ export function WorkerPaymentTable() {
         body: paidStatusBodyTemplate,
         sortable: true,
         filter: true,
-        style: { width: "100px" },
+        className: "w-7rem",
       },
       {
         field: "paidDate",
         header: "Fecha de Pago",
         body: paidDateBodyTemplate,
         sortable: true,
-        style: { width: "160px" },
+        className: "w-12rem",
       },
       {
         field: "payrollPeriod",
@@ -396,33 +396,33 @@ export function WorkerPaymentTable() {
         body: payrollPeriodBodyTemplate,
         sortable: true,
         filter: true,
-        style: { minWidth: "150px" },
+        className: "w-11rem",
       },
       {
         field: "sale",
         header: "Venta",
         body: saleBodyTemplate,
         sortable: true,
-        style: { width: "150px" },
+        className: "w-11rem",
       },
       {
         field: "breakdown",
         header: "Desglose",
         body: breakdownBodyTemplate,
-        style: { minWidth: "200px" },
+        className: "w-14rem",
       },
       {
         field: "entities",
         header: "Organización",
         body: securityEntitiesBodyTemplate,
-        style: { minWidth: "150px" },
+        className: "w-11rem",
         visible: false,
       },
       {
         field: "notes",
         header: "Notas",
         body: notesBodyTemplate,
-        style: { minWidth: "150px" },
+        className: "w-11rem",
         visible: false,
       },
       {
@@ -430,14 +430,14 @@ export function WorkerPaymentTable() {
         header: "Creado",
         body: dateBodyTemplate,
         sortable: true,
-        style: { width: "150px" },
+        className: "w-11rem",
         visible: false,
       },
       {
         field: "audit",
         header: "Auditoría",
         body: auditBodyTemplate,
-        style: { minWidth: "150px" },
+        className: "w-11rem",
         visible: false,
       },
     ],
@@ -505,6 +505,7 @@ export function WorkerPaymentTable() {
     handleRefresh();
   }, [handleRefresh]);
 
+  // eslint-disable-next-line no-unused-vars -- la acción de fila que lo usa está comentada
   const handleEdit = (id) => {
     setSelectedPaymentId(id);
     setEditDialogVisible(true);
@@ -515,6 +516,7 @@ export function WorkerPaymentTable() {
     setDetailDialogVisible(true);
   };
 
+  // eslint-disable-next-line no-unused-vars -- la acción de fila que lo usa está comentada
   const handleDelete = (id) => {
     confirmDialog({
       message: "¿Estás seguro de que deseas eliminar este pago?",
@@ -549,21 +551,26 @@ export function WorkerPaymentTable() {
       <div className="actions-column">
         <Button
           icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
+          text
+          rounded
+          severity="info"
           tooltip="Ver detalles"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleViewDetails(rowData.id)}
         />
         {/* <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
           tooltip="Editar"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
         <Button
           icon="pi pi-trash"
-          className="p-button-rounded p-button-text p-button-danger"
+          text
+          rounded
+          severity="danger"
           tooltip="Eliminar"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleDelete(rowData.id)}
@@ -613,8 +620,7 @@ export function WorkerPaymentTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "8rem" }}
-          bodyStyle={{ textAlign: "center" }}
+          headerClassName="w-8rem"
         />
       </GenericDataTable>
 

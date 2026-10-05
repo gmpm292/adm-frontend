@@ -9,7 +9,7 @@ import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
-import { Badge } from "primereact/badge";
+import { Tag } from "primereact/tag";
 import { ScopedAccessEditForm } from "./ScopedAccessEditForm";
 import { ScopedAccessCreateForm } from "./ScopedAccessCreateForm";
 import { ScopedAccessDetailForm } from "./ScopedAccessDetailForm";
@@ -205,13 +205,13 @@ export function ScopedAccessTable() {
 
   const accessLevelsBodyTemplate = (rowData) => {
     if (!rowData.accessLevels || rowData.accessLevels.length === 0) {
-      return <Badge value="Sin niveles" severity="danger" />;
+      return <Tag value="Sin niveles" severity="danger" />;
     }
 
     const levelConfig = {
       BUSINESS: { label: "Negocio", severity: "info" },
       OFFICE: { label: "Oficina", severity: "warning" },
-      DEPARTMENT: { label: "Departamento", severity: "help" },
+      DEPARTMENT: { label: "Departamento" },
       TEAM: { label: "Equipo", severity: "success" },
       GENERAL: { label: "General", severity: "secondary" },
       PERSONAL: { label: "Personal", severity: "contrast" },
@@ -226,7 +226,7 @@ export function ScopedAccessTable() {
             severity: "secondary",
           };
           return (
-            <Badge
+            <Tag
               key={index}
               value={config.label}
               severity={config.severity}
@@ -234,7 +234,7 @@ export function ScopedAccessTable() {
           );
         })}
         {rowData.accessLevels.length > 3 && (
-          <Badge value={`+${rowData.accessLevels.length - 3}`} />
+          <Tag value={`+${rowData.accessLevels.length - 3}`} severity="secondary" />
         )}
       </div>
     );
@@ -243,13 +243,9 @@ export function ScopedAccessTable() {
   const statusBodyTemplate = (rowData) => {
     const isActive = rowData.entityStatus == 1;
     return (
-      <i
-        className={`pi ${
-          isActive
-            ? "pi-check-circle text-green-500"
-            : "pi-times-circle text-red-500"
-        }`}
-        style={{ fontSize: "1.25rem" }}
+      <Tag
+        severity={isActive ? "success" : "danger"}
+        value={isActive ? "Habilitado" : "Deshabilitado"}
       />
     );
   };
@@ -275,21 +271,26 @@ export function ScopedAccessTable() {
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
           tooltip="Editar niveles de acceso"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
         <Button
           icon="pi pi-trash"
-          className="p-button-rounded p-button-text p-button-danger"
+          text
+          rounded
+          severity="danger"
           tooltip="Eliminar nivel de acceso"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleDelete(rowData.id)}
         />
         <Button
           icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
+          text
+          rounded
+          severity="secondary"
           tooltip="Ver detalles"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleViewDetails(rowData.id)}
@@ -379,8 +380,7 @@ export function ScopedAccessTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "12rem" }}
-          bodyStyle={{ textAlign: "center" }}
+          headerClassName="w-12rem"
         />
       </GenericDataTable>
 

@@ -13,7 +13,10 @@ import { client } from "./apollo";
 import { AuthProvider } from "./modules/auth/components/AuthContext";
 import ProtectedRoute from "./modules/auth/components/ProtectedRoute";
 import { LoginPage } from "./modules/auth/pages/LoginPage";
-import { MainLayout } from "./layout/components/MainLayout";
+import { UnauthorizedPage } from "./modules/auth/pages/UnauthorizedPage";
+import { ForgotPasswordPage } from "./modules/auth/pages/ForgotPasswordPage";
+import { TwoFactorPage } from "./modules/auth/pages/TwoFactorPage";
+import { AppShell } from "./layout/components/AppShell";
 import { Analytics } from "./modules/statistics/pages/Analytics";
 import { Sales } from "./modules/statistics/pages/Sales";
 import { UserListPage } from "./modules/user/pages/UserListPage";
@@ -28,20 +31,9 @@ import { ConfigListPage } from "./modules/config/pages/ConfigListPage";
 import { ProfilePage } from "./modules/user/pages/ProfilePage";
 import { EmailSettingsPage } from "./modules/auth/email/email_oauth_config/pages/EmailSettingsPage";
 
-// Importaciones de PrimeReact
-import "primereact/resources/themes/lara-light-indigo/theme.css";
-import "primereact/resources/primereact.min.css";
-import "primeicons/primeicons.css";
-import "primeflex/primeflex.css";
-import "./App.css";
-import "./styles/ButtonStyles.css";
-import "./styles/dialogs.css";
-import "./components/BaseTable/styles.css";
-
 // Importar locale español
 import { PrimeReactProvider } from "primereact/api";
 import { setupLocales } from "./locales/i18n";
-import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import { QzTrayPage } from "./modules/printing/printing.module";
 import { RoleGuardListPage } from "./modules/role-guard";
 import { ScopedAccessListPage } from "./modules/scoped-access";
@@ -80,113 +72,66 @@ function App() {
                 path="/change-password/:confirmationToken"
                 element={<ChangePasswordPage />}
               />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/two-factor" element={<TwoFactorPage />} />
+              <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
               <Route element={<ProtectedRoute />}>
+                <Route element={<AppShell />}>
                 <Route
                   path="/statistics/analytics"
-                  element={
-                    <MainLayout>
-                      <Analytics />
-                    </MainLayout>
-                  }
+                  element={<Analytics />}
                 />
                 <Route
                   path="/statistics/sales"
-                  element={
-                    <MainLayout>
-                      <Sales />
-                    </MainLayout>
-                  }
+                  element={<Sales />}
                 />
                 <Route
                   path="/users"
-                  element={
-                    <MainLayout>
-                      <UserListPage />
-                    </MainLayout>
-                  }
+                  element={<UserListPage />}
                 />
                 <Route
                   path="/profile"
-                  element={
-                    <MainLayout>
-                      <ProfilePage />
-                    </MainLayout>
-                  }
+                  element={<ProfilePage />}
                 />
                 <Route
                   path="/configurations"
-                  element={
-                    <MainLayout>
-                      <ConfigListPage />
-                    </MainLayout>
-                  }
+                  element={<ConfigListPage />}
                 />
                 <Route
                   path="/company/*"
-                  element={
-                    <MainLayout>
-                      <CompanyModule />
-                    </MainLayout>
-                  }
+                  element={<CompanyModule />}
                 />
                 <Route
                   path="/inventory/*"
-                  element={
-                    <MainLayout>
-                      <InventoryModule />
-                    </MainLayout>
-                  }
+                  element={<InventoryModule />}
                 />
                 <Route
                   path="/payroll/*"
-                  element={
-                    <MainLayout>
-                      <PayrollModule />
-                    </MainLayout>
-                  }
+                  element={<PayrollModule />}
                 />
                 <Route
                   path="/sales/*"
-                  element={
-                    <MainLayout>
-                      <SalesModule />
-                    </MainLayout>
-                  }
+                  element={<SalesModule />}
                 />
                 <Route
                   path="/system/email"
-                  element={
-                    <MainLayout>
-                      <EmailSettingsPage />
-                    </MainLayout>
-                  }
+                  element={<EmailSettingsPage />}
                 />
                 <Route
                   path="/system/printing"
-                  element={
-                    <MainLayout>
-                      <QzTrayPage />
-                    </MainLayout>
-                  }
+                  element={<QzTrayPage />}
                 />
 
                 <Route
                   path="/system/security/role-guards"
-                  element={
-                    <MainLayout>
-                      <RoleGuardListPage />
-                    </MainLayout>
-                  }
+                  element={<RoleGuardListPage />}
                 />
                 <Route
                   path="/system/security/scoped-access"
-                  element={
-                    <MainLayout>
-                      <ScopedAccessListPage />
-                    </MainLayout>
-                  }
+                  element={<ScopedAccessListPage />}
                 />
+                </Route>
               </Route>
 
               <Route path="*" element={<Navigate to="/login" replace />} />

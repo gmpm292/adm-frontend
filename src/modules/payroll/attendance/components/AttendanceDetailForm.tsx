@@ -4,6 +4,7 @@ import { useQuery } from "@apollo/client";
 import { GET_ATTENDANCE_BY_ID } from "../graphql/queries";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Tag } from "primereact/tag";
+import { EmptyState } from "../../../../components/ui";
 
 interface AttendanceDetailFormProps {
   attendanceId: number | null;
@@ -100,36 +101,34 @@ export const AttendanceDetailForm: React.FC<AttendanceDetailFormProps> = ({
     <Dialog
       header="Detalles del Registro de Asistencia"
       visible={visible}
-      style={{ width: "700px" }}
+      className="w-full md:w-8 lg:w-6"
       onHide={onHide}
       modal
-      className="attendance-detail-form"
     >
       {loading ? (
-        <div className="flex justify-center align-items-center py-8">
+        <div className="flex justify-content-center align-items-center py-6">
           <ProgressSpinner />
         </div>
       ) : attendance ? (
-        <div className="space-y-4">
+        <div className="flex flex-column gap-4">
           {/* Encabezado con información principal */}
-          <div className="border-round border-1 surface-border p-4 bg-blue-50">
+          <div className="border-round border-1 surface-border p-4 surface-50">
             <div className="flex flex-column md:flex-row md:align-items-center gap-4">
               {/* Avatar y nombre */}
               <div className="flex align-items-center gap-3">
                 <div className="flex-shrink-0">
-                  <div className="w-3rem h-3rem border-circle bg-blue-100 flex align-items-center justify-content-center">
-                    <i className="pi pi-user text-blue-500 text-xl"></i>
+                  <div className="w-3rem h-3rem border-circle bg-primary-100 flex align-items-center justify-content-center">
+                    <i className="pi pi-user text-primary text-xl"></i>
                   </div>
                 </div>
                 <div className="flex-1">
                   <div className="text-lg font-semibold">{workerName}</div>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                      {attendance.worker?.workerType || "N/A"}
-                    </span>
-                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                      <i className="pi pi-calendar mr-1"></i>
-                      {new Date(attendance.attendanceDate).toLocaleDateString(
+                    <Tag severity="info" value={attendance.worker?.workerType || "N/A"} />
+                    <Tag
+                      severity="success"
+                      icon="pi pi-calendar"
+                      value={new Date(attendance.attendanceDate).toLocaleDateString(
                         "es-ES",
                         {
                           weekday: "short",
@@ -138,7 +137,7 @@ export const AttendanceDetailForm: React.FC<AttendanceDetailFormProps> = ({
                           year: "numeric",
                         },
                       )}
-                    </span>
+                    />
                   </div>
                 </div>
               </div>
@@ -171,10 +170,10 @@ export const AttendanceDetailForm: React.FC<AttendanceDetailFormProps> = ({
             <div className="col-12 md:col-6">
               <div className="border-round border-1 surface-border p-3 h-full">
                 <div className="flex align-items-center gap-2 mb-3">
-                  <i className="pi pi-clock text-blue-500"></i>
+                  <i className="pi pi-clock text-primary"></i>
                   <span className="font-semibold">Horarios</span>
                 </div>
-                <div className="space-y-3">
+                <div className="flex flex-column gap-3">
                   <div>
                     <div className="text-xs text-color-secondary">Entrada</div>
                     <div
@@ -199,10 +198,10 @@ export const AttendanceDetailForm: React.FC<AttendanceDetailFormProps> = ({
             <div className="col-12 md:col-6">
               <div className="border-round border-1 surface-border p-3 h-full">
                 <div className="flex align-items-center gap-2 mb-3">
-                  <i className="pi pi-map-marker text-green-500"></i>
+                  <i className="pi pi-map-marker text-primary"></i>
                   <span className="font-semibold">Ubicación</span>
                 </div>
-                <div className="space-y-2">
+                <div className="flex flex-column gap-2">
                   {attendance.business?.name && (
                     <div className="flex align-items-center gap-2">
                       <i className="pi pi-building text-xs text-color-secondary"></i>
@@ -247,7 +246,7 @@ export const AttendanceDetailForm: React.FC<AttendanceDetailFormProps> = ({
             <div className="col-12">
               <div className="border-round border-1 surface-border p-3">
                 <div className="flex align-items-center gap-2 mb-3">
-                  <i className="pi pi-info-circle text-purple-500"></i>
+                  <i className="pi pi-info-circle text-primary"></i>
                   <span className="font-semibold">Información Adicional</span>
                 </div>
                 <div className="grid">
@@ -304,10 +303,10 @@ export const AttendanceDetailForm: React.FC<AttendanceDetailFormProps> = ({
               <div className="col-12">
                 <div className="border-round border-1 surface-border p-3">
                   <div className="flex align-items-center gap-2 mb-3">
-                    <i className="pi pi-file-edit text-orange-500"></i>
+                    <i className="pi pi-file-edit text-primary"></i>
                     <span className="font-semibold">Notas</span>
                   </div>
-                  <div className="p-3 border-round border-1 surface-border bg-gray-50">
+                  <div className="p-3 border-round border-1 surface-border surface-50">
                     <p className="text-sm m-0">{attendance.notes}</p>
                   </div>
                 </div>
@@ -316,8 +315,8 @@ export const AttendanceDetailForm: React.FC<AttendanceDetailFormProps> = ({
 
             {/* Tarjeta 5: Metadatos */}
             <div className="col-12">
-              <div className="border-round border-1 surface-border p-3 bg-gray-50">
-                <div className="text-xs text-color-secondary space-y-1">
+              <div className="border-round border-1 surface-border p-3 surface-50">
+                <div className="text-xs text-color-secondary flex flex-column gap-1">
                   <div className="flex align-items-center gap-2">
                     <i className="pi pi-calendar-plus text-xs"></i>
                     <span>
@@ -358,14 +357,9 @@ export const AttendanceDetailForm: React.FC<AttendanceDetailFormProps> = ({
           </div>
         </div>
       ) : (
-        <div className="text-center py-8">
-          <div className="w-4rem h-4rem border-circle bg-red-100 flex align-items-center justify-content-center mx-auto mb-3">
-            <i className="pi pi-exclamation-triangle text-red-500 text-2xl"></i>
-          </div>
-          <p className="text-color-secondary m-0">
-            No se encontró información del registro de asistencia
-          </p>
-        </div>
+        <EmptyState icon="pi pi-exclamation-triangle">
+          <p>No se encontró información del registro de asistencia</p>
+        </EmptyState>
       )}
     </Dialog>
   );

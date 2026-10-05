@@ -9,6 +9,7 @@ import { InputTextarea } from "primereact/inputtextarea";
 import { Checkbox } from "primereact/checkbox";
 import { useMutation } from "@apollo/client";
 import { Toast } from "primereact/toast";
+import { FormField } from "../../../../components/ui";
 import { CREATE_ATTENDANCE } from "../graphql/queries";
 import { WorkerSelector } from "../../worker/components/WorkerSelector";
 
@@ -317,12 +318,12 @@ export const AttendanceCreateForm: React.FC<AttendanceCreateFormProps> = ({
 
   // Footer del diálogo
   const footer = (
-    <div className="flex justify-content-end gap-2">
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
         disabled={loading}
       />
       <Button
@@ -333,7 +334,7 @@ export const AttendanceCreateForm: React.FC<AttendanceCreateFormProps> = ({
         loading={loading}
         disabled={!formData.workerId || !formData.attendanceDate || loading}
       />
-    </div>
+    </>
   );
 
   return (
@@ -342,11 +343,10 @@ export const AttendanceCreateForm: React.FC<AttendanceCreateFormProps> = ({
       <Dialog
         header="Crear Registro de Asistencia"
         visible={visible}
-        style={{ width: "50vw", minWidth: "300px" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
         modal
-        className="attendance-create-form"
         onShow={() => {
           // Resetear cuando se abre
           setFormData({
@@ -367,37 +367,34 @@ export const AttendanceCreateForm: React.FC<AttendanceCreateFormProps> = ({
           setErrors({});
         }}
       >
-        <div className="p-fluid grid">
+        <div className="formgrid grid">
           {/* Campo: Trabajador (obligatorio) */}
           <div className="col-12">
-            <div className="field">
-              <label htmlFor="worker" className="block mb-2">
-                Trabajador *
-                {errors.workerId && (
-                  <small className="p-error ml-2">{errors.workerId}</small>
-                )}
-              </label>
+            <FormField
+              label="Trabajador"
+              htmlFor="worker"
+              required
+              error={errors.workerId}
+            >
               <WorkerSelector
                 onWorkerSelected={handleWorkerSelect}
                 selectedWorkerId={formData.workerId}
                 placeholder="Busque y seleccione un trabajador..."
                 disabled={loading}
               />
-            </div>
+            </FormField>
           </div>
 
           {/* Campos: Fecha y Estado */}
-          <div className="col-6">
-            <div className="field">
-              <label htmlFor="attendanceDate" className="block mb-2">
-                Fecha de Asistencia *
-                {errors.attendanceDate && (
-                  <small className="p-error ml-2">
-                    {errors.attendanceDate}
-                  </small>
-                )}
-              </label>
+          <div className="col-12 md:col-6">
+            <FormField
+              label="Fecha de Asistencia"
+              htmlFor="attendanceDate"
+              required
+              error={errors.attendanceDate}
+            >
               <Calendar
+                invalid={Boolean(errors.attendanceDate)}
                 id="attendanceDate"
                 value={formData.attendanceDate}
                 onChange={(e) => handleInputChange("attendanceDate", e.value)}
@@ -407,14 +404,11 @@ export const AttendanceCreateForm: React.FC<AttendanceCreateFormProps> = ({
                 disabled={loading}
                 required
               />
-            </div>
+            </FormField>
           </div>
 
-          <div className="col-6">
-            <div className="field">
-              <label htmlFor="status" className="block mb-2">
-                Estado
-              </label>
+          <div className="col-12 md:col-6">
+            <FormField label="Estado" htmlFor="status">
               <Dropdown
                 id="status"
                 value={formData.status}
@@ -424,19 +418,19 @@ export const AttendanceCreateForm: React.FC<AttendanceCreateFormProps> = ({
                 className="w-full"
                 disabled={loading}
               />
-            </div>
+            </FormField>
           </div>
 
           {/* Campos: Hora de entrada y salida */}
-          <div className="col-6">
-            <div className="field">
-              <label htmlFor="checkInTime" className="block mb-2">
-                Hora de Entrada (HH:mm)
-                {errors.checkInTime && (
-                  <small className="p-error ml-2">{errors.checkInTime}</small>
-                )}
-              </label>
+          <div className="col-12 md:col-6">
+            <FormField
+              label="Hora de Entrada (HH:mm)"
+              htmlFor="checkInTime"
+              hint="Formato 24h (ej: 08:30, 14:00)"
+              error={errors.checkInTime}
+            >
               <InputText
+                invalid={Boolean(errors.checkInTime)}
                 id="checkInTime"
                 value={formData.checkInTime}
                 onChange={(e) =>
@@ -447,21 +441,17 @@ export const AttendanceCreateForm: React.FC<AttendanceCreateFormProps> = ({
                 disabled={loading}
                 maxLength={5}
               />
-              <small className="text-color-secondary">
-                Formato 24h (ej: 08:30, 14:00)
-              </small>
-            </div>
+            </FormField>
           </div>
 
-          <div className="col-6">
-            <div className="field">
-              <label htmlFor="checkOutTime" className="block mb-2">
-                Hora de Salida (HH:mm)
-                {errors.checkOutTime && (
-                  <small className="p-error ml-2">{errors.checkOutTime}</small>
-                )}
-              </label>
+          <div className="col-12 md:col-6">
+            <FormField
+              label="Hora de Salida (HH:mm)"
+              htmlFor="checkOutTime"
+              error={errors.checkOutTime}
+            >
               <InputText
+                invalid={Boolean(errors.checkOutTime)}
                 id="checkOutTime"
                 value={formData.checkOutTime}
                 onChange={(e) =>
@@ -472,15 +462,20 @@ export const AttendanceCreateForm: React.FC<AttendanceCreateFormProps> = ({
                 disabled={loading}
                 maxLength={5}
               />
-            </div>
+            </FormField>
           </div>
 
           {/* Campos: Horas trabajadas y Día festivo */}
-          <div className="col-6">
-            <div className="field">
-              <label htmlFor="hoursWorked" className="block mb-2">
-                Horas Trabajadas
-              </label>
+          <div className="col-12 md:col-6">
+            <FormField
+              label="Horas Trabajadas"
+              htmlFor="hoursWorked"
+              hint={
+                formData.checkInTime && formData.checkOutTime
+                  ? "Calculado automáticamente"
+                  : "Ingrese manualmente"
+              }
+            >
               <InputNumber
                 id="hoursWorked"
                 value={formData.hoursWorked}
@@ -491,16 +486,11 @@ export const AttendanceCreateForm: React.FC<AttendanceCreateFormProps> = ({
                 readOnly
                 disabled={loading}
               />
-              <small className="text-color-secondary">
-                {formData.checkInTime && formData.checkOutTime
-                  ? "Calculado automáticamente"
-                  : "Ingrese manualmente"}
-              </small>
-            </div>
+            </FormField>
           </div>
 
-          <div className="col-6">
-            <div className="field flex align-items-center mt-4">
+          <div className="col-12 md:col-6">
+            <div className="flex align-items-center mb-4">
               <Checkbox
                 id="isHoliday"
                 checked={formData.isHoliday}
@@ -515,10 +505,7 @@ export const AttendanceCreateForm: React.FC<AttendanceCreateFormProps> = ({
 
           {/* Campo: Notas */}
           <div className="col-12">
-            <div className="field">
-              <label htmlFor="notes" className="block mb-2">
-                Notas
-              </label>
+            <FormField label="Notas" htmlFor="notes">
               <InputTextarea
                 id="notes"
                 value={formData.notes}
@@ -528,19 +515,19 @@ export const AttendanceCreateForm: React.FC<AttendanceCreateFormProps> = ({
                 disabled={loading}
                 placeholder="Observaciones adicionales..."
               />
-            </div>
+            </FormField>
           </div>
 
           {/* Información de entidades de seguridad heredadas */}
           {selectedWorker && (
-            <div className="col-12 mt-3">
-              <div className="border-round border-1 surface-border p-3">
+            <div className="col-12">
+              <div className="border-round border-1 surface-border surface-50 p-3">
                 <div className="text-sm font-semibold mb-2">
                   Entidades de seguridad heredadas del trabajador:
                 </div>
                 <div className="grid">
                   {formData.businessId && (
-                    <div className="col-6">
+                    <div className="col-12 md:col-6">
                       <div className="text-xs text-color-secondary">
                         Business:
                       </div>
@@ -550,7 +537,7 @@ export const AttendanceCreateForm: React.FC<AttendanceCreateFormProps> = ({
                     </div>
                   )}
                   {formData.officeId && (
-                    <div className="col-6">
+                    <div className="col-12 md:col-6">
                       <div className="text-xs text-color-secondary">
                         Oficina:
                       </div>
@@ -560,7 +547,7 @@ export const AttendanceCreateForm: React.FC<AttendanceCreateFormProps> = ({
                     </div>
                   )}
                   {formData.departmentId && (
-                    <div className="col-6">
+                    <div className="col-12 md:col-6">
                       <div className="text-xs text-color-secondary">
                         Departamento:
                       </div>
@@ -570,7 +557,7 @@ export const AttendanceCreateForm: React.FC<AttendanceCreateFormProps> = ({
                     </div>
                   )}
                   {formData.teamId && (
-                    <div className="col-6">
+                    <div className="col-12 md:col-6">
                       <div className="text-xs text-color-secondary">
                         Equipo:
                       </div>

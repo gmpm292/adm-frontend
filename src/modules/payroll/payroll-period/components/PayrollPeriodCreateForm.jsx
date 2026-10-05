@@ -6,6 +6,7 @@ import { Calendar } from 'primereact/calendar';
 import { useMutation } from '@apollo/client';
 import { CREATE_PAYROLL_PERIOD } from '../graphql/queries';
 import { Toast } from 'primereact/toast';
+import { FormField } from '../../../../components/ui';
 import SecurityEntitySelector from '../../../../components/SecurityEntitySelector/SecurityEntitySelector';
 
 export const PayrollPeriodCreateForm = ({ visible, onHide, onSuccess }) => {
@@ -87,76 +88,76 @@ export const PayrollPeriodCreateForm = ({ visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
-      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} className="p-button-text" />
+    <>
+      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} severity="secondary" />
       <Button label="Crear" icon="pi pi-check" onClick={handleSubmit} autoFocus />
-    </div>
+    </>
   );
 
   return (
     <>
       <Toast ref={toast} />
-      <Dialog 
-        header="Crear Nuevo Período de Nómina" 
-        visible={visible} 
-        style={{ width: '50vw' }} 
-        footer={footer} 
+      <Dialog
+        header="Crear Nuevo Período de Nómina"
+        visible={visible}
+        className="w-full md:w-8 lg:w-6"
+        footer={footer}
         onHide={onHide}
       >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="name">Nombre*</label>
-            <InputText 
-              id="name" 
-              name="name" 
-              value={formData.name} 
-              onChange={handleChange} 
-              required
+        <div className="formgrid grid">
+          <div className="col-12 md:col-6">
+            <FormField label="Nombre" htmlFor="name" required>
+              <InputText
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </FormField>
+          </div>
+
+          <div className="col-12 md:col-6">
+            <FormField label="Descripción" htmlFor="description">
+              <InputText
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+              />
+            </FormField>
+          </div>
+
+          <div className="col-12 md:col-6">
+            <FormField label="Fecha de Inicio" htmlFor="startDate" required>
+              <Calendar
+                id="startDate"
+                value={formData.startDate}
+                onChange={(e) => handleDateChange('startDate', e.value)}
+                dateFormat="dd/mm/yy"
+                showIcon
+                required
+              />
+            </FormField>
+          </div>
+          <div className="col-12 md:col-6">
+            <FormField label="Fecha de Fin" htmlFor="endDate" required>
+              <Calendar
+                id="endDate"
+                value={formData.endDate}
+                onChange={(e) => handleDateChange('endDate', e.value)}
+                dateFormat="dd/mm/yy"
+                showIcon
+                required
+              />
+            </FormField>
+          </div>
+
+          <div className="col-12">
+            <SecurityEntitySelector
+              onSelectionChange={handleSecurityEntitiesChange}
             />
           </div>
-
-          <div className="p-field">
-            <label htmlFor="description">Descripción</label>
-            <InputText 
-              id="description" 
-              name="description" 
-              value={formData.description} 
-              onChange={handleChange} 
-            />
-          </div>
-
-          <div className="p-grid">
-            <div className="p-col-12 p-md-6">
-              <div className="p-field">
-                <label htmlFor="startDate">Fecha de Inicio*</label>
-                <Calendar
-                  id="startDate"
-                  value={formData.startDate}
-                  onChange={(e) => handleDateChange('startDate', e.value)}
-                  dateFormat="dd/mm/yy"
-                  showIcon
-                  required
-                />
-              </div>
-            </div>
-            <div className="p-col-12 p-md-6">
-              <div className="p-field">
-                <label htmlFor="endDate">Fecha de Fin*</label>
-                <Calendar
-                  id="endDate"
-                  value={formData.endDate}
-                  onChange={(e) => handleDateChange('endDate', e.value)}
-                  dateFormat="dd/mm/yy"
-                  showIcon
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          <SecurityEntitySelector
-            onSelectionChange={handleSecurityEntitiesChange}
-          />
         </div>
       </Dialog>
     </>

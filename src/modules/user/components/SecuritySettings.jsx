@@ -1,39 +1,63 @@
-import React from "react";
+import { useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
-import { CHANGE_PASSWORD_BY_EMAIL, GET_PROFILE } from "../graphql/queries";
+import { CHANGE_OWN_PASSWORD, GET_PROFILE } from "../graphql/queries";
 import { useFormik } from "formik";
 import { Password } from "primereact/password";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
-import { classNames } from "primereact/utils";
 import { Card } from "primereact/card";
-import { Divider } from "primereact/divider";
-import { Badge } from "primereact/badge";
 import { Tag } from "primereact/tag";
 import { Skeleton } from "primereact/skeleton";
+import { FormField } from "../../../components/ui";
+import { TwoFactorDialog } from "./TwoFactorDialog";
+
+const MIN_PASSWORD_LENGTH = 8;
+
+/**
+ * Traduce el error del backend a un mensaje entendible para el usuario
+ */
+const getChangePasswordErrorMessage = (error) => {
+  if (error.networkError) {
+    return "No se pudo conectar con el servidor. Inténtalo de nuevo.";
+  }
+  if (/Current password incorrect/i.test(error.message)) {
+    return "La contraseña actual no es correcta.";
+  }
+  return "No se pudo cambiar la contraseña. Inténtalo de nuevo.";
+};
 
 export function SecuritySettings({ showSuccess }) {
   const {
     data: profileData,
     loading: profileLoading,
     error: profileError,
+    refetch: refetchProfile,
   } = useQuery(GET_PROFILE);
-  const [changePassword, { loading, error }] = useMutation(
-    CHANGE_PASSWORD_BY_EMAIL
-  );
+  const [rejectedValues, setRejectedValues] = useState(null);
+  const [changePassword, { loading, error }] =
+    useMutation(CHANGE_OWN_PASSWORD);
+  // null: cerrado · "enable" · "disable"
+  const [twoFactorMode, setTwoFactorMode] = useState(null);
 
   const formik = useFormik({
     initialValues: {
+      currentPassword: "",
       newPassword: "",
       confirmPassword: "",
     },
     validate: (values) => {
       const errors = {};
 
+      if (!values.currentPassword) {
+        errors.currentPassword = "Contraseña actual requerida";
+      }
+
       if (!values.newPassword) {
         errors.newPassword = "Nueva contraseña requerida";
-      } else if (values.newPassword.length < 4) {
-        errors.newPassword = "Mínimo 4 caracteres";
+      } else if (values.newPassword.length < MIN_PASSWORD_LENGTH) {
+        errors.newPassword = `Mínimo ${MIN_PASSWORD_LENGTH} caracteres`;
+      } else if (values.newPassword === values.currentPassword) {
+        errors.newPassword = "La nueva contraseña debe ser distinta de la actual";
       }
 
       if (values.newPassword !== values.confirmPassword) {
@@ -47,7 +71,7 @@ export function SecuritySettings({ showSuccess }) {
         await changePassword({
           variables: {
             input: {
-              email: profileData?.profile?.email,
+              currentPassword: values.currentPassword,
               newPassword: values.newPassword,
             },
           },
@@ -56,19 +80,16 @@ export function SecuritySettings({ showSuccess }) {
         showSuccess("Contraseña cambiada exitosamente");
       } catch (e) {
         console.error("Error changing password:", e);
+        setRejectedValues(JSON.stringify(values));
       }
     },
   });
 
-  const isFormFieldValid = (field) =>
-    !!(formik.touched[field] && formik.errors[field]);
-  const getFormErrorMessage = (field) => {
-    return (
-      isFormFieldValid(field) && (
-        <small className="p-error">{formik.errors[field]}</small>
-      )
-    );
-  };
+  // El error del servidor solo se muestra mientras los datos sigan siendo los
+  // que se rechazaron; al corregir algo desaparece
+  const showError = error && rejectedValues === JSON.stringify(formik.values);
+
+  const fieldError = (name) => formik.touched[name] && formik.errors[name];
 
   if (profileLoading)
     return (
@@ -89,130 +110,159 @@ export function SecuritySettings({ showSuccess }) {
       </Card>
     );
 
+  const profile = profileData?.profile;
+  const twoFactorActive =
+    profile?.isTwoFactorEnabled && profile?.isTwoFactorConfigured;
+
+  const handleTwoFactorDone = async (enabled) => {
+    setTwoFactorMode(null);
+    await refetchProfile();
+    showSuccess(
+      enabled
+        ? "Verificación en dos pasos activada"
+        : "Verificación en dos pasos desactivada"
+    );
+  };
+
   return (
-    <div className="security-container">
-      {/* Sección de Autenticación */}
-      <Card className="mb-4">
-        <h4>Autenticación</h4>
-        <Divider />
+    <div className="flex flex-column gap-4">
+      <Card title="Autenticación">
         <div className="grid">
           <div className="col-12 md:col-6">
-            <div className="field mb-4">
-              <label>Estado de la Cuenta</label>
-              <div className="p-inputtext">
-                {profileData?.profile?.enabled ? (
+            <FormField label="Estado de la cuenta">
+              <div>
+                {profile?.enabled ? (
                   <Tag severity="success" value="Activa" />
                 ) : (
                   <Tag severity="danger" value="Inactiva" />
                 )}
               </div>
-            </div>
+            </FormField>
           </div>
 
           <div className="col-12 md:col-6">
-            <div className="field mb-4">
-              <label>Autenticación de Dos Factores</label>
-              <div className="flex align-items-center gap-2">
-                {profileData?.profile?.isTwoFactorConfigured ? (
-                  <Badge
-                    value={
-                      profileData.profile.isTwoFactorEnabled
-                        ? "Activado"
-                        : "Desactivado"
-                    }
-                    severity={
-                      profileData.profile.isTwoFactorEnabled
-                        ? "success"
-                        : "warning"
-                    }
-                  />
-                ) : (
-                  <Tag severity="danger" value="No configurado" />
-                )}
+            <FormField
+              label="Verificación en dos pasos"
+              hint="Además de la contraseña, pide un código de tu teléfono al iniciar sesión."
+            >
+              <div className="flex align-items-center gap-3">
+                <Tag
+                  severity={twoFactorActive ? "success" : "warning"}
+                  value={twoFactorActive ? "Activada" : "Desactivada"}
+                />
                 <Button
-                  icon="pi pi-cog"
-                  className="p-button-text p-button-sm"
-                  tooltip="Configurar 2FA"
-                  tooltipOptions={{ position: "top" }}
+                  label={twoFactorActive ? "Desactivar" : "Activar"}
+                  icon={twoFactorActive ? "pi pi-lock-open" : "pi pi-shield"}
+                  severity={twoFactorActive ? "secondary" : undefined}
+                  size="small"
+                  onClick={() =>
+                    setTwoFactorMode(twoFactorActive ? "disable" : "enable")
+                  }
                 />
               </div>
-            </div>
+            </FormField>
           </div>
         </div>
       </Card>
 
-      {/* Sección de Cambio de Contraseña */}
-      <Card>
-        <h4>Cambiar Contraseña</h4>
-        <Divider />
-        {error && (
+      <Card title="Cambiar contraseña">
+        {showError && (
           <Message
             severity="error"
-            text="Error al cambiar contraseña"
-            className="mb-3"
+            text={getChangePasswordErrorMessage(error)}
+            className="w-full mb-4"
           />
         )}
 
-        <form onSubmit={formik.handleSubmit}>
+        <form onSubmit={formik.handleSubmit} noValidate>
           <div className="grid">
             <div className="col-12 md:col-6">
-              <div className="field mb-4">
-                <label htmlFor="newPassword">Nueva Contraseña*</label>
+              <FormField
+                label="Contraseña actual"
+                htmlFor="currentPassword"
+                required
+                error={fieldError("currentPassword")}
+              >
                 <Password
-                  id="newPassword"
+                  inputId="currentPassword"
+                  name="currentPassword"
+                  autoComplete="current-password"
+                  value={formik.values.currentPassword}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  toggleMask
+                  invalid={Boolean(fieldError("currentPassword"))}
+                  disabled={loading}
+                  feedback={false}
+                />
+              </FormField>
+            </div>
+            <div className="col-12 md:col-6" />
+
+            <div className="col-12 md:col-6">
+              <FormField
+                label="Nueva contraseña"
+                htmlFor="newPassword"
+                required
+                hint={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres`}
+                error={fieldError("newPassword")}
+              >
+                <Password
+                  inputId="newPassword"
                   name="newPassword"
+                  autoComplete="new-password"
                   value={formik.values.newPassword}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   toggleMask
-                  className={classNames({
-                    "p-invalid": isFormFieldValid("newPassword"),
-                  })}
+                  invalid={Boolean(fieldError("newPassword"))}
                   disabled={loading}
                   feedback={false}
                 />
-                {getFormErrorMessage("newPassword")}
-                <small className="text-color-secondary">
-                  Mínimo 4 caracteres
-                </small>
-              </div>
+              </FormField>
             </div>
 
             <div className="col-12 md:col-6">
-              <div className="field mb-4">
-                <label htmlFor="confirmPassword">Confirmar Contraseña*</label>
+              <FormField
+                label="Confirmar contraseña"
+                htmlFor="confirmPassword"
+                required
+                error={fieldError("confirmPassword")}
+              >
                 <Password
-                  id="confirmPassword"
+                  inputId="confirmPassword"
                   name="confirmPassword"
+                  autoComplete="new-password"
                   value={formik.values.confirmPassword}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   toggleMask
-                  className={classNames({
-                    "p-invalid": isFormFieldValid("confirmPassword"),
-                  })}
+                  invalid={Boolean(fieldError("confirmPassword"))}
                   disabled={loading}
                   feedback={false}
                 />
-                {getFormErrorMessage("confirmPassword")}
-              </div>
+              </FormField>
             </div>
 
-            <div className="col-12">
-              <div className="flex justify-content-end mt-3">
-                <Button
-                  type="submit"
-                  label="Cambiar Contraseña"
-                  icon="pi pi-key"
-                  className="p-button-warning"
-                  loading={loading}
-                  disabled={!formik.dirty || !formik.isValid || loading}
-                />
-              </div>
+            <div className="col-12 flex justify-content-end">
+              <Button
+                type="submit"
+                label="Cambiar contraseña"
+                icon="pi pi-key"
+                loading={loading}
+                disabled={!formik.dirty || !formik.isValid || loading}
+              />
             </div>
           </div>
         </form>
       </Card>
+
+      <TwoFactorDialog
+        mode={twoFactorMode ?? "enable"}
+        visible={twoFactorMode !== null}
+        onHide={() => setTwoFactorMode(null)}
+        onDone={handleTwoFactorDone}
+      />
     </div>
   );
 }

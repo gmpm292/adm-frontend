@@ -10,18 +10,22 @@ export function RoleTypeTabs({ activeTab, onTabChange }) {
   ];
 
   return (
-    <div className="flex gap-1">
-      {tabs.map((tab) => (
-        <Button
-          key={tab.key}
-          icon={tab.icon}
-          label={tab.label}
-          className={`p-button-sm ${
-            activeTab === tab.key ? "" : "p-button-outlined"
-          }`}
-          onClick={() => onTabChange(tab.key)}
-        />
-      ))}
+    <div className="flex flex-wrap gap-1">
+      {tabs.map((tab) => {
+        const isActive = activeTab === tab.key;
+        return (
+          <Button
+            key={tab.key}
+            icon={tab.icon}
+            label={tab.label}
+            size="small"
+            outlined={isActive}
+            text={!isActive}
+            severity={isActive ? undefined : "secondary"}
+            onClick={() => onTabChange(tab.key)}
+          />
+        );
+      })}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { GET_CONFIG } from "../graphql/queries";
 import { Tag } from "primereact/tag";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
+import { FormField } from "../../../components/ui";
 
 const getVisibilityTag = (visibility: string) => {
   switch (visibility) {
@@ -64,71 +65,78 @@ export const ConfigDetailForm = ({ configId, visible, onHide }) => {
   );
 
   const footer = (
-    <div>
-      <Button
-        label="Cerrar"
-        icon="pi pi-times"
-        onClick={onHide}
-        className="p-button-text"
-      />
-    </div>
+    <Button
+      label="Cerrar"
+      icon="pi pi-times"
+      onClick={onHide}
+      severity="secondary"
+    />
   );
 
   return (
     <Dialog
       header={`Detalles de Configuración - ${config.group}`}
       visible={visible}
-      style={{ width: "50vw" }}
+      className="w-full md:w-8 lg:w-6"
       footer={footer}
       onHide={onHide}
     >
-      <div className="p-fluid">
-        <div className="p-field">
-          <label>ID</label>
-          <div>{config.id}</div>
+      <div className="grid">
+        <div className="col-12 md:col-6">
+          <FormField label="ID">
+            <div>{config.id}</div>
+          </FormField>
         </div>
 
-        <div className="p-field">
-          <label>Grupo</label>
-          <div>{config.group}</div>
+        <div className="col-12 md:col-6">
+          <FormField label="Grupo">
+            <div>{config.group}</div>
+          </FormField>
         </div>
 
-        <div className="p-field">
-          <label>Descripción</label>
-          <div>{config.description || "-"}</div>
+        <div className="col-12">
+          <FormField label="Descripción">
+            <div>{config.description || "-"}</div>
+          </FormField>
         </div>
 
-        <div className="p-field">
-          <label>Categoría</label>
-          <div>{getCategoryTag(config.category)}</div>
+        <div className="col-12 md:col-6">
+          <FormField label="Categoría">
+            <div>{getCategoryTag(config.category)}</div>
+          </FormField>
         </div>
 
-        <div className="p-field">
-          <label>Visibilidad</label>
-          <div>{getVisibilityTag(config.configVisibility)}</div>
+        <div className="col-12 md:col-6">
+          <FormField label="Visibilidad">
+            <div>{getVisibilityTag(config.configVisibility)}</div>
+          </FormField>
         </div>
 
-        <div className="p-field">
-          <label>Estado</label>
-          <div>{getStatusTag(config.configStatus)}</div>
+        <div className="col-12 md:col-6">
+          <FormField label="Estado">
+            <div>{getStatusTag(config.configStatus)}</div>
+          </FormField>
         </div>
 
-        <div className="p-field">
-          <label>Valores</label>
-          <DataTable value={valuesArray} paginator rows={5}>
-            <Column field="key" header="Clave" />
-            <Column field="value" header="Valor" />
-          </DataTable>
+        <div className="col-12">
+          <FormField label="Valores">
+            <DataTable value={valuesArray} paginator rows={5}>
+              <Column field="key" header="Clave" />
+              <Column field="value" header="Valor" />
+            </DataTable>
+          </FormField>
         </div>
 
-        <div className="p-field">
-          <label>Creado en</label>
-          <div>{new Date(config.createdAt).toLocaleString()}</div>
+        <div className="col-12 md:col-6">
+          <FormField label="Creado en">
+            <div>{new Date(config.createdAt).toLocaleString()}</div>
+          </FormField>
         </div>
 
-        <div className="p-field">
-          <label>Actualizado en</label>
-          <div>{new Date(config.updatedAt).toLocaleString()}</div>
+        <div className="col-12 md:col-6">
+          <FormField label="Actualizado en">
+            <div>{new Date(config.updatedAt).toLocaleString()}</div>
+          </FormField>
         </div>
       </div>
     </Dialog>

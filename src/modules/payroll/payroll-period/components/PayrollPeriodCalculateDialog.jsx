@@ -10,6 +10,7 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Tag } from "primereact/tag";
 import { useMutation } from "@apollo/client";
+import { EmptyState } from "../../../../components/ui";
 import {
   PROCESS_PERIOD_PAYMENTS,
   PROCESS_PERIOD_SALES,
@@ -145,7 +146,7 @@ export const PayrollPeriodCalculateDialog = ({
     return (
       <div className="flex flex-column">
         {rowData.errors.map((error, index) => (
-          <small key={index} className="text-red-500">
+          <small key={index} className="text-red-600">
             {error}
           </small>
         ))}
@@ -193,19 +194,17 @@ export const PayrollPeriodCalculateDialog = ({
   };
 
   const footer = (
-    <div>
-      <Button
-        label="Cerrar"
-        icon="pi pi-times"
-        onClick={onHide}
-        className="p-button-text"
-      />
-    </div>
+    <Button
+      label="Cerrar"
+      icon="pi pi-times"
+      onClick={onHide}
+      severity="secondary"
+    />
   );
 
   const headerElement = (
     <div className="flex align-items-center gap-2">
-      <i className="pi pi-calculator" style={{ fontSize: "1.5rem" }}></i>
+      <i className="pi pi-calculator text-2xl"></i>
       <span className="text-xl font-bold">
         Calcular Pagos: {period?.name || "Período de Nómina"}
       </span>
@@ -218,7 +217,7 @@ export const PayrollPeriodCalculateDialog = ({
       <Dialog
         header={headerElement}
         visible={visible}
-        style={{ width: "80vw", maxWidth: "1200px" }}
+        className="w-full lg:w-10"
         footer={footer}
         onHide={onHide}
         modal
@@ -236,7 +235,7 @@ export const PayrollPeriodCalculateDialog = ({
           >
             <div className="flex flex-column gap-3">
               <div className="flex justify-content-between align-items-center">
-                <span className="text-secondary">
+                <span className="text-color-secondary">
                   Calcular pagos basados en salarios base y reglas de pago
                 </span>
                 <Button
@@ -245,7 +244,6 @@ export const PayrollPeriodCalculateDialog = ({
                   onClick={handleCalculatePayments}
                   loading={loadingPayments}
                   disabled={loadingSales || !period?.id}
-                  className="p-button-primary"
                 />
               </div>
 
@@ -260,9 +258,9 @@ export const PayrollPeriodCalculateDialog = ({
               {paymentResults && (
                 <div className="flex flex-column gap-3">
                   <div className="grid">
-                    <div className="col-4">
-                      <div className="p-3 surface-200 border-round text-center">
-                        <span className="text-secondary block">
+                    <div className="col-12 md:col-4">
+                      <div className="p-3 surface-100 border-round text-center">
+                        <span className="text-color-secondary block">
                           Total Procesados
                         </span>
                         <span className="text-2xl font-bold">
@@ -270,17 +268,17 @@ export const PayrollPeriodCalculateDialog = ({
                         </span>
                       </div>
                     </div>
-                    <div className="col-4">
-                      <div className="p-3 surface-200 border-round text-center">
-                        <span className="text-secondary block">Exitosos</span>
+                    <div className="col-12 md:col-4">
+                      <div className="p-3 surface-100 border-round text-center">
+                        <span className="text-color-secondary block">Exitosos</span>
                         <span className="text-2xl font-bold text-green-600">
                           {paymentResults.successCount}
                         </span>
                       </div>
                     </div>
-                    <div className="col-4">
-                      <div className="p-3 surface-200 border-round text-center">
-                        <span className="text-secondary block">
+                    <div className="col-12 md:col-4">
+                      <div className="p-3 surface-100 border-round text-center">
+                        <span className="text-color-secondary block">
                           Con Errores
                         </span>
                         <span className="text-2xl font-bold text-red-600">
@@ -302,55 +300,54 @@ export const PayrollPeriodCalculateDialog = ({
                       field="workerId"
                       header="ID Trabajador"
                       sortable
-                      style={{ width: "120px" }}
+                      className="w-9rem"
                     />
                     <Column
                       header="Trabajador"
                       body={workerNameBodyTemplate}
                       sortable
-                      style={{ minWidth: "200px" }}
+                      className="w-14rem"
                     />
                     <Column
                       header="Concepto"
                       body={conceptBodyTemplate}
                       sortable
-                      style={{ width: "120px" }}
+                      className="w-9rem"
                     />
                     <Column
                       header="Monto"
                       body={amountBodyTemplate}
                       sortable
-                      style={{ width: "150px" }}
+                      className="w-11rem"
                     />
                     <Column
                       field="currency"
                       header="Moneda"
                       sortable
-                      style={{ width: "100px" }}
+                      className="w-7rem"
                     />
                     <Column
                       header="Estado"
                       body={statusBodyTemplate}
                       sortable
-                      style={{ width: "120px" }}
+                      className="w-9rem"
                     />
                     <Column
                       header="Errores"
                       body={errorBodyTemplate}
-                      style={{ minWidth: "200px" }}
+                      className="w-14rem"
                     />
                   </DataTable>
                 </div>
               )}
 
               {!loadingPayments && !paymentResults && (
-                <div className="text-center p-4 surface-200 border-round">
-                  <i className="pi pi-info-circle text-3xl text-secondary mb-2"></i>
-                  <p className="text-secondary">
+                <EmptyState icon="pi pi-info-circle">
+                  <p>
                     Haz clic en "Calcular Pagos Fijos" para procesar los pagos
                     del período
                   </p>
-                </div>
+                </EmptyState>
               )}
             </div>
           </TabPanel>
@@ -359,7 +356,7 @@ export const PayrollPeriodCalculateDialog = ({
           <TabPanel header="Pagos por Ventas" leftIcon="pi pi-chart-line mr-2">
             <div className="flex flex-column gap-3">
               <div className="flex justify-content-between align-items-center">
-                <span className="text-secondary">
+                <span className="text-color-secondary">
                   Calcular comisiones y pagos basados en ventas del período
                 </span>
                 <Button
@@ -368,7 +365,6 @@ export const PayrollPeriodCalculateDialog = ({
                   onClick={handleCalculateSales}
                   loading={loadingSales}
                   disabled={loadingPayments || !period?.id}
-                  className="p-button-success"
                 />
               </div>
 
@@ -383,9 +379,9 @@ export const PayrollPeriodCalculateDialog = ({
               {salesResults && (
                 <div className="flex flex-column gap-3">
                   <div className="grid">
-                    <div className="col-3">
-                      <div className="p-3 surface-200 border-round text-center">
-                        <span className="text-secondary block">
+                    <div className="col-6 md:col-3">
+                      <div className="p-3 surface-100 border-round text-center">
+                        <span className="text-color-secondary block">
                           Ventas Totales
                         </span>
                         <span className="text-2xl font-bold">
@@ -393,25 +389,25 @@ export const PayrollPeriodCalculateDialog = ({
                         </span>
                       </div>
                     </div>
-                    <div className="col-3">
-                      <div className="p-3 surface-200 border-round text-center">
-                        <span className="text-secondary block">Exitosas</span>
+                    <div className="col-6 md:col-3">
+                      <div className="p-3 surface-100 border-round text-center">
+                        <span className="text-color-secondary block">Exitosas</span>
                         <span className="text-2xl font-bold text-green-600">
                           {salesResults.successful}
                         </span>
                       </div>
                     </div>
-                    <div className="col-3">
-                      <div className="p-3 surface-200 border-round text-center">
-                        <span className="text-secondary block">Fallidas</span>
+                    <div className="col-6 md:col-3">
+                      <div className="p-3 surface-100 border-round text-center">
+                        <span className="text-color-secondary block">Fallidas</span>
                         <span className="text-2xl font-bold text-red-600">
                           {salesResults.failed}
                         </span>
                       </div>
                     </div>
-                    <div className="col-3">
-                      <div className="p-3 surface-200 border-round text-center">
-                        <span className="text-secondary block">
+                    <div className="col-6 md:col-3">
+                      <div className="p-3 surface-100 border-round text-center">
+                        <span className="text-color-secondary block">
                           Total Pagos Creados
                         </span>
                         <span className="text-2xl font-bold">
@@ -423,8 +419,8 @@ export const PayrollPeriodCalculateDialog = ({
 
                   <div className="grid">
                     <div className="col-12">
-                      <div className="p-3 surface-200 border-round text-center">
-                        <span className="text-secondary block">
+                      <div className="p-3 surface-100 border-round text-center">
+                        <span className="text-color-secondary block">
                           Monto Total Pagado
                         </span>
                         <span className="text-3xl font-bold text-primary">
@@ -449,43 +445,42 @@ export const PayrollPeriodCalculateDialog = ({
                       field="saleId"
                       header="ID Venta"
                       sortable
-                      style={{ width: "120px" }}
+                      className="w-9rem"
                     />
                     <Column
                       header="Estado"
                       body={saleStatusBodyTemplate}
                       sortable
-                      style={{ width: "120px" }}
+                      className="w-9rem"
                     />
                     <Column
                       field="paymentsCreated"
                       header="Pagos Creados"
                       sortable
-                      style={{ width: "150px" }}
+                      className="w-11rem"
                     />
                     <Column
                       header="Monto Total"
                       body={amountBodyTemplate}
                       sortable
-                      style={{ width: "150px" }}
+                      className="w-11rem"
                     />
                     <Column
                       field="error"
                       header="Error"
-                      style={{ minWidth: "250px" }}
+                      className="w-18rem"
                     />
                   </DataTable>
                 </div>
               )}
 
               {!loadingSales && !salesResults && (
-                <div className="text-center p-4 surface-200 border-round">
-                  <i className="pi pi-info-circle text-3xl text-secondary mb-2"></i>
-                  <p className="text-secondary">
+                <EmptyState icon="pi pi-info-circle">
+                  <p>
                     Haz clic en "Calcular Pagos por Ventas" para procesar las
                     ventas del período
                   </p>
-                </div>
+                </EmptyState>
               )}
             </div>
           </TabPanel>

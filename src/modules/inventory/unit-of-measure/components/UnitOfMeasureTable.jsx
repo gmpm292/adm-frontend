@@ -31,11 +31,10 @@ const categoryMap = {
 
 const statusBodyTemplate = (rowData) => {
   return (
-    <span
-      className={`badge status-${rowData.isActive ? "active" : "inactive"}`}
-    >
-      {rowData.isActive ? "Activo" : "Inactivo"}
-    </span>
+    <Tag
+      severity={rowData.isActive ? "success" : "danger"}
+      value={rowData.isActive ? "Activo" : "Inactivo"}
+    />
   );
 };
 
@@ -238,21 +237,27 @@ export const UnitOfMeasureTable = () => {
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
+          severity="secondary"
           tooltip="Editar unidad"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
         <Button
           icon={rowData.isActive ? "pi pi-ban" : "pi pi-check"}
-          className={`p-button-rounded p-button-text ${rowData.isActive ? "p-button-warning" : "p-button-success"}`}
+          text
+          rounded
+          severity={rowData.isActive ? "warning" : "success"}
           tooltip={rowData.isActive ? "Desactivar" : "Activar"}
           tooltipOptions={{ position: "top" }}
           onClick={() => handleToggleStatus(rowData.id, rowData.isActive)}
         />
         <Button
           icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
+          text
+          rounded
+          severity="secondary"
           tooltip="Ver detalles"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleViewDetails(rowData.id)}
@@ -293,31 +298,29 @@ export const UnitOfMeasureTable = () => {
 
   const renderHeader = () => {
     return (
-      <div className="flex justify-content-between align-items-center">
-        <div className="flex gap-2">
-          <Button
-            icon="pi pi-plus"
-            label="Nueva Unidad"
-            onClick={() => setCreateDialogVisible(true)}
-          />
-          {selectedUnits.length > 0 && (
-            <>
-              <Button
-                icon="pi pi-trash"
-                label="Eliminar seleccionadas"
-                className="p-button-danger"
-                onClick={handleDeleteSelected}
-              />
-              <Button
-                icon="pi pi-replay"
-                label="Restaurar seleccionadas"
-                className="p-button-success"
-                onClick={handleRestoreSelected}
-              />
-            </>
-          )}
-        </div>
-      </div>
+      <>
+        <Button
+          icon="pi pi-plus"
+          label="Nueva Unidad"
+          onClick={() => setCreateDialogVisible(true)}
+        />
+        {selectedUnits.length > 0 && (
+          <>
+            <Button
+              icon="pi pi-trash"
+              label="Eliminar seleccionadas"
+              severity="danger"
+              onClick={handleDeleteSelected}
+            />
+            <Button
+              icon="pi pi-replay"
+              label="Restaurar seleccionadas"
+              severity="secondary"
+              onClick={handleRestoreSelected}
+            />
+          </>
+        )}
+      </>
     );
   };
 
@@ -345,8 +348,7 @@ export const UnitOfMeasureTable = () => {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "10rem" }}
-          bodyStyle={{ textAlign: "center" }}
+          headerClassName="w-10rem"
         />
       </GenericDataTable>
 

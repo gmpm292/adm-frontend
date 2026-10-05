@@ -3,10 +3,10 @@ import { CLASSIC_LOGIN } from "../graphql/queries";
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
 import { Button } from "primereact/button";
-import { Card } from "primereact/card";
 import { Message } from "primereact/message";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthContext } from "./AuthContext";
+import { FormField } from "../../../components/ui";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 
@@ -19,6 +19,32 @@ const validationSchema = Yup.object().shape({
     .min(4, "La contraseña debe tener al menos 4 caracteres")
     .required("La contraseña es requerida"),
 });
+
+/**
+ * Traduce el error del backend a un mensaje entendible para el usuario
+ */
+const getLoginErrorMessage = (error) => {
+  if (error.networkError) {
+    return "No se pudo conectar con el servidor. Inténtalo de nuevo.";
+  }
+
+  const message = error.graphQLErrors?.[0]?.message ?? "";
+
+  if (/incorrect/i.test(message)) {
+    return "Correo o contraseña incorrectos.";
+  }
+  if (/disable/i.test(message)) {
+    return "Tu usuario está deshabilitado. Contacta al administrador.";
+  }
+  if (/must have/i.test(message)) {
+    return "Tu usuario no tiene asignada la empresa, oficina o equipo que requiere su rol. Contacta al administrador.";
+  }
+  if (/^Unauthorized(Error)?$/.test(message)) {
+    return "Tu usuario no tiene acceso a esta aplicación.";
+  }
+
+  return "No se pudo iniciar sesión. Inténtalo de nuevo.";
+};
 
 export function LoginForm() {
   const [loginQuery, { loading, error }] = useLazyQuery(CLASSIC_LOGIN, {
@@ -51,8 +77,7 @@ export function LoginForm() {
         const profile = data?.classicLogin?.profile;
 
         if (profile) {
-          login(profile);
-          navigate("/statistics/analytics");
+          navigate(login(profile));
         }
       } catch (err) {
         console.error("Error en login:", err);
@@ -60,71 +85,66 @@ export function LoginForm() {
     },
   });
 
+  const fieldError = (name) => formik.touched[name] && formik.errors[name];
+
   return (
-    <Card className="login-card" style={{ border: "none", boxShadow: "none" }}>
-      <form onSubmit={formik.handleSubmit} className="p-fluid">
-        <div className="field">
-          <span className="p-float-label">
-            <InputText
-              id="email"
-              name="email"
-              value={formik.values.email}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              className={`p-inputtext-lg ${
-                formik.touched.email && formik.errors.email ? "p-invalid" : ""
-              }`}
-              style={{ width: "100%" }}
-            />
-            <label htmlFor="email">Email</label>
-          </span>
-          {formik.touched.email && formik.errors.email && (
-            <small className="p-error">{formik.errors.email}</small>
-          )}
-        </div>
-
-        <div className="field">
-          <span className="p-float-label">
-            <Password
-              id="password"
-              name="password"
-              value={formik.values.password}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              toggleMask
-              className={`p-inputtext-lg ${
-                formik.touched.password && formik.errors.password
-                  ? "p-invalid"
-                  : ""
-              }`}
-              feedback={false}
-              style={{ width: "100%" }}
-            />
-            <label htmlFor="password">Password</label>
-          </span>
-          {formik.touched.password && formik.errors.password && (
-            <small className="p-error">{formik.errors.password}</small>
-          )}
-        </div>
-
-        {error && (
-          <Message
-            severity="error"
-            text={error.message || "Error al iniciar sesión"}
-            className="w-full mb-3"
-          />
-        )}
-
-        <Button
-          type="submit"
-          label={loading ? "Iniciando sesión..." : "Iniciar sesión"}
-          icon="pi pi-sign-in"
-          loading={loading}
-          className="p-button-lg"
-          style={{ width: "100%", marginTop: "20px" }}
-          disabled={!formik.isValid || loading}
+    <form onSubmit={formik.handleSubmit} noValidate>
+      <FormField
+        label="Correo electrónico"
+        htmlFor="email"
+        error={fieldError("email")}
+      >
+        <InputText
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="username"
+          placeholder="nombre@empresa.com"
+          value={formik.values.email}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          invalid={Boolean(fieldError("email"))}
+          autoFocus
         />
-      </form>
-    </Card>
+      </FormField>
+
+      <FormField
+        label="Contraseña"
+        htmlFor="password"
+        error={fieldError("password")}
+      >
+        <Password
+          inputId="password"
+          name="password"
+          autoComplete="current-password"
+          value={formik.values.password}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          invalid={Boolean(fieldError("password"))}
+          feedback={false}
+          toggleMask
+        />
+      </FormField>
+
+      <div className="auth-card__row">
+        <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
+      </div>
+
+      {error && (
+        <Message
+          severity="error"
+          text={getLoginErrorMessage(error)}
+          className="w-full mb-4"
+        />
+      )}
+
+      <Button
+        type="submit"
+        label={loading ? "Iniciando sesión..." : "Iniciar sesión"}
+        loading={loading}
+        className="w-full"
+        disabled={loading}
+      />
+    </form>
   );
 }

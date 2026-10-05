@@ -7,6 +7,7 @@ import { Toast } from "primereact/toast";
 import { useRef } from "react";
 
 import { GET_BUSINESS_BY_ID, UPDATE_BUSINESS } from "../graphql/queries";
+import { FormField } from "../../../../components/ui";
 
 export const BusinessEditForm = ({
   businessId,
@@ -76,12 +77,12 @@ export const BusinessEditForm = ({
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Guardar"
@@ -89,7 +90,7 @@ export const BusinessEditForm = ({
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -98,7 +99,7 @@ export const BusinessEditForm = ({
       <Dialog
         header="Editar Empresa"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
       >
@@ -107,55 +108,60 @@ export const BusinessEditForm = ({
         ) : error ? (
           <p>Error al cargar empresa</p>
         ) : (
-          <div className="p-fluid">
-            <div className="p-field">
-              <label htmlFor="name">Nombre</label>
-              <InputText
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-              />
+          <div className="formgrid grid">
+            <div className="col-12 md:col-6">
+              <FormField label="Nombre" htmlFor="name">
+                <InputText
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="taxId">RUC/NIT</label>
-              <InputText
-                id="taxId"
-                name="taxId"
-                value={formData.taxId}
-                onChange={handleChange}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="RUC/NIT" htmlFor="taxId">
+                <InputText
+                  id="taxId"
+                  name="taxId"
+                  value={formData.taxId}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="address">Dirección</label>
-              <InputText
-                id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Dirección" htmlFor="address">
+                <InputText
+                  id="address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="contactPhone">Teléfono</label>
-              <InputText
-                id="contactPhone"
-                name="contactPhone"
-                value={formData.contactPhone}
-                onChange={handleChange}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Teléfono" htmlFor="contactPhone">
+                <InputText
+                  id="contactPhone"
+                  name="contactPhone"
+                  value={formData.contactPhone}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="contactEmail">Email</label>
-              <InputText
-                id="contactEmail"
-                name="contactEmail"
-                value={formData.contactEmail}
-                onChange={handleChange}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Email" htmlFor="contactEmail">
+                <InputText
+                  id="contactEmail"
+                  name="contactEmail"
+                  value={formData.contactEmail}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
           </div>
         )}

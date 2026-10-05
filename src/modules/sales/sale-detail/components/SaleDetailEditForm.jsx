@@ -5,7 +5,9 @@ import { InputNumber } from "primereact/inputnumber";
 import { useMutation, useQuery } from "@apollo/client";
 import { GET_SALE_DETAIL_BY_ID, UPDATE_SALE_DETAIL } from "../graphql/queries";
 import { Toast } from "primereact/toast";
+import { Message } from "primereact/message";
 import { PublicistSelector } from "./PublicistSelector";
+import { FormField } from "../../../../components/ui";
 
 export const SaleDetailEditForm = ({
   saleDetailId,
@@ -74,12 +76,12 @@ export const SaleDetailEditForm = ({
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Guardar"
@@ -87,7 +89,7 @@ export const SaleDetailEditForm = ({
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -96,33 +98,36 @@ export const SaleDetailEditForm = ({
       <Dialog
         header="Editar Detalle de Venta"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-30rem"
         footer={footer}
         onHide={onHide}
       >
         {loading ? (
-          <p>Cargando...</p>
+          <p className="text-color-secondary">Cargando...</p>
         ) : error ? (
-          <p>Error al cargar detalle de venta</p>
+          <Message severity="error" className="w-full" text="Error al cargar detalle de venta" />
         ) : (
-          <div className="p-fluid">
-            <div className="p-field">
-              <label htmlFor="quantity">Cantidad*</label>
-              <InputNumber
-                id="quantity"
-                value={formData.quantity}
-                onValueChange={(e) =>
-                  setFormData((prev) => ({ ...prev, quantity: e.value }))
-                }
-                min={1}
-                required
-              />
+          <div className="formgrid grid">
+            <div className="col-12">
+              <FormField label="Cantidad" htmlFor="quantity" required>
+                <InputNumber
+                  id="quantity"
+                  value={formData.quantity}
+                  onValueChange={(e) =>
+                    setFormData((prev) => ({ ...prev, quantity: e.value }))
+                  }
+                  min={1}
+                  required
+                />
+              </FormField>
             </div>
 
-            <PublicistSelector
-              selectedPublicistIds={formData.publicistIds}
-              onPublicistsChange={handlePublicistsChange}
-            />
+            <div className="col-12">
+              <PublicistSelector
+                selectedPublicistIds={formData.publicistIds}
+                onPublicistsChange={handlePublicistsChange}
+              />
+            </div>
           </div>
         )}
       </Dialog>

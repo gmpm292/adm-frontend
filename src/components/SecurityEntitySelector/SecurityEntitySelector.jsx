@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useQuery } from "@apollo/client";
 import { Dropdown } from "primereact/dropdown";
+import { Button } from "primereact/button";
+import { FormField } from "../ui";
 import {
   GET_BUSINESSES,
   GET_OFFICES,
@@ -224,8 +226,17 @@ const SecurityEntitySelector = ({
     }
   }, [teamsData]);
 
+  // Los formularios pasan una función nueva en cada render; se guarda la última
+  // para que notificar la selección no dependa de su identidad (evita un bucle
+  // de renderizado)
+  const onSelectionChangeRef = useRef(onSelectionChange);
+  useEffect(() => {
+    onSelectionChangeRef.current = onSelectionChange;
+  });
+
   useEffect(() => {
     // Notificar cambios en la selección, solo para las entidades incluidas
+    const onSelectionChange = onSelectionChangeRef.current;
     if (onSelectionChange) {
       const selection = {};
 
@@ -249,7 +260,6 @@ const SecurityEntitySelector = ({
     selectedOffice,
     selectedDepartment,
     selectedTeam,
-    onSelectionChange,
     includeBusiness,
     includeOffice,
     includeDepartment,
@@ -272,133 +282,135 @@ const SecurityEntitySelector = ({
     !userProfile?.team;
 
   return (
-    <div className="security-entity-selector">
+    <div>
       {showBusinessField && (
-        <div className="p-field">
-          <div className="flex align-items-center justify-content-between">
-            <label>Business</label>
+        <FormField label="Business">
+          <div className="flex align-items-center gap-2">
+            <Dropdown
+              value={selectedBusiness}
+              options={businessesData?.businesses?.data || []}
+              onChange={handleBusinessChange}
+              optionLabel="name"
+              placeholder={
+                userProfile?.business
+                  ? userProfile.business.name
+                  : "Select a business"
+              }
+              disabled={!!userProfile?.business}
+              className="flex-1"
+            />
             {showClearButton(
               EntityTypes.BUSINESS,
               selectedBusiness,
               userProfile?.business
             ) && (
-              <button
-                className="p-button p-button-text p-button-sm"
+              <Button
+                label="Clear"
+                text
+                size="small"
+                severity="secondary"
                 onClick={() => clearField(EntityTypes.BUSINESS)}
-              >
-                Clear
-              </button>
+              />
             )}
           </div>
-          <Dropdown
-            value={selectedBusiness}
-            options={businessesData?.businesses?.data || []}
-            onChange={handleBusinessChange}
-            optionLabel="name"
-            placeholder={
-              userProfile?.business
-                ? userProfile.business.name
-                : "Select a business"
-            }
-            disabled={!!userProfile?.business}
-            className="w-full"
-          />
-        </div>
+        </FormField>
       )}
 
       {showOfficeField && (
-        <div className="p-field">
-          <div className="flex align-items-center justify-content-between">
-            <label>Office</label>
+        <FormField label="Office">
+          <div className="flex align-items-center gap-2">
+            <Dropdown
+              value={selectedOffice}
+              options={availableOffices}
+              onChange={handleOfficeChange}
+              optionLabel="name"
+              placeholder={
+                userProfile?.office
+                  ? userProfile.office.name
+                  : "Select an office"
+              }
+              disabled={!!userProfile?.office}
+              className="flex-1"
+            />
             {showClearButton(
               EntityTypes.OFFICE,
               selectedOffice,
               userProfile?.office
             ) && (
-              <button
-                className="p-button p-button-text p-button-sm"
+              <Button
+                label="Clear"
+                text
+                size="small"
+                severity="secondary"
                 onClick={() => clearField(EntityTypes.OFFICE)}
-              >
-                Clear
-              </button>
+              />
             )}
           </div>
-          <Dropdown
-            value={selectedOffice}
-            options={availableOffices}
-            onChange={handleOfficeChange}
-            optionLabel="name"
-            placeholder={
-              userProfile?.office ? userProfile.office.name : "Select an office"
-            }
-            disabled={!!userProfile?.office}
-            className="w-full"
-          />
-        </div>
+        </FormField>
       )}
 
       {showDepartmentField && (
-        <div className="p-field">
-          <div className="flex align-items-center justify-content-between">
-            <label>Department</label>
+        <FormField label="Department">
+          <div className="flex align-items-center gap-2">
+            <Dropdown
+              value={selectedDepartment}
+              options={availableDepartments}
+              onChange={handleDepartmentChange}
+              optionLabel="name"
+              placeholder={
+                userProfile?.department
+                  ? userProfile.department.name
+                  : "Select a department"
+              }
+              disabled={!!userProfile?.department}
+              className="flex-1"
+            />
             {showClearButton(
               EntityTypes.DEPARTMENT,
               selectedDepartment,
               userProfile?.department
             ) && (
-              <button
-                className="p-button p-button-text p-button-sm"
+              <Button
+                label="Clear"
+                text
+                size="small"
+                severity="secondary"
                 onClick={() => clearField(EntityTypes.DEPARTMENT)}
-              >
-                Clear
-              </button>
+              />
             )}
           </div>
-          <Dropdown
-            value={selectedDepartment}
-            options={availableDepartments}
-            onChange={handleDepartmentChange}
-            optionLabel="name"
-            placeholder={
-              userProfile?.department
-                ? userProfile.department.name
-                : "Select a department"
-            }
-            disabled={!!userProfile?.department}
-            className="w-full"
-          />
-        </div>
+        </FormField>
       )}
 
       {showTeamField && (
-        <div className="p-field">
-          <div className="flex align-items-center justify-content-between">
-            <label>Team</label>
+        <FormField label="Team">
+          <div className="flex align-items-center gap-2">
+            <Dropdown
+              value={selectedTeam}
+              options={availableTeams}
+              onChange={handleTeamChange}
+              optionLabel="name"
+              placeholder={
+                userProfile?.team ? userProfile.team.name : "Select a team"
+              }
+              disabled={!!userProfile?.team}
+              className="flex-1"
+            />
             {showClearButton(
               EntityTypes.TEAM,
               selectedTeam,
               userProfile?.team
             ) && (
-              <button
-                className="p-button p-button-text p-button-sm"
+              <Button
+                label="Clear"
+                text
+                size="small"
+                severity="secondary"
                 onClick={() => clearField(EntityTypes.TEAM)}
-              >
-                Clear
-              </button>
+              />
             )}
           </div>
-          <Dropdown
-            value={selectedTeam}
-            options={availableTeams}
-            onChange={handleTeamChange}
-            optionLabel="name"
-            placeholder={
-              userProfile?.team ? userProfile.team.name : "Select a team"
-            }
-            disabled={!!userProfile?.team}
-            className="w-full"
-          />
-        </div>
+        </FormField>
       )}
     </div>
   );

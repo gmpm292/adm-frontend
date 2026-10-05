@@ -1,15 +1,16 @@
 import React from "react";
-import { Card } from "primereact/card";
+import { PageHeader } from "../../../../components/ui";
 import { MaterialCostTable } from "../components/MaterialCostTable";
-import "../styles/MaterialCostList.css";
 
 export const MaterialCostListPage = () => {
   return (
-    <div className="material-cost-list-page">
-      <Card title="Gestión de Costos de Materiales">
-        <MaterialCostTable />
-      </Card>
-    </div>
+    <>
+      <PageHeader
+        title="Costos de materiales"
+        subtitle="Registra los materiales, su unidad de medida y su precio de costo."
+      />
+      <MaterialCostTable />
+    </>
   );
 };
 

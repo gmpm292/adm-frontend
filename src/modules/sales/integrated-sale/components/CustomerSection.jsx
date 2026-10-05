@@ -5,8 +5,10 @@ import { Button } from "primereact/button";
 import { Divider } from "primereact/divider";
 import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
 import { EntityTypes } from "../../../../components/SecurityEntitySelector/entityTypes";
+import { Message } from "primereact/message";
+import { FormField } from "../../../../components/ui";
 
-export const CustomerSection = ({ initialData, onSubmit, onStepChange }) => {
+export const CustomerSection = ({ initialData, onSubmit }) => {
   const [formData, setFormData] = useState({
     name: "",
     lastName: "",
@@ -74,33 +76,30 @@ export const CustomerSection = ({ initialData, onSubmit, onStepChange }) => {
   const isFormValid = formData.name && formData.businessId;
 
   return (
-    <div className="customer-section">
-      <div className="section-header">
-        <h3>Crear Nuevo Cliente</h3>
-        <p>Complete la información del nuevo cliente</p>
+    <>
+      <div className="text-center mb-4">
+        <h3 className="mt-0 mb-2 text-lg font-semibold text-900">
+          Crear Nuevo Cliente
+        </h3>
+        <p className="m-0 text-color-secondary">
+          Complete la información del nuevo cliente
+        </p>
       </div>
 
       <Card>
         {initialData?.existingCustomer && (
-          <div className="p-message p-message-warning mb-3">
-            <div className="p-message-wrapper">
-              <span className="p-message-icon pi pi-info-circle"></span>
-              <div className="p-message-content">
-                <p>
-                  Actualmente usando cliente existente. Los cambios crearán un
-                  nuevo cliente.
-                </p>
-              </div>
-            </div>
-          </div>
+          <Message
+            severity="warn"
+            className="w-full mb-3"
+            text="Actualmente usando cliente existente. Los cambios crearán un nuevo cliente."
+          />
         )}
 
-        <form onSubmit={handleSubmit} className="p-fluid">
-          <div className="p-grid">
+        <form onSubmit={handleSubmit}>
+          <div className="formgrid grid">
             {/* Selector de Entidades de Seguridad */}
-            <div className="p-col-12">
-              <div className="p-field">
-                <label htmlFor="securityEntities">Empresa *</label>
+            <div className="col-12">
+              <FormField label="Empresa" htmlFor="securityEntities" required>
                 <SecurityEntitySelector
                   onSelectionChange={handleSecurityEntitiesChange}
                   entitiesToInclude={[EntityTypes.BUSINESS]}
@@ -117,17 +116,16 @@ export const CustomerSection = ({ initialData, onSubmit, onStepChange }) => {
                     team: "Equipo",
                   }}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="p-col-12">
+            <div className="col-12">
               <Divider />
             </div>
 
             {/* Nombre y Apellido en misma línea */}
-            <div className="p-col-6">
-              <div className="p-field">
-                <label htmlFor="name">Nombres *</label>
+            <div className="col-12 md:col-6">
+              <FormField label="Nombres" htmlFor="name" required>
                 <InputText
                   id="name"
                   name="name"
@@ -136,12 +134,11 @@ export const CustomerSection = ({ initialData, onSubmit, onStepChange }) => {
                   placeholder="Ej: Juan Carlos"
                   required
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="p-col-6">
-              <div className="p-field">
-                <label htmlFor="lastName">Apellidos</label>
+            <div className="col-12 md:col-6">
+              <FormField label="Apellidos" htmlFor="lastName">
                 <InputText
                   id="lastName"
                   name="lastName"
@@ -149,13 +146,11 @@ export const CustomerSection = ({ initialData, onSubmit, onStepChange }) => {
                   onChange={handleChange}
                   placeholder="Ej: Pérez García"
                 />
-              </div>
+              </FormField>
             </div>
 
-            {/* CI al lado derecho */}
-            <div className="p-col-12">
-              <div className="p-field">
-                <label htmlFor="ci">Carnet de Identidad</label>
+            <div className="col-12">
+              <FormField label="Carnet de Identidad" htmlFor="ci">
                 <InputText
                   id="ci"
                   name="ci"
@@ -163,17 +158,16 @@ export const CustomerSection = ({ initialData, onSubmit, onStepChange }) => {
                   onChange={handleChange}
                   placeholder="Ej: 12345678901"
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="p-col-12">
+            <div className="col-12">
               <Divider />
             </div>
 
             {/* Contacto */}
-            <div className="p-col-6">
-              <div className="p-field">
-                <label htmlFor="email">Correo Electrónico</label>
+            <div className="col-12 md:col-6">
+              <FormField label="Correo Electrónico" htmlFor="email">
                 <InputText
                   id="email"
                   name="email"
@@ -182,12 +176,11 @@ export const CustomerSection = ({ initialData, onSubmit, onStepChange }) => {
                   placeholder="cliente@ejemplo.com"
                   type="email"
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="p-col-6">
-              <div className="p-field">
-                <label htmlFor="phone">Teléfono Móvil</label>
+            <div className="col-12 md:col-6">
+              <FormField label="Teléfono Móvil" htmlFor="phone">
                 <InputText
                   id="phone"
                   name="phone"
@@ -195,21 +188,20 @@ export const CustomerSection = ({ initialData, onSubmit, onStepChange }) => {
                   onChange={handleChange}
                   placeholder="Ej: +53 12345678"
                 />
-              </div>
+              </FormField>
             </div>
           </div>
 
-          <div className="form-actions">
+          <div className="flex justify-content-end mt-3">
             <Button
               label="Crear Cliente y Continuar"
               icon="pi pi-user-plus"
               type="submit"
               disabled={!isFormValid}
-              className="p-button-primary"
             />
           </div>
         </form>
       </Card>
-    </div>
+    </>
   );
 };

@@ -1,164 +1,117 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "primereact/button";
-import { PanelMenu } from "primereact/panelmenu";
+import { useEffect, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { useFilteredMenu } from "../../hooks/useFilteredMenu";
-import "../styles/Sidebar.css";
+import { APP_NAME } from "../../config/app";
+import { BrandIcon } from "../../components/ui";
 
-/**
- * Componente Sidebar con menú dinámico filtrado por permisos
- * Muestra solo las opciones a las que el usuario tiene acceso
- */
-export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
-  const [expandedKeys, setExpandedKeys] = useState({});
-  const navigate = useNavigate();
-  const { filteredMenu, loading } = useFilteredMenu();
+const itemClassName = ({ isActive }) =>
+  isActive ? "app-nav-item app-nav-item--active" : "app-nav-item";
 
-  /**
-   * Maneja el toggle de expansión de items del menú
-   * Solo permite un item expandido a la vez
-   */
-  const handleToggle = (key) => {
-    setExpandedKeys((prevKeys) => {
-      const isExpanded = prevKeys[key];
-      // Colapsa todos excepto el que se hizo clic
-      return isExpanded ? {} : { [key]: true };
-    });
-  };
+/** Indica si alguna ruta del grupo corresponde a la página actual */
+const containsPath = (item, pathname) =>
+  item.path === pathname ||
+  (item.items ?? []).some((child) => containsPath(child, pathname));
 
-  /**
-   * Convierte el menú filtrado al formato que espera PanelMenu
-   * Agrega los comandos de navegación y estructura recursiva
-   */
-  const convertMenuToPanelMenuFormat = (menuItems) => {
-    return menuItems.map((item) => {
-      const menuItem = {
-        label: item.label,
-        icon: item.icon,
-        key: item.key,
-        command: () => handleToggle(item.key),
-      };
+function NavItem({ item }) {
+  return (
+    <NavLink to={item.path} className={itemClassName}>
+      <i className={item.icon} />
+      <span className="app-nav-item__label">{item.label}</span>
+    </NavLink>
+  );
+}
 
-      // Procesar items hijos recursivamente
-      if (item.items && item.items.length > 0) {
-        menuItem.items = item.items.map((subItem) => {
-          const subMenuItem = {
-            label: subItem.label,
-            icon: subItem.icon,
-            key: subItem.key,
-          };
-
-          // Si el subitem tiene path, agregar comando de navegación
-          if (subItem.path) {
-            subMenuItem.command = () => {
-              console.log(`🔄 Navegando a: ${subItem.path}`);
-              navigate(subItem.path);
-            };
-          }
-
-          // Procesar items anidados (tercer nivel)
-          if (subItem.items && subItem.items.length > 0) {
-            subMenuItem.items = subItem.items.map((nestedItem) => ({
-              label: nestedItem.label,
-              icon: nestedItem.icon,
-              key: nestedItem.key,
-              command: nestedItem.path
-                ? () => {
-                    console.log(`🔄 Navegando a: ${nestedItem.path}`);
-                    navigate(nestedItem.path);
-                  }
-                : undefined,
-            }));
-          }
-
-          return subMenuItem;
-        });
-      } else if (item.path) {
-        // Si es un item terminal sin hijos, agregar comando directo
-        menuItem.command = () => {
-          console.log(`🔄 Navegando a: ${item.path}`);
-          navigate(item.path);
-        };
-      }
-
-      return menuItem;
-    });
-  };
-
-  const menuItems = convertMenuToPanelMenuFormat(filteredMenu);
-
-  // Estado de carga
-  if (loading) {
-    return (
-      <div className={`sidebar ${collapsed ? "collapsed" : ""}`}>
-        <div className="sidebar-header">
-          <Button
-            icon={collapsed ? "pi pi-angle-right" : "pi pi-angle-left"}
-            onClick={() => setCollapsed(!collapsed)}
-            className="p-button-text"
-            disabled={loading}
-          />
-        </div>
-        <div className="sidebar-content flex justify-content-center align-items-center">
-          <ProgressSpinner style={{ width: "40px", height: "40px" }} />
-          <span className="ml-2">Cargando menú...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // Menú vacío (usuario sin permisos para nada)
-  if (menuItems.length === 0) {
-    return (
-      <div className={`sidebar ${collapsed ? "collapsed" : ""}`}>
-        <div className="sidebar-header">
-          <Button
-            icon={collapsed ? "pi pi-angle-right" : "pi pi-angle-left"}
-            onClick={() => setCollapsed(!collapsed)}
-            className="p-button-text"
-          />
-        </div>
-        <div className="sidebar-content flex justify-content-center align-items-center p-4">
-          <div className="text-center">
-            <i
-              className="pi pi-lock"
-              style={{ fontSize: "2rem", color: "#6c757d" }}
-            ></i>
-            <p className="mt-2 text-color-secondary">
-              No tienes acceso a ninguna opción
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+function NavGroup({ item, open, active, onToggle }) {
+  const className = [
+    "app-nav-group",
+    open && "app-nav-group--open",
+    active && "app-nav-group--active",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <div className={`sidebar ${collapsed ? "collapsed" : ""}`}>
-      <div className="sidebar-header">
-        <Button
-          icon={collapsed ? "pi pi-angle-right" : "pi pi-angle-left"}
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-button-text"
-          tooltip={collapsed ? "Expandir menú" : "Colapsar menú"}
-          tooltipOptions={{ position: "right" }}
-        />
-      </div>
-      <div className="sidebar-content">
-        <PanelMenu
-          model={menuItems}
-          expandedKeys={expandedKeys}
-          onPanelMenuItemClick={(e) => {
-            // Manejar clicks en items que no son enlaces (solo grupos)
-            if (e.item.key && !e.item.path) {
-              handleToggle(e.item.key);
-            }
-          }}
-          className={`sidebar-menu ${collapsed ? "icons-only" : ""}`}
-        />
-      </div>
+    <div className={className}>
+      <button
+        type="button"
+        className="app-nav-group__toggle"
+        onClick={onToggle}
+        aria-expanded={open}
+        title={item.label}
+      >
+        <i className={item.icon} />
+        <span className="app-nav-group__label">{item.label}</span>
+        <i className="pi pi-chevron-right app-nav-group__chevron" />
+      </button>
+      {open && (
+        <div className="app-nav-group__items">
+          {item.items.map((child) =>
+            child.items?.length ? (
+              child.items.map((nested) => (
+                <NavItem key={nested.path ?? nested.label} item={nested} />
+              ))
+            ) : (
+              <NavItem key={child.path ?? child.label} item={child} />
+            )
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+/**
+ * Menú lateral con las opciones a las que el usuario tiene acceso
+ */
+export function Sidebar() {
+  const { pathname } = useLocation();
+  const { filteredMenu, loading } = useFilteredMenu();
+  const [openKey, setOpenKey] = useState(null);
+
+  // Abre el grupo de la página actual al entrar o al navegar
+  useEffect(() => {
+    const current = filteredMenu.find((item) => containsPath(item, pathname));
+    if (current) setOpenKey(current.key);
+  }, [filteredMenu, pathname]);
+
+  return (
+    <aside className="app-sidebar">
+      <div className="app-sidebar__brand" title={APP_NAME}>
+        <span className="app-sidebar__mark">
+          <BrandIcon />
+        </span>
+        <span className="app-sidebar__name">{APP_NAME}</span>
+      </div>
+
+      {loading ? (
+        <div className="app-sidebar__status">
+          <ProgressSpinner strokeWidth="4" className="w-3rem h-3rem" />
+        </div>
+      ) : filteredMenu.length === 0 ? (
+        <div className="app-sidebar__status">
+          <i className="pi pi-lock text-2xl" />
+          <span>No tienes acceso a ninguna opción</span>
+        </div>
+      ) : (
+        <nav className="app-sidebar__nav">
+          {filteredMenu.map((item) =>
+            item.items?.length ? (
+              <NavGroup
+                key={item.key}
+                item={item}
+                open={openKey === item.key}
+                active={containsPath(item, pathname)}
+                onToggle={() =>
+                  setOpenKey(openKey === item.key ? null : item.key)
+                }
+              />
+            ) : (
+              <NavItem key={item.key} item={item} />
+            )
+          )}
+        </nav>
+      )}
+    </aside>
   );
 }

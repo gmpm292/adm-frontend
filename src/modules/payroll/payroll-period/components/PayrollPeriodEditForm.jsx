@@ -10,6 +10,8 @@ import {
   UPDATE_PAYROLL_PERIOD,
 } from "../graphql/queries";
 import { Toast } from "primereact/toast";
+import { Message } from "primereact/message";
+import { FormField } from "../../../../components/ui";
 import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
 
 export const PayrollPeriodEditForm = ({
@@ -115,12 +117,12 @@ export const PayrollPeriodEditForm = ({
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Guardar"
@@ -128,7 +130,7 @@ export const PayrollPeriodEditForm = ({
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -137,89 +139,94 @@ export const PayrollPeriodEditForm = ({
       <Dialog
         header="Editar Período de Nómina"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
       >
         {loading ? (
-          <p>Cargando...</p>
+          <p className="text-color-secondary">Cargando...</p>
         ) : error ? (
-          <p>Error al cargar período de nómina</p>
+          <Message
+            severity="error"
+            text="Error al cargar período de nómina"
+            className="w-full"
+          />
         ) : (
-          <div className="p-fluid">
-            <div className="p-field">
-              <label htmlFor="name">Nombre*</label>
-              <InputText
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="p-grid">
-              <div className="p-col-12 p-md-6">
-                <div className="p-field">
-                  <label htmlFor="startDate">Fecha Inicio*</label>
-                  <Calendar
-                    id="startDate"
-                    value={formData.startDate}
-                    onChange={(e) => handleDateChange("startDate", e.value)}
-                    dateFormat="dd/mm/yy"
-                    showIcon
-                    required
-                  />
-                </div>
-              </div>
-              <div className="p-col-12 p-md-6">
-                <div className="p-field">
-                  <label htmlFor="endDate">Fecha Fin*</label>
-                  <Calendar
-                    id="endDate"
-                    value={formData.endDate}
-                    onChange={(e) => handleDateChange("endDate", e.value)}
-                    dateFormat="dd/mm/yy"
-                    showIcon
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="p-field">
-              <label htmlFor="description">Descripción</label>
-              <InputText
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="p-field">
-              <label htmlFor="isClosed">Estado</label>
-              <div className="flex align-items-center">
-                <InputSwitch
-                  id="isClosed"
-                  checked={formData.isClosed}
-                  onChange={handleStatusChange}
+          <div className="formgrid grid">
+            <div className="col-12">
+              <FormField label="Nombre" htmlFor="name" required>
+                <InputText
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
                 />
-                <span className="ml-2">
-                  {formData.isClosed ? "Cerrado" : "Abierto"}
-                </span>
-              </div>
+              </FormField>
             </div>
 
-            <SecurityEntitySelector
-              onSelectionChange={handleSecurityEntitiesChange}
-              initialValues={{
-                businessId: formData.businessId,
-                officeId: formData.officeId,
-                departmentId: formData.departmentId,
-                teamId: formData.teamId,
-              }}
-            />
+            <div className="col-12 md:col-6">
+              <FormField label="Fecha Inicio" htmlFor="startDate" required>
+                <Calendar
+                  id="startDate"
+                  value={formData.startDate}
+                  onChange={(e) => handleDateChange("startDate", e.value)}
+                  dateFormat="dd/mm/yy"
+                  showIcon
+                  required
+                />
+              </FormField>
+            </div>
+            <div className="col-12 md:col-6">
+              <FormField label="Fecha Fin" htmlFor="endDate" required>
+                <Calendar
+                  id="endDate"
+                  value={formData.endDate}
+                  onChange={(e) => handleDateChange("endDate", e.value)}
+                  dateFormat="dd/mm/yy"
+                  showIcon
+                  required
+                />
+              </FormField>
+            </div>
+
+            <div className="col-12 md:col-6">
+              <FormField label="Descripción" htmlFor="description">
+                <InputText
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                />
+              </FormField>
+            </div>
+
+            <div className="col-12 md:col-6">
+              <FormField label="Estado" htmlFor="isClosed">
+                <div className="flex align-items-center gap-2">
+                  <InputSwitch
+                    id="isClosed"
+                    checked={formData.isClosed}
+                    onChange={handleStatusChange}
+                  />
+                  <span>
+                    {formData.isClosed ? "Cerrado" : "Abierto"}
+                  </span>
+                </div>
+              </FormField>
+            </div>
+
+            <div className="col-12">
+              <SecurityEntitySelector
+                onSelectionChange={handleSecurityEntitiesChange}
+                initialValues={{
+                  businessId: formData.businessId,
+                  officeId: formData.officeId,
+                  departmentId: formData.departmentId,
+                  teamId: formData.teamId,
+                }}
+              />
+            </div>
           </div>
         )}
       </Dialog>

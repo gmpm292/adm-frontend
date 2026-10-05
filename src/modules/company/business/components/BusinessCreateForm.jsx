@@ -6,6 +6,7 @@ import { Toast } from "primereact/toast";
 import { useMutation } from "@apollo/client";
 
 import { CREATE_BUSINESS } from "../graphql/queries";
+import { FormField } from "../../../../components/ui";
 
 export const BusinessCreateForm = ({ visible, onHide, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -62,12 +63,12 @@ export const BusinessCreateForm = ({ visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Crear"
@@ -75,7 +76,7 @@ export const BusinessCreateForm = ({ visible, onHide, onSuccess }) => {
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -84,60 +85,65 @@ export const BusinessCreateForm = ({ visible, onHide, onSuccess }) => {
       <Dialog
         header="Crear Nueva Empresa"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
       >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="name">Nombre*</label>
-            <InputText
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
+        <div className="formgrid grid">
+          <div className="col-12 md:col-6">
+            <FormField label="Nombre" htmlFor="name" required>
+              <InputText
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="taxId">RUC/NIT</label>
-            <InputText
-              id="taxId"
-              name="taxId"
-              value={formData.taxId}
-              onChange={handleChange}
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="RUC/NIT" htmlFor="taxId">
+              <InputText
+                id="taxId"
+                name="taxId"
+                value={formData.taxId}
+                onChange={handleChange}
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="address">Dirección</label>
-            <InputText
-              id="address"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Dirección" htmlFor="address">
+              <InputText
+                id="address"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="contactPhone">Teléfono</label>
-            <InputText
-              id="contactPhone"
-              name="contactPhone"
-              value={formData.contactPhone}
-              onChange={handleChange}
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Teléfono" htmlFor="contactPhone">
+              <InputText
+                id="contactPhone"
+                name="contactPhone"
+                value={formData.contactPhone}
+                onChange={handleChange}
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="contactEmail">Email</label>
-            <InputText
-              id="contactEmail"
-              name="contactEmail"
-              value={formData.contactEmail}
-              onChange={handleChange}
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Email" htmlFor="contactEmail">
+              <InputText
+                id="contactEmail"
+                name="contactEmail"
+                value={formData.contactEmail}
+                onChange={handleChange}
+              />
+            </FormField>
           </div>
         </div>
       </Dialog>

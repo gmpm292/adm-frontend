@@ -10,93 +10,77 @@ import { Observable } from "@apollo/client/core";
 
 console.log("API URL:", import.meta.env.VITE_API_URL);
 
-let isRefreshing = false;
-let pendingRequests = [];
-
-const resolvePendingRequests = () => {
-  pendingRequests.forEach((callback) => callback());
-  pendingRequests = [];
-};
-
-const rejectPendingRequests = () => {
-  pendingRequests.forEach((callback) => callback());
-  pendingRequests = [];
-};
+let refreshPromise = null;
 
 const errorLink = onError(({ graphQLErrors, operation, forward }) => {
-  if (graphQLErrors) {
-    for (const err of graphQLErrors) {
-      console.log("err", err);
-      console.log("operation", operation);
-      const isUnauthorized =
-        err.extensions?.code === "401" &&
-        (err.message === "Unauthorized" || err.message === "UnauthorizedError");
+  const unauthorized = graphQLErrors?.some(
+    (error) =>
+      String(error.extensions?.code) === "401" &&
+      (error.message === "Unauthorized" ||
+        error.message === "UnauthorizedError"),
+  );
 
-      console.log("isUnauthorized", isUnauthorized);
-      if (isUnauthorized) {
-        if (!isRefreshing) {
-          isRefreshing = true;
-
-          const refreshPromise = client
-            .mutate({ mutation: REFRESH_TOKEN })
-            .then(({ data }) => {
-              if (data?.refresh?.accessToken) {
-                console.log("Token refrescado correctamente");
-                resolvePendingRequests();
-                console.log("Retorna true.");
-                return true;
-              } else {
-                throw new Error("Refresh token falló");
-              }
-            })
-            .catch((error) => {
-              console.error("Error al refrescar el token:", error);
-              rejectPendingRequests();
-
-              // Limpiar estado antes de redirigir
-              localStorage.removeItem("isAuthenticated");
-              localStorage.removeItem("userAuthenticated");
-
-              window.dispatchEvent(new Event("auth-failed"));
-              return false;
-            })
-            .finally(() => {
-              console.error("Error al refrescar el token: .finally");
-              isRefreshing = false;
-            });
-
-          return new Observable((observer) => {
-            refreshPromise.then((success) => {
-              console.log("success", success);
-              if (success) {
-                forward(operation).subscribe({
-                  next: observer.next.bind(observer),
-                  error: observer.error.bind(observer),
-                  complete: observer.complete.bind(observer),
-                });
-              } else {
-                observer.error(new Error("No se pudo refrescar el token"));
-              }
-            });
-          });
-        } else {
-          console.log("isRefreshing", isRefreshing);
-          isRefreshing = false;
-          window.dispatchEvent(new Event("auth-failed"));
-        }
-
-        return new Observable((observer) => {
-          pendingRequests.push(() => {
-            forward(operation).subscribe({
-              next: observer.next.bind(observer),
-              error: observer.error.bind(observer),
-              complete: observer.complete.bind(observer),
-            });
-          });
-        });
-      }
-    }
+  if (!unauthorized || operation.getContext().skipAuthRefresh) {
+    return;
   }
+
+  const clearAuthentication = () => {
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("userAuthenticated");
+    window.dispatchEvent(new Event("auth-failed"));
+  };
+
+  if (operation.getContext().authRefreshRetried) {
+    clearAuthentication();
+    return;
+  }
+
+  if (!refreshPromise) {
+    refreshPromise = client
+      .mutate({
+        mutation: REFRESH_TOKEN,
+        context: { skipAuthRefresh: true },
+      })
+      .then(({ data }) => {
+        if (!data?.refresh?.accessToken) {
+          throw new Error("El backend no devolvió un token de acceso renovado");
+        }
+      })
+      .catch((error) => {
+        console.error("Error al refrescar el token:", error);
+        clearAuthentication();
+        throw error;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  operation.setContext({ authRefreshRetried: true });
+
+  return new Observable((observer) => {
+    let subscription;
+    let cancelled = false;
+
+    refreshPromise
+      .then(() => {
+        if (cancelled) return;
+
+        subscription = forward(operation).subscribe({
+          next: observer.next.bind(observer),
+          error: observer.error.bind(observer),
+          complete: observer.complete.bind(observer),
+        });
+      })
+      .catch((error) => {
+        if (!cancelled) observer.error(error);
+      });
+
+    return () => {
+      cancelled = true;
+      subscription?.unsubscribe();
+    };
+  });
 });
 
 const httpLink = createHttpLink({
@@ -110,7 +94,13 @@ const httpLink = createHttpLink({
 // Cliente con más opciones de debug
 export const client = new ApolloClient({
   link: from([errorLink, httpLink]),
-  cache: new InMemoryCache(),
+  cache: new InMemoryCache({
+    typePolicies: {
+      // Filas de clasificaciones (productos, vendedores, clientes...): su id es
+      // el de entidades distintas, así que no sirve para identificarlas en caché
+      StatisticsRanking: { keyFields: false },
+    },
+  }),
   defaultOptions: {
     watchQuery: {
       fetchPolicy: "network-only",

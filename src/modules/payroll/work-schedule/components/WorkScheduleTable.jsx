@@ -137,21 +137,26 @@ export function WorkScheduleTable() {
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
           tooltip="Editar"
           tooltipOptions={{ position: 'top' }}
           onClick={() => handleEdit(rowData.id)}
         />
         <Button
           icon="pi pi-trash"
-          className="p-button-rounded p-button-text p-button-danger"
+          text
+          rounded
+          severity="danger"
           tooltip="Eliminar"
           tooltipOptions={{ position: 'top' }}
           onClick={() => handleDelete(rowData.id)}
         />
         <Button
           icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
+          text
+          rounded
+          severity="info"
           tooltip="Ver detalles"
           tooltipOptions={{ position: 'top' }}
           onClick={() => handleViewDetails(rowData.id)}
@@ -219,8 +224,7 @@ export function WorkScheduleTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: '10rem' }}
-          bodyStyle={{ textAlign: 'center' }}
+          headerClassName="w-10rem"
         />
       </GenericDataTable>
 

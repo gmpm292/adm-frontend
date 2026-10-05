@@ -33,25 +33,25 @@ export const PayrollPeriodCloseDialog = ({ periodId, visible, onHide, onSuccess 
   };
 
   const footer = (
-    <div>
-      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} className="p-button-text" />
-      <Button label="Cerrar Período" icon="pi pi-lock" onClick={handleClosePeriod} className="p-button-warning" />
-    </div>
+    <>
+      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} severity="secondary" />
+      <Button label="Cerrar Período" icon="pi pi-lock" onClick={handleClosePeriod} severity="warning" />
+    </>
   );
 
   return (
     <>
       <Toast ref={toast} />
-      <Dialog 
-        header="Cerrar Período de Nómina" 
-        visible={visible} 
-        style={{ width: '40vw' }} 
-        footer={footer} 
+      <Dialog
+        header="Cerrar Período de Nómina"
+        visible={visible}
+        className="w-full md:w-30rem"
+        footer={footer}
         onHide={onHide}
         modal
       >
         <p>¿Estás seguro de que deseas cerrar este período de nómina? Esta acción no se puede deshacer.</p>
-        <p className="p-mt-3"><strong>Nota:</strong> Al cerrar el período, no se podrán realizar más pagos asociados a él.</p>
+        <p className="mt-3"><strong>Nota:</strong> Al cerrar el período, no se podrán realizar más pagos asociados a él.</p>
       </Dialog>
     </>
   );

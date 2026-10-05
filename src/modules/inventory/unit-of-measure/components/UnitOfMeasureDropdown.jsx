@@ -113,7 +113,7 @@ const UnitOfMeasureDropdown = ({
   };
 
   if (loading) {
-    return <Skeleton height="40px" className={className} />;
+    return <Skeleton height="3rem" className={className} />;
   }
 
   return (

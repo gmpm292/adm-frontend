@@ -1,5 +1,6 @@
 import React from "react";
 import { InputNumber } from "primereact/inputnumber";
+import { FormField } from "../../../../components/ui";
 
 export const FixedAmountCondition = ({ condition, onChange }) => {
   const handleChange = (field, value) => {
@@ -10,17 +11,18 @@ export const FixedAmountCondition = ({ condition, onChange }) => {
   };
 
   return (
-    <div className="p-fluid p-grid">
-      <div className="p-col-12">
-        <label>Monto*</label>
-        <InputNumber
-          value={condition.amount}
-          onValueChange={(e) => handleChange("amount", e.value)}
-          mode="currency"
-          currency="USD"
-          locale="en-US"
-          required
-        />
+    <div className="formgrid grid">
+      <div className="col-12">
+        <FormField label="Monto" required>
+          <InputNumber
+            value={condition.amount}
+            onValueChange={(e) => handleChange("amount", e.value)}
+            mode="currency"
+            currency="USD"
+            locale="en-US"
+            required
+          />
+        </FormField>
       </div>
     </div>
   );

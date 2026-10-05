@@ -3,6 +3,7 @@ import { Dropdown } from "primereact/dropdown";
 import { useLazyQuery } from "@apollo/client";
 import { GET_WORKERS } from "../../../payroll/worker/graphql/queries";
 import { Chip } from "primereact/chip";
+import { FormField } from "../../../../components/ui";
 
 export const PublicistSelector = ({
   selectedPublicistIds = [],
@@ -63,9 +64,7 @@ export const PublicistSelector = ({
   };
 
   return (
-    <div className="p-field">
-      <label htmlFor="publicists">{label}</label>
-
+    <FormField label={label} htmlFor="publicists">
       <Dropdown
         id="publicists"
         options={workers.filter(
@@ -79,8 +78,8 @@ export const PublicistSelector = ({
       />
 
       {selectedPublicistIds.length > 0 && (
-        <div className="mt-2">
-          <div className="text-sm text-gray-600 mb-2">
+        <div>
+          <div className="text-sm text-color-secondary mb-2">
             Publicistas seleccionados:
           </div>
           <div className="flex flex-wrap gap-2">
@@ -95,6 +94,6 @@ export const PublicistSelector = ({
           </div>
         </div>
       )}
-    </div>
+    </FormField>
   );
 };

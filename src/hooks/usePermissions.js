@@ -24,7 +24,7 @@ export const usePermissions = () => {
   const hasPermission = useCallback(
     async (operationName) => {
       if (!user) return false;
-      if (user.roles?.includes("SUPER")) return true;
+      if (user.role?.includes("SUPER")) return true;
 
       try {
         const result = await Promise.race([
@@ -49,7 +49,7 @@ export const usePermissions = () => {
   const hasAnyPermission = useCallback(
     async (operationNames) => {
       if (!user) return false;
-      if (user.roles?.includes("SUPER")) return true;
+      if (user.role?.includes("SUPER")) return true;
 
       for (const operationName of operationNames) {
         const hasPerm = await hasPermission(operationName);

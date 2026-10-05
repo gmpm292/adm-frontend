@@ -8,6 +8,7 @@ import { useMutation } from "@apollo/client";
 import { CREATE_DEPARTMENT } from "../graphql/queries";
 import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
 import { EntityTypes } from "../../../../components/SecurityEntitySelector/entityTypes";
+import { FormField } from "../../../../components/ui";
 
 const departmentTypes = [
   { label: "Económico", value: "ECONOMIC" },
@@ -90,12 +91,12 @@ export const DepartmentCreateForm = ({ visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Crear"
@@ -103,7 +104,7 @@ export const DepartmentCreateForm = ({ visible, onHide, onSuccess }) => {
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -112,64 +113,70 @@ export const DepartmentCreateForm = ({ visible, onHide, onSuccess }) => {
       <Dialog
         header="Crear Nuevo Departamento"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
       >
-        <div className="p-fluid">
-          <SecurityEntitySelector
-            onSelectionChange={handleSecurityEntitiesChange}
-            entitiesToInclude={[EntityTypes.BUSINESS, EntityTypes.OFFICE]}
-            labels={{
-              business: "Empresa",
-              office: "Oficina",
-              department: "Departamento",
-              team: "Equipo",
-            }}
-          />
-
-          <div className="p-field">
-            <label htmlFor="departmentType">Tipo*</label>
-            <Dropdown
-              id="departmentType"
-              value={formData.departmentType}
-              options={departmentTypes}
-              onChange={handleDepartmentTypeChange}
-              optionLabel="label"
-              placeholder="Seleccione tipo"
-              required
+        <div className="formgrid grid">
+          <div className="col-12">
+            <SecurityEntitySelector
+              onSelectionChange={handleSecurityEntitiesChange}
+              entitiesToInclude={[EntityTypes.BUSINESS, EntityTypes.OFFICE]}
+              labels={{
+                business: "Empresa",
+                office: "Oficina",
+                department: "Departamento",
+                team: "Equipo",
+              }}
             />
           </div>
 
-          <div className="p-field">
-            <label htmlFor="name">Nombre*</label>
-            <InputText
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Tipo" htmlFor="departmentType" required>
+              <Dropdown
+                id="departmentType"
+                value={formData.departmentType}
+                options={departmentTypes}
+                onChange={handleDepartmentTypeChange}
+                optionLabel="label"
+                placeholder="Seleccione tipo"
+                required
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="description">Descripción</label>
-            <InputText
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Nombre" htmlFor="name" required>
+              <InputText
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </FormField>
           </div>
 
-          <div className="p-field">
-            <label htmlFor="address">Dirección</label>
-            <InputText
-              id="address"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Descripción" htmlFor="description">
+              <InputText
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+              />
+            </FormField>
+          </div>
+
+          <div className="col-12 md:col-6">
+            <FormField label="Dirección" htmlFor="address">
+              <InputText
+                id="address"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+              />
+            </FormField>
           </div>
         </div>
       </Dialog>

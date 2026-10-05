@@ -8,6 +8,8 @@ import { Calendar } from 'primereact/calendar';
 import { useMutation, useQuery } from '@apollo/client';
 import { GET_WORKER_PAYMENT_BY_ID, UPDATE_WORKER_PAYMENT } from '../graphql/queries';
 import { Toast } from 'primereact/toast';
+import { Message } from 'primereact/message';
+import { FormField } from '../../../../components/ui';
 import SecurityEntitySelector from '../../../../components/SecurityEntitySelector/SecurityEntitySelector';
 
 const paymentMethods = [
@@ -161,32 +163,31 @@ export const WorkerPaymentEditForm = ({ paymentId, visible, onHide, onSuccess })
   };
 
   const footer = (
-    <div>
-      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} className="p-button-text" />
+    <>
+      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} severity="secondary" />
       <Button label="Guardar" icon="pi pi-check" onClick={handleSubmit} autoFocus />
-    </div>
+    </>
   );
 
   return (
     <>
       <Toast ref={toast} />
-      <Dialog 
-        header="Editar Pago a Trabajador" 
-        visible={visible} 
-        style={{ width: '50vw' }} 
-        footer={footer} 
+      <Dialog
+        header="Editar Pago a Trabajador"
+        visible={visible}
+        className="w-full md:w-10 lg:w-8"
+        footer={footer}
         onHide={onHide}
       >
         {loading ? (
-          <p>Cargando...</p>
+          <p className="text-color-secondary">Cargando...</p>
         ) : error ? (
-          <p>Error al cargar pago</p>
+          <Message severity="error" text="Error al cargar pago" className="w-full" />
         ) : (
           <div className="p-fluid">
-            <div className="p-grid">
-              <div className="p-col-12 p-md-6">
-                <div className="p-field">
-                  <label htmlFor="amount">Monto*</label>
+            <div className="formgrid grid">
+              <div className="col-12 md:col-6">
+                <FormField label="Monto" htmlFor="amount" required>
                   <InputNumber
                     id="amount"
                     value={formData.amount}
@@ -196,25 +197,23 @@ export const WorkerPaymentEditForm = ({ paymentId, visible, onHide, onSuccess })
                     locale="en-US"
                     required
                   />
-                </div>
+                </FormField>
               </div>
-              <div className="p-col-12 p-md-6">
-                <div className="p-field">
-                  <label htmlFor="currency">Moneda*</label>
+              <div className="col-12 md:col-6">
+                <FormField label="Moneda" htmlFor="currency" required>
                   <InputText
                     id="currency"
                     value={formData.currency}
                     onChange={(e) => handleChange(e)}
                     required
                   />
-                </div>
+                </FormField>
               </div>
             </div>
 
-            <div className="p-grid">
-              <div className="p-col-12 p-md-6">
-                <div className="p-field">
-                  <label htmlFor="exchangeRate">Tasa de Cambio</label>
+            <div className="formgrid grid">
+              <div className="col-12 md:col-6">
+                <FormField label="Tasa de Cambio" htmlFor="exchangeRate">
                   <InputNumber
                     id="exchangeRate"
                     value={formData.exchangeRate}
@@ -222,11 +221,10 @@ export const WorkerPaymentEditForm = ({ paymentId, visible, onHide, onSuccess })
                     min={0}
                     max={100}
                   />
-                </div>
+                </FormField>
               </div>
-              <div className="p-col-12 p-md-6">
-                <div className="p-field">
-                  <label htmlFor="paymentDate">Fecha de Pago*</label>
+              <div className="col-12 md:col-6">
+                <FormField label="Fecha de Pago" htmlFor="paymentDate" required>
                   <Calendar
                     id="paymentDate"
                     value={formData.paymentDate}
@@ -235,14 +233,13 @@ export const WorkerPaymentEditForm = ({ paymentId, visible, onHide, onSuccess })
                     showIcon
                     required
                   />
-                </div>
+                </FormField>
               </div>
             </div>
 
-            <div className="p-grid">
-              <div className="p-col-12 p-md-6">
-                <div className="p-field">
-                  <label htmlFor="paymentMethod">Método de Pago*</label>
+            <div className="formgrid grid">
+              <div className="col-12 md:col-6">
+                <FormField label="Método de Pago" htmlFor="paymentMethod" required>
                   <Dropdown
                     id="paymentMethod"
                     value={formData.paymentMethod}
@@ -252,11 +249,10 @@ export const WorkerPaymentEditForm = ({ paymentId, visible, onHide, onSuccess })
                     placeholder="Seleccione"
                     required
                   />
-                </div>
+                </FormField>
               </div>
-              <div className="p-col-12 p-md-6">
-                <div className="p-field">
-                  <label htmlFor="paymentType">Tipo de Pago*</label>
+              <div className="col-12 md:col-6">
+                <FormField label="Tipo de Pago" htmlFor="paymentType" required>
                   <Dropdown
                     id="paymentType"
                     value={formData.paymentType}
@@ -266,69 +262,71 @@ export const WorkerPaymentEditForm = ({ paymentId, visible, onHide, onSuccess })
                     placeholder="Seleccione"
                     required
                   />
-                </div>
+                </FormField>
               </div>
             </div>
 
-            <div className="p-field">
-              <label>Desglose</label>
-              <div className="p-grid">
-                <div className="p-col-12 p-md-3">
-                  <label htmlFor="baseSalary">Salario Base</label>
-                  <InputNumber
-                    id="baseSalary"
-                    value={formData.breakdown.baseSalary}
-                    onValueChange={(e) => handleBreakdownChange('baseSalary', e.value)}
-                    mode="currency"
-                    currency={formData.currency}
-                    locale="en-US"
-                  />
+            <FormField label="Desglose">
+              <div className="formgrid grid">
+                <div className="col-12 md:col-6 lg:col-3">
+                  <FormField label="Salario Base" htmlFor="baseSalary">
+                    <InputNumber
+                      id="baseSalary"
+                      value={formData.breakdown.baseSalary}
+                      onValueChange={(e) => handleBreakdownChange('baseSalary', e.value)}
+                      mode="currency"
+                      currency={formData.currency}
+                      locale="en-US"
+                    />
+                  </FormField>
                 </div>
-                <div className="p-col-12 p-md-3">
-                  <label htmlFor="commissions">Comisiones</label>
-                  <InputNumber
-                    id="commissions"
-                    value={formData.breakdown.commissions}
-                    onValueChange={(e) => handleBreakdownChange('commissions', e.value)}
-                    mode="currency"
-                    currency={formData.currency}
-                    locale="en-US"
-                  />
+                <div className="col-12 md:col-6 lg:col-3">
+                  <FormField label="Comisiones" htmlFor="commissions">
+                    <InputNumber
+                      id="commissions"
+                      value={formData.breakdown.commissions}
+                      onValueChange={(e) => handleBreakdownChange('commissions', e.value)}
+                      mode="currency"
+                      currency={formData.currency}
+                      locale="en-US"
+                    />
+                  </FormField>
                 </div>
-                <div className="p-col-12 p-md-3">
-                  <label htmlFor="bonuses">Bonos</label>
-                  <InputNumber
-                    id="bonuses"
-                    value={formData.breakdown.bonuses}
-                    onValueChange={(e) => handleBreakdownChange('bonuses', e.value)}
-                    mode="currency"
-                    currency={formData.currency}
-                    locale="en-US"
-                  />
+                <div className="col-12 md:col-6 lg:col-3">
+                  <FormField label="Bonos" htmlFor="bonuses">
+                    <InputNumber
+                      id="bonuses"
+                      value={formData.breakdown.bonuses}
+                      onValueChange={(e) => handleBreakdownChange('bonuses', e.value)}
+                      mode="currency"
+                      currency={formData.currency}
+                      locale="en-US"
+                    />
+                  </FormField>
                 </div>
-                <div className="p-col-12 p-md-3">
-                  <label htmlFor="deductions">Deducciones</label>
-                  <InputNumber
-                    id="deductions"
-                    value={formData.breakdown.deductions}
-                    onValueChange={(e) => handleBreakdownChange('deductions', e.value)}
-                    mode="currency"
-                    currency={formData.currency}
-                    locale="en-US"
-                  />
+                <div className="col-12 md:col-6 lg:col-3">
+                  <FormField label="Deducciones" htmlFor="deductions">
+                    <InputNumber
+                      id="deductions"
+                      value={formData.breakdown.deductions}
+                      onValueChange={(e) => handleBreakdownChange('deductions', e.value)}
+                      mode="currency"
+                      currency={formData.currency}
+                      locale="en-US"
+                    />
+                  </FormField>
                 </div>
               </div>
-            </div>
+            </FormField>
 
-            <div className="p-field">
-              <label htmlFor="notes">Notas</label>
+            <FormField label="Notas" htmlFor="notes">
               <InputText
                 id="notes"
                 name="notes"
                 value={formData.notes}
                 onChange={handleChange}
               />
-            </div>
+            </FormField>
 
             <SecurityEntitySelector
               onSelectionChange={handleSecurityEntitiesChange}

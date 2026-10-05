@@ -5,6 +5,7 @@ import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import { InputSwitch } from "primereact/inputswitch";
 import { Toast } from "primereact/toast";
+import { FormField } from "../../../../components/ui";
 import { Fieldset } from "primereact/fieldset";
 import { useMutation } from "@apollo/client";
 import { CurrencyInput } from "../../../../components/CurrencyInput/CurrencyInput";
@@ -440,15 +441,15 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
       <Dialog
         header="Crear Nueva Regla de Pago"
         visible={visible}
-        style={{ width: "70vw" }}
+        className="w-full md:w-10 lg:w-8"
         onHide={onHide}
         footer={
-          <div className="flex justify-content-end gap-2">
+          <>
             <Button
               label="Cancelar"
               icon="pi pi-times"
               onClick={onHide}
-              className="p-button-text"
+              severity="secondary"
             />
             <Button
               label="Crear"
@@ -456,109 +457,118 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
               onClick={handleSubmit}
               autoFocus
             />
-          </div>
+          </>
         }
       >
         <div className="p-fluid">
           <Fieldset legend="Datos Generales" className="mb-4">
             <div className="grid formgrid">
               <div className="col-12 md:col-6">
-                <label htmlFor="name">Nombre*</label>
-                <InputText
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                />
+                <FormField label="Nombre" htmlFor="name" required>
+                  <InputText
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                  />
+                </FormField>
               </div>
               <div className="col-12 md:col-6">
-                <label htmlFor="description">Descripción</label>
-                <InputText
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                />
+                <FormField label="Descripción" htmlFor="description">
+                  <InputText
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                  />
+                </FormField>
               </div>
               <div className="col-12 md:col-4">
-                <label htmlFor="paymentType">Tipo de Pago*</label>
-                <Dropdown
-                  id="paymentType"
-                  value={formData.paymentType}
-                  options={paymentTypes}
-                  onChange={handlePaymentTypeChange}
-                  optionLabel="label"
-                  placeholder="Seleccione"
-                />
+                <FormField label="Tipo de Pago" htmlFor="paymentType" required>
+                  <Dropdown
+                    id="paymentType"
+                    value={formData.paymentType}
+                    options={paymentTypes}
+                    onChange={handlePaymentTypeChange}
+                    optionLabel="label"
+                    placeholder="Seleccione"
+                  />
+                </FormField>
               </div>
               <div className="col-12 md:col-4">
-                <label htmlFor="workerType">Tipo de Trabajador*</label>
-                <Dropdown
-                  id="workerType"
-                  value={formData.workerType}
-                  options={workerTypes}
-                  onChange={handleWorkerTypeChange}
-                  optionLabel="label"
-                  placeholder="Seleccione"
-                />
+                <FormField label="Tipo de Trabajador" htmlFor="workerType" required>
+                  <Dropdown
+                    id="workerType"
+                    value={formData.workerType}
+                    options={workerTypes}
+                    onChange={handleWorkerTypeChange}
+                    optionLabel="label"
+                    placeholder="Seleccione"
+                  />
+                </FormField>
               </div>
               {formData.workerType === "OTHER" && (
                 <div className="col-12 md:col-4">
-                  <label htmlFor="otherType">Especificar Tipo*</label>
-                  <InputText
-                    id="otherType"
-                    name="otherType"
-                    value={formData.otherType}
-                    onChange={handleChange}
-                    placeholder="Especifique el tipo de trabajador"
-                  />
+                  <FormField label="Especificar Tipo" htmlFor="otherType" required>
+                    <InputText
+                      id="otherType"
+                      name="otherType"
+                      value={formData.otherType}
+                      onChange={handleChange}
+                      placeholder="Especifique el tipo de trabajador"
+                    />
+                  </FormField>
                 </div>
               )}
               {formData.workerType !== "OTHER" && (
                 <div className="col-12 md:col-4">
-                  <label htmlFor="isActive">Estado</label>
-                  <div className="flex align-items-center gap-2">
-                    <InputSwitch
-                      id="isActive"
-                      checked={formData.isActive}
-                      onChange={handleStatusChange}
-                    />
-                    <span>{formData.isActive ? "Activo" : "Inactivo"}</span>
-                  </div>
+                  <FormField label="Estado" htmlFor="isActive">
+                    <div className="flex align-items-center gap-2">
+                      <InputSwitch
+                        id="isActive"
+                        checked={formData.isActive}
+                        onChange={handleStatusChange}
+                      />
+                      <span>{formData.isActive ? "Activo" : "Inactivo"}</span>
+                    </div>
+                  </FormField>
                 </div>
               )}
               <div className="col-12 md:col-4">
-                <label htmlFor="paymentCurrency">Moneda de Pago*</label>
-                <Dropdown
-                  id="paymentCurrency"
-                  value={formData.paymentCurrency}
-                  options={currencyOptions}
-                  onChange={handleCurrencyChange}
-                  optionLabel="label"
-                  placeholder="Seleccione"
-                />
-              </div>
-              <div className="col-12 md:col-4">
-                <label htmlFor="scope">Ámbito*</label>
-                <Dropdown
-                  id="scope"
-                  value={formData.scope}
-                  options={scopedAccessOptions}
-                  onChange={handleScopeChange}
-                  optionLabel="label"
-                  placeholder="Seleccione"
-                />
-              </div>
-              <div className="col-12 md:col-4">
-                <label htmlFor="distributeProfits">Distribuir Beneficios</label>
-                <div className="flex align-items-center gap-2">
-                  <InputSwitch
-                    id="distributeProfits"
-                    checked={formData.distributeProfits}
-                    onChange={handleDistributeProfitsChange}
+                <FormField label="Moneda de Pago" htmlFor="paymentCurrency" required>
+                  <Dropdown
+                    id="paymentCurrency"
+                    value={formData.paymentCurrency}
+                    options={currencyOptions}
+                    onChange={handleCurrencyChange}
+                    optionLabel="label"
+                    placeholder="Seleccione"
                   />
-                  <span>{formData.distributeProfits ? "Sí" : "No"}</span>
-                </div>
+                </FormField>
+              </div>
+              <div className="col-12 md:col-4">
+                <FormField label="Ámbito" htmlFor="scope" required>
+                  <Dropdown
+                    id="scope"
+                    value={formData.scope}
+                    options={scopedAccessOptions}
+                    onChange={handleScopeChange}
+                    optionLabel="label"
+                    placeholder="Seleccione"
+                  />
+                </FormField>
+              </div>
+              <div className="col-12 md:col-4">
+                <FormField label="Distribuir Beneficios" htmlFor="distributeProfits">
+                  <div className="flex align-items-center gap-2">
+                    <InputSwitch
+                      id="distributeProfits"
+                      checked={formData.distributeProfits}
+                      onChange={handleDistributeProfitsChange}
+                    />
+                    <span>{formData.distributeProfits ? "Sí" : "No"}</span>
+                  </div>
+                </FormField>
               </div>
             </div>
           </Fieldset>
@@ -572,12 +582,13 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
           <Fieldset legend="Condiciones de Pago">
             {formData.paymentType === "PRICE_RANGE" && (
               <div>
-                <div className="flex justify-content-between align-items-center mb-2">
-                  <label>Rangos de Precio</label>
+                <div className="flex justify-content-between align-items-center mb-3">
+                  <span className="font-medium">Rangos de Precio</span>
                   <Button
                     label="Agregar"
                     icon="pi pi-plus"
-                    className="p-button-sm"
+                    size="small"
+                    severity="secondary"
                     onClick={handleAddPriceRange}
                   />
                 </div>
@@ -598,12 +609,13 @@ export const PaymentRuleCreateForm = ({ visible, onHide, onSuccess }) => {
 
             {formData.paymentType === "SALE_QUANTITY" && (
               <div>
-                <div className="flex justify-content-between align-items-center mb-2">
-                  <label>Condiciones de Venta</label>
+                <div className="flex justify-content-between align-items-center mb-3">
+                  <span className="font-medium">Condiciones de Venta</span>
                   <Button
                     label="Agregar"
                     icon="pi pi-plus"
-                    className="p-button-sm"
+                    size="small"
+                    severity="secondary"
                     onClick={handleAddSaleQuantity}
                   />
                 </div>

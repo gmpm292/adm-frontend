@@ -98,7 +98,7 @@ export const CurrencyDropdown = ({
   };
 
   if (loading) {
-    return <Skeleton height="40px" className={className} />;
+    return <Skeleton height="2.5rem" className={className} />;
   }
 
   return (

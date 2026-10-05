@@ -24,6 +24,8 @@ export const GET_USERS = gql`
         lastName
         mobile
         role
+        isTwoFactorEnabled
+        isTwoFactorConfigured
       }
     }
   }
@@ -136,6 +138,7 @@ export const GET_PROFILE = gql`
       }
       team {
         id
+        name
       }
     }
   }
@@ -149,6 +152,14 @@ export const UPDATE_USER_PROFILE = gql`
       name
       lastName
       mobile
+    }
+  }
+`;
+
+export const CHANGE_OWN_PASSWORD = gql`
+  mutation ChangeOwnPassword($input: ChangeOwnPasswordInput!) {
+    changeOwnPassword(input: $input) {
+      id
     }
   }
 `;

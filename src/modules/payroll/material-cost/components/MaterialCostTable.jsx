@@ -3,8 +3,6 @@ import { useLazyQuery, useMutation } from "@apollo/client";
 import {
   GET_MATERIAL_COSTS,
   TOGGLE_MATERIAL_COST_ACTIVE,
-  REMOVE_MATERIAL_COSTS,
-  RESTORE_MATERIAL_COSTS,
 } from "../graphql/queries";
 import GenericDataTable from "../../../../components/BaseTable/index";
 import { Column } from "primereact/column";
@@ -19,17 +17,16 @@ import { MaterialCostEditForm } from "./MaterialCostEditForm";
 
 const statusBodyTemplate = (rowData) => {
   return (
-    <span
-      className={`badge status-${rowData.isActive ? "active" : "inactive"}`}
-    >
-      {rowData.isActive ? "Activo" : "Inactivo"}
-    </span>
+    <Tag
+      severity={rowData.isActive ? "success" : "danger"}
+      value={rowData.isActive ? "Activo" : "Inactivo"}
+    />
   );
 };
 
 const priceBodyTemplate = (rowData) => {
   return (
-    <span className="font-mono">
+    <span>
       {rowData.currency?.symbol || rowData.currency?.code}{" "}
       {rowData.costPrice?.toLocaleString("es-ES", {
         minimumFractionDigits: 2,
@@ -55,8 +52,6 @@ export const MaterialCostTable = () => {
     },
   );
   const [toggleActive] = useMutation(TOGGLE_MATERIAL_COST_ACTIVE);
-  const [removeMaterials] = useMutation(REMOVE_MATERIAL_COSTS);
-  const [restoreMaterials] = useMutation(RESTORE_MATERIAL_COSTS);
 
   const [selectedMaterialId, setSelectedMaterialId] = useState(null);
   const [editDialogVisible, setEditDialogVisible] = useState(false);
@@ -169,21 +164,26 @@ export const MaterialCostTable = () => {
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
           tooltip="Editar material"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
         <Button
           icon={rowData.isActive ? "pi pi-ban" : "pi pi-check"}
-          className={`p-button-rounded p-button-text ${rowData.isActive ? "p-button-warning" : "p-button-success"}`}
+          text
+          rounded
+          severity={rowData.isActive ? "warning" : "success"}
           tooltip={rowData.isActive ? "Desactivar" : "Activar"}
           tooltipOptions={{ position: "top" }}
           onClick={() => handleToggleStatus(rowData.id, rowData.isActive)}
         />
         <Button
           icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
+          text
+          rounded
+          severity="info"
           tooltip="Ver detalles"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleViewDetails(rowData.id)}
@@ -226,13 +226,11 @@ export const MaterialCostTable = () => {
 
   const renderHeader = () => {
     return (
-      <div className="flex justify-content-between align-items-center">
-        <Button
-          icon="pi pi-plus"
-          label="Nuevo Material"
-          onClick={() => setCreateDialogVisible(true)}
-        />
-      </div>
+      <Button
+        icon="pi pi-plus"
+        label="Nuevo Material"
+        onClick={() => setCreateDialogVisible(true)}
+      />
     );
   };
 
@@ -258,8 +256,7 @@ export const MaterialCostTable = () => {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "10rem" }}
-          bodyStyle={{ textAlign: "center" }}
+          headerClassName="w-10rem"
         />
       </GenericDataTable>
 

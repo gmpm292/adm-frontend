@@ -10,6 +10,7 @@ import { Toast } from "primereact/toast";
 import { InventorySelectorWithFilters } from "./InventorySelectorWithFilters";
 import { usePrinting } from "../../../printing/printing.module";
 import { Message } from "primereact/message";
+import { FormField } from "../../../../components/ui";
 
 const movementTypes = [
   { label: "Entrada", value: "IN" },
@@ -201,12 +202,12 @@ export const InventoryMovementCreateForm = ({
   };
 
   const footer = (
-    <div className="flex justify-content-end gap-2">
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Crear"
@@ -214,7 +215,7 @@ export const InventoryMovementCreateForm = ({
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -223,61 +224,63 @@ export const InventoryMovementCreateForm = ({
       <Dialog
         header="Crear Nuevo Movimiento"
         visible={visible}
-        style={{ width: "60vw" }}
+        className="w-full md:w-8"
         footer={footer}
         onHide={onHide}
         resizable
         draggable
       >
-        <div className="p-fluid">
+        <div className="formgrid grid p-fluid">
           {/* Tipo de Movimiento - SOLO UNA VEZ al inicio */}
-          <div className="p-field p-mb-4">
-            <label htmlFor="type">Tipo de Movimiento*</label>
-            <Dropdown
-              id="type"
-              value={formData.type}
-              options={movementTypes}
-              onChange={handleTypeChange}
-              optionLabel="label"
-              placeholder="Seleccione el tipo de movimiento"
-              required
-              className="w-full"
-            />
+          <div className="col-12">
+            <FormField label="Tipo de Movimiento" htmlFor="type" required>
+              <Dropdown
+                id="type"
+                value={formData.type}
+                options={movementTypes}
+                onChange={handleTypeChange}
+                optionLabel="label"
+                placeholder="Seleccione el tipo de movimiento"
+                required
+                className="w-full"
+              />
+            </FormField>
           </div>
 
           {/* Selector de inventario con filtros */}
-          <InventorySelectorWithFilters
-            selectedInventoryId={formData.inventoryId}
-            onInventorySelect={handleInventorySelect}
-            onInventoryOptionsChange={handleInventoryOptionsChange} // 👈 Pasar la función para recibir opciones
-            movementType={formData.type}
-            disabled={!formData.type || !!selectedInventoryId}
-            officeId={initialOfficeId}
-            categoryId={initialCategoryId}
-          />
-
-          {!formData.type && (
-            <Message
-              severity="info"
-              text="Seleccione el tipo de movimiento para habilitar la selección de inventario"
-              className="w-full p-mt-2"
+          <div className="col-12">
+            <InventorySelectorWithFilters
+              selectedInventoryId={formData.inventoryId}
+              onInventorySelect={handleInventorySelect}
+              onInventoryOptionsChange={handleInventoryOptionsChange} // 👈 Pasar la función para recibir opciones
+              movementType={formData.type}
+              disabled={!formData.type || !!selectedInventoryId}
+              officeId={initialOfficeId}
+              categoryId={initialCategoryId}
             />
-          )}
 
-          {selectedInventoryId && (
-            <small className="p-d-block p-mt-1 p-mb-3 p-text-secondary">
-              El inventario está preseleccionado desde la tabla
-            </small>
-          )}
+            {!formData.type && (
+              <Message
+                severity="info"
+                text="Seleccione el tipo de movimiento para habilitar la selección de inventario"
+                className="w-full mb-3"
+              />
+            )}
+
+            {selectedInventoryId && (
+              <small className="block mb-3 text-color-secondary">
+                El inventario está preseleccionado desde la tabla
+              </small>
+            )}
+          </div>
 
           {/* Campos adicionales del movimiento */}
           {formData.type && (
-            <div className="p-grid p-fluid p-mt-4">
-              <div className="p-col-12 p-md-6">
-                <div className="p-field">
-                  <label htmlFor="quantity">Cantidad*</label>
+            <>
+              <div className="col-12 md:col-6">
+                <FormField label="Cantidad" htmlFor="quantity" required>
                   <InputNumber
-                    id="quantity"
+                    inputId="quantity"
                     name="quantity"
                     value={formData.quantity}
                     onValueChange={handleNumberChange}
@@ -286,12 +289,11 @@ export const InventoryMovementCreateForm = ({
                     required
                     className="w-full"
                   />
-                </div>
+                </FormField>
               </div>
 
-              <div className="p-col-12 p-md-6">
-                <div className="p-field">
-                  <label htmlFor="reason">Motivo*</label>
+              <div className="col-12 md:col-6">
+                <FormField label="Motivo" htmlFor="reason" required>
                   <Dropdown
                     id="reason"
                     value={formData.reason}
@@ -304,11 +306,11 @@ export const InventoryMovementCreateForm = ({
                     className="w-full"
                     disabled={!formData.type}
                   />
-                </div>
+                </FormField>
               </div>
 
-              <div className="p-col-12">
-                <div className="p-field-checkbox flex align-items-center">
+              <div className="col-12">
+                <div className="flex align-items-center">
                   <Checkbox
                     inputId="shouldPrint"
                     checked={formData.shouldPrint}
@@ -322,7 +324,7 @@ export const InventoryMovementCreateForm = ({
                   Se generará un ticket con los detalles del movimiento
                 </small>
               </div>
-            </div>
+            </>
           )}
 
           {/* Vista previa del ticket */}
@@ -330,35 +332,33 @@ export const InventoryMovementCreateForm = ({
             formData.type &&
             formData.quantity > 0 &&
             formData.reason && (
-              <div className="p-mt-4 p-p-3 surface-ground border-round">
-                <h5 className="p-mt-0 p-mb-2">Vista previa del ticket</h5>
-                <div className="p-grid">
-                  <div className="p-col-12">
-                    <div className="flex align-items-center gap-2">
-                      <i className="pi pi-print text-primary"></i>
-                      <span>
-                        Se imprimirá un ticket con los siguientes datos:
-                      </span>
-                    </div>
-                    <ul className="p-mt-2 p-mb-0">
-                      <li>
-                        <strong>Tipo:</strong>{" "}
-                        {formData.type === "IN" ? "ENTRADA" : "SALIDA"}
-                      </li>
-                      <li>
-                        <strong>Cantidad:</strong> {formData.quantity}
-                      </li>
-                      <li>
-                        <strong>Motivo:</strong>{" "}
-                        {availableReasons.find(
-                          (r) => r.value === formData.reason,
-                        )?.label || formData.reason}
-                      </li>
-                      <li>
-                        <strong>Fecha:</strong> {new Date().toLocaleString()}
-                      </li>
-                    </ul>
+              <div className="col-12">
+                <div className="mt-3 p-3 surface-ground border-round">
+                  <h5 className="mt-0 mb-2">Vista previa del ticket</h5>
+                  <div className="flex align-items-center gap-2">
+                    <i className="pi pi-print text-primary"></i>
+                    <span>
+                      Se imprimirá un ticket con los siguientes datos:
+                    </span>
                   </div>
+                  <ul className="mt-2 mb-0">
+                    <li>
+                      <strong>Tipo:</strong>{" "}
+                      {formData.type === "IN" ? "ENTRADA" : "SALIDA"}
+                    </li>
+                    <li>
+                      <strong>Cantidad:</strong> {formData.quantity}
+                    </li>
+                    <li>
+                      <strong>Motivo:</strong>{" "}
+                      {availableReasons.find(
+                        (r) => r.value === formData.reason,
+                      )?.label || formData.reason}
+                    </li>
+                    <li>
+                      <strong>Fecha:</strong> {new Date().toLocaleString()}
+                    </li>
+                  </ul>
                 </div>
               </div>
             )}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLazyQuery } from "@apollo/client";
 import { AutoComplete } from "primereact/autocomplete";
+import { Tag } from "primereact/tag";
 import { GET_WORKERS } from "../graphql/queries";
 
 /**
@@ -148,9 +149,7 @@ export const WorkerSelector = ({
           <span className="font-medium">{fullName}</span>
           <div className="flex align-items-center gap-2 mt-1">
             {workerType && (
-              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                {workerType}
-              </span>
+              <Tag severity="info" value={workerType} />
             )}
             {departmentName !== "Sin departamento" && (
               <span className="text-xs text-color-secondary">
@@ -167,9 +166,7 @@ export const WorkerSelector = ({
           )}
         </div>
         {worker.user?.enabled === false && (
-          <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded ml-2">
-            Inactivo
-          </span>
+          <Tag severity="danger" value="Inactivo" className="ml-2" />
         )}
       </div>
     );

@@ -23,7 +23,7 @@ export function CustomerTable() {
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
   const [editDialogVisible, setEditDialogVisible] = useState(false);
   const [createDialogVisible, setCreateDialogVisible] = useState(false);
-  const [globalFilter, setGlobalFilter] = useState("");
+  const [globalFilter] = useState("");
   const [detailDialogVisible, setDetailDialogVisible] = useState(false);
   const toast = useRef(null);
   const tableStateRef = useRef({
@@ -164,7 +164,9 @@ export function CustomerTable() {
         <div className="actions-column">
           <Button
             icon="pi pi-history"
-            className="p-button-rounded p-button-text p-button-success"
+            text
+            rounded
+            severity="success"
             tooltip="Restaurar usuario"
             tooltipOptions={{ position: "top" }}
             onClick={() => handleRestore(rowData.id)}
@@ -177,21 +179,26 @@ export function CustomerTable() {
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
           tooltip="Editar cliente"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
         <Button
           icon="pi pi-trash"
-          className="p-button-rounded p-button-text p-button-danger"
+          text
+          rounded
+          severity="danger"
           tooltip="Eliminar cliente"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleDelete(rowData.id)}
         />
         <Button
           icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
+          text
+          rounded
+          severity="info"
           tooltip="Ver detalles"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleViewDetails(rowData.id)}
@@ -265,8 +272,7 @@ export function CustomerTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "10rem" }}
-          bodyStyle={{ textAlign: "center" }}
+          className="w-10rem"
         />
       </GenericDataTable>
 

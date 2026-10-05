@@ -7,6 +7,8 @@ import { Dropdown } from "primereact/dropdown";
 import { useMutation, useQuery } from "@apollo/client";
 import { GET_WORKER_BY_ID, UPDATE_WORKER } from "../graphql/queries";
 import { Toast } from "primereact/toast";
+import { Message } from "primereact/message";
+import { FormField } from "../../../../components/ui";
 import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
 import { UserSelector } from "../../../user/components/UserSelector";
 
@@ -193,12 +195,12 @@ export const WorkerEditForm = ({ workerId, visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
         disabled={updating}
       />
       <Button
@@ -208,7 +210,7 @@ export const WorkerEditForm = ({ workerId, visible, onHide, onSuccess }) => {
         autoFocus
         loading={updating}
       />
-    </div>
+    </>
   );
 
   return (
@@ -217,27 +219,30 @@ export const WorkerEditForm = ({ workerId, visible, onHide, onSuccess }) => {
       <Dialog
         header="Editar Trabajador"
         visible={visible}
-        style={{ width: "60vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
       >
         {loading ? (
-          <p>Cargando...</p>
+          <p className="text-color-secondary">Cargando...</p>
         ) : error ? (
-          <p>Error al cargar trabajador</p>
+          <Message
+            severity="error"
+            text="Error al cargar trabajador"
+            className="w-full"
+          />
         ) : (
-          <div className="p-fluid">
-            <div className="p-field mb-3">
-              <div className="flex align-items-center">
-                <label className="mr-2">Modo creación de usuario</label>
+          <div className="formgrid grid">
+            <div className="col-12">
+              <div className="flex align-items-center gap-2 mb-4">
+                <label>Modo creación de usuario</label>
                 <input
                   type="checkbox"
                   checked={userCreationMode}
                   onChange={toggleUserCreationMode}
-                  className="mr-2"
                   disabled={formData.userId !== null} // Deshabilitar si ya tiene usuario
                 />
-                <small className="text-gray-600">
+                <small className="text-color-secondary">
                   {userCreationMode
                     ? "Editando usuario temporal"
                     : "Usar usuario existente"}
@@ -247,137 +252,129 @@ export const WorkerEditForm = ({ workerId, visible, onHide, onSuccess }) => {
             </div>
 
             {!userCreationMode ? (
-              <div className="p-field mb-4">
-                <label htmlFor="user">Usuario Existente*</label>
-                <UserSelector
-                  onUserSelected={handleUserChange}
-                  selectedUserId={formData.userId}
-                  disabled={formData.userId !== null} // Deshabilitar si ya tiene usuario
-                />
+              <div className="col-12">
+                <FormField label="Usuario Existente" htmlFor="user" required>
+                  <UserSelector
+                    onUserSelected={handleUserChange}
+                    selectedUserId={formData.userId}
+                    disabled={formData.userId !== null} // Deshabilitar si ya tiene usuario
+                  />
+                </FormField>
               </div>
             ) : (
               <>
-                <div className="grid">
-                  <div className="col-6">
-                    <div className="p-field mb-3">
-                      <label htmlFor="tempFirstName">Nombre*</label>
-                      <InputText
-                        id="tempFirstName"
-                        value={formData.tempFirstName}
-                        onChange={handleChange}
-                        name="tempFirstName"
-                        placeholder="Nombre del usuario"
-                        className="w-full"
-                        disabled={updating}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-6">
-                    <div className="p-field mb-3">
-                      <label htmlFor="tempLastName">Apellido*</label>
-                      <InputText
-                        id="tempLastName"
-                        value={formData.tempLastName}
-                        onChange={handleChange}
-                        name="tempLastName"
-                        placeholder="Apellido del usuario"
-                        className="w-full"
-                        disabled={updating}
-                      />
-                    </div>
-                  </div>
+                <div className="col-12 md:col-6">
+                  <FormField label="Nombre" htmlFor="tempFirstName" required>
+                    <InputText
+                      id="tempFirstName"
+                      value={formData.tempFirstName}
+                      onChange={handleChange}
+                      name="tempFirstName"
+                      placeholder="Nombre del usuario"
+                      disabled={updating}
+                    />
+                  </FormField>
                 </div>
-
-                <div className="grid">
-                  <div className="col-6">
-                    <div className="p-field mb-3">
-                      <label htmlFor="tempEmail">Email*</label>
-                      <InputText
-                        id="tempEmail"
-                        value={formData.tempEmail}
-                        onChange={handleChange}
-                        name="tempEmail"
-                        placeholder="email@ejemplo.com"
-                        className="w-full"
-                        disabled={updating}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-6">
-                    <div className="p-field mb-3">
-                      <label htmlFor="tempPhone">Teléfono</label>
-                      <InputText
-                        id="tempPhone"
-                        value={formData.tempPhone}
-                        onChange={handleChange}
-                        name="tempPhone"
-                        placeholder="+1234567890"
-                        className="w-full"
-                        disabled={updating}
-                      />
-                    </div>
-                  </div>
+                <div className="col-12 md:col-6">
+                  <FormField label="Apellido" htmlFor="tempLastName" required>
+                    <InputText
+                      id="tempLastName"
+                      value={formData.tempLastName}
+                      onChange={handleChange}
+                      name="tempLastName"
+                      placeholder="Apellido del usuario"
+                      disabled={updating}
+                    />
+                  </FormField>
                 </div>
-
-                <div className="p-field mb-4">
-                  <label htmlFor="tempRole">Rol del Usuario*</label>
-                  <Dropdown
-                    id="tempRole"
-                    value={formData.tempRole[0] || null}
-                    options={roles}
-                    onChange={handleTempRoleChange}
-                    optionLabel="label"
-                    name="tempRole"
-                    placeholder="Seleccione un rol"
-                    className="w-full"
-                    disabled={updating}
-                    required
-                  />
+                <div className="col-12 md:col-6">
+                  <FormField label="Email" htmlFor="tempEmail" required>
+                    <InputText
+                      id="tempEmail"
+                      value={formData.tempEmail}
+                      onChange={handleChange}
+                      name="tempEmail"
+                      placeholder="email@ejemplo.com"
+                      disabled={updating}
+                    />
+                  </FormField>
+                </div>
+                <div className="col-12 md:col-6">
+                  <FormField label="Teléfono" htmlFor="tempPhone">
+                    <InputText
+                      id="tempPhone"
+                      value={formData.tempPhone}
+                      onChange={handleChange}
+                      name="tempPhone"
+                      placeholder="+1234567890"
+                      disabled={updating}
+                    />
+                  </FormField>
+                </div>
+                <div className="col-12 md:col-6">
+                  <FormField label="Rol del Usuario" htmlFor="tempRole" required>
+                    <Dropdown
+                      id="tempRole"
+                      value={formData.tempRole[0] || null}
+                      options={roles}
+                      onChange={handleTempRoleChange}
+                      optionLabel="label"
+                      name="tempRole"
+                      placeholder="Seleccione un rol"
+                      className="w-full"
+                      disabled={updating}
+                      required
+                    />
+                  </FormField>
                 </div>
               </>
             )}
 
-            <div className="p-field mb-4">
-              <label htmlFor="workerType">Tipo de Trabajador*</label>
-              <Dropdown
-                id="workerType"
-                value={formData.workerType}
-                options={workerTypes}
-                onChange={handleChange}
-                optionLabel="label"
-                name="workerType"
-                placeholder="Seleccione un tipo"
-                className="w-full"
-                disabled={updating}
-                required
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Tipo de Trabajador" htmlFor="workerType" required>
+                <Dropdown
+                  id="workerType"
+                  value={formData.workerType}
+                  options={workerTypes}
+                  onChange={handleChange}
+                  optionLabel="label"
+                  name="workerType"
+                  placeholder="Seleccione un tipo"
+                  className="w-full"
+                  disabled={updating}
+                  required
+                />
+              </FormField>
             </div>
 
-            <div className="p-field mb-4">
-              <label htmlFor="baseSalary">Salario Base</label>
-              <InputNumber
-                id="baseSalary"
-                value={formData.baseSalary}
-                onValueChange={handleNumberChange}
-                mode="currency"
-                currency="USD"
-                locale="en-US"
-                min={0}
-                className="w-full"
+            <div className="col-12 md:col-6">
+              <FormField label="Salario Base" htmlFor="baseSalary">
+                <InputNumber
+                  id="baseSalary"
+                  value={formData.baseSalary}
+                  onValueChange={handleNumberChange}
+                  mode="currency"
+                  currency="USD"
+                  locale="en-US"
+                  min={0}
+                  className="w-full"
+                  disabled={updating}
+                />
+              </FormField>
+            </div>
+
+            <div className="col-12">
+              <SecurityEntitySelector
+                onSelectionChange={handleSecurityEntitiesChange}
+                initialValues={{
+                  businessId: formData.businessId,
+                  officeId: formData.officeId,
+                  departmentId: formData.departmentId,
+                  teamId: formData.teamId,
+                }}
                 disabled={updating}
               />
             </div>
-
-            <SecurityEntitySelector
-              onSelectionChange={handleSecurityEntitiesChange}
-              initialValues={{
-                businessId: formData.businessId,
-                officeId: formData.officeId,
-                departmentId: formData.departmentId,
-                teamId: formData.teamId,
-              }}
-              disabled={updating}
-            />
           </div>
         )}
       </Dialog>

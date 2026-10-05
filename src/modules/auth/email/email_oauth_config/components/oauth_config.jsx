@@ -101,70 +101,69 @@ export function OAuthButton() {
   const isHealthy = healthData?.emailHealthStatus?.isHealthy || false;
 
   return (
-    <div className="oauth-button-container">
-      <Card title="Configuración de Correo Electrónico" className="shadow-2">
-        {error && (
-          <Message
-            severity="error"
-            text={error}
-            className="w-full mb-4"
-            onClose={() => setError(null)}
-          />
+    <Card title="Configuración de Correo Electrónico">
+      {error && (
+        <Message
+          severity="error"
+          text={error}
+          className="w-full mb-4"
+          onClose={() => setError(null)}
+        />
+      )}
+
+      <div className="flex flex-column align-items-center gap-3">
+        <i className="pi pi-envelope text-6xl text-primary-500"></i>
+
+        <Divider className="w-full" />
+
+        {isConfigured ? (
+          <>
+            <Message
+              severity={isHealthy ? "success" : "warn"}
+              text={
+                isHealthy
+                  ? "El servicio de correo está configurado y funcionando correctamente"
+                  : "El servicio de correo está configurado pero presenta problemas"
+              }
+              className="w-full"
+            />
+            <Button
+              label="Reconfigurar"
+              icon="pi pi-refresh"
+              severity="secondary"
+              onClick={startOAuthFlow}
+              loading={loading}
+            />
+          </>
+        ) : (
+          <>
+            <p className="text-center">
+              Para configurar el servicio de correo, necesitamos autenticarte
+              con Google.
+            </p>
+
+            {loading ? (
+              <div className="flex align-items-center gap-2">
+                <ProgressSpinner
+                  strokeWidth="4"
+                  className="w-2rem h-2rem"
+                />
+                <span>Conectando con Google...</span>
+              </div>
+            ) : (
+              <Button
+                label="Continuar con Google"
+                icon="pi pi-google"
+                onClick={startOAuthFlow}
+              />
+            )}
+          </>
         )}
 
-        <div className="flex flex-column align-items-center gap-3">
-          <i className="pi pi-envelope text-6xl text-primary-500"></i>
-
-          <Divider className="w-full" />
-
-          {isConfigured ? (
-            <>
-              <Message
-                severity={isHealthy ? "success" : "warn"}
-                text={
-                  isHealthy
-                    ? "El servicio de correo está configurado y funcionando correctamente"
-                    : "El servicio de correo está configurado pero presenta problemas"
-                }
-                className="w-full"
-              />
-              <Button
-                label="Reconfigurar"
-                icon="pi pi-refresh"
-                className="p-button-outlined mt-3"
-                onClick={startOAuthFlow}
-                loading={loading}
-              />
-            </>
-          ) : (
-            <>
-              <p className="text-center">
-                Para configurar el servicio de correo, necesitamos autenticarte
-                con Google.
-              </p>
-
-              {loading ? (
-                <div className="flex align-items-center gap-2">
-                  <ProgressSpinner style={{ width: "24px", height: "24px" }} />
-                  <span>Conectando con Google...</span>
-                </div>
-              ) : (
-                <Button
-                  label="Continuar con Google"
-                  icon="pi pi-google"
-                  className="p-button-outlined"
-                  onClick={startOAuthFlow}
-                  severity="secondary"
-                />
-              )}
-            </>
-          )}
-
-          <small className="text-color-secondary">
-            Serás redirigido a Google para autorizar el acceso
-          </small>
-        </div>
-      </Card>
-    </div>
+        <small className="text-color-secondary">
+          Serás redirigido a Google para autorizar el acceso
+        </small>
+      </div>
+    </Card>
   );
 }

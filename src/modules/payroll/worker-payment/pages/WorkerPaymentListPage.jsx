@@ -1,14 +1,15 @@
 import React from 'react';
-import { Card } from 'primereact/card';
+import { PageHeader } from '../../../../components/ui';
 import { WorkerPaymentTable } from '../components/WorkerPaymentTable';
-import '../styles/WorkerPaymentList.css';
 
 export function WorkerPaymentListPage() {
     return (
-        <div className="worker-payment-list-page">
-            <Card title="Gestión de Pagos a Trabajadores">
-                <WorkerPaymentTable />
-            </Card>
-        </div>
+        <>
+            <PageHeader
+                title="Pagos a trabajadores"
+                subtitle="Consulta y registra los pagos de salarios, comisiones y bonos."
+            />
+            <WorkerPaymentTable />
+        </>
     );
 }

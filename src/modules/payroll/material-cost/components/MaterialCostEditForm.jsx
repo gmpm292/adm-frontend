@@ -8,6 +8,7 @@ import { InputSwitch } from "primereact/inputswitch";
 import { useMutation, useLazyQuery } from "@apollo/client";
 import { GET_MATERIAL_COST, UPDATE_MATERIAL_COST } from "../graphql/queries";
 import { Toast } from "primereact/toast";
+import { FormField } from "../../../../components/ui";
 import { ProgressSpinner } from "primereact/progressspinner";
 import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
 
@@ -61,7 +62,7 @@ export const MaterialCostEditForm = ({
         });
       }
     },
-    onError: (err) => {
+    onError: () => {
       toast.current.show({
         severity: "error",
         summary: "Error",
@@ -155,12 +156,12 @@ export const MaterialCostEditForm = ({
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Guardar"
@@ -168,7 +169,7 @@ export const MaterialCostEditForm = ({
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -177,7 +178,7 @@ export const MaterialCostEditForm = ({
       <Dialog
         header="Editar Material"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
         modal
@@ -187,96 +188,98 @@ export const MaterialCostEditForm = ({
             <ProgressSpinner />
           </div>
         ) : (
-          <div className="p-fluid">
-            <div className="field">
-              <label htmlFor="name">Nombre del Material*</label>
-              <InputText
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                autoFocus
-              />
-            </div>
-
-            <div className="field">
-              <label htmlFor="description">Descripción</label>
-              <InputTextarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={3}
-                autoResize
-              />
-            </div>
-
-            <div className="field">
-              <label htmlFor="unitOfMeasureId">Unidad de Medida*</label>
-              <UnitOfMeasureDropdown
-                id="unitOfMeasureId"
-                value={formData.unitOfMeasureId}
-                onChange={handleUnitChange}
-                placeholder="Seleccione una unidad"
-                onlyActive={true}
-              />
-            </div>
-
-            <div className="grid">
-              <div className="col-8">
-                <div className="field">
-                  <label htmlFor="costPrice">Precio de Costo*</label>
-                  <InputNumber
-                    id="costPrice"
-                    value={formData.costPrice}
-                    onValueChange={handleNumberChange}
-                    mode="decimal"
-                    min={0}
-                    minFractionDigits={2}
-                    maxFractionDigits={4}
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="col-4">
-                <div className="field">
-                  <label htmlFor="currency">Moneda*</label>
-                  <CurrencyDropdown
-                    id="currency"
-                    value={formData.currency}
-                    onChange={handleCurrencyChange}
-                    placeholder="Moneda"
-                    onlyActive={true}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="field">
-              <label htmlFor="isActive">Estado</label>
-              <div className="flex align-items-center">
-                <InputSwitch
-                  id="isActive"
-                  checked={formData.isActive}
-                  onChange={handleStatusChange}
+          <div className="formgrid grid">
+            <div className="col-12">
+              <FormField label="Nombre del Material" htmlFor="name" required>
+                <InputText
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  autoFocus
                 />
-                <span className="ml-2">
-                  {formData.isActive ? "Activo" : "Inactivo"}
-                </span>
-              </div>
+              </FormField>
             </div>
 
-            <SecurityEntitySelector
-              onSelectionChange={handleSecurityEntitiesChange}
-              initialValues={{
-                businessId: formData.businessId,
-                officeId: formData.officeId,
-                departmentId: formData.departmentId,
-                teamId: formData.teamId,
-              }}
-            />
+            <div className="col-12">
+              <FormField label="Descripción" htmlFor="description">
+                <InputTextarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={3}
+                  autoResize
+                />
+              </FormField>
+            </div>
+
+            <div className="col-12 md:col-6">
+              <FormField label="Unidad de Medida" htmlFor="unitOfMeasureId" required>
+                <UnitOfMeasureDropdown
+                  id="unitOfMeasureId"
+                  value={formData.unitOfMeasureId}
+                  onChange={handleUnitChange}
+                  placeholder="Seleccione una unidad"
+                  onlyActive={true}
+                />
+              </FormField>
+            </div>
+
+            <div className="col-12 md:col-6">
+              <FormField label="Estado" htmlFor="isActive">
+                <div className="flex align-items-center gap-2">
+                  <InputSwitch
+                    id="isActive"
+                    checked={formData.isActive}
+                    onChange={handleStatusChange}
+                  />
+                  <span>
+                    {formData.isActive ? "Activo" : "Inactivo"}
+                  </span>
+                </div>
+              </FormField>
+            </div>
+
+            <div className="col-12 md:col-6">
+              <FormField label="Precio de Costo" htmlFor="costPrice" required>
+                <InputNumber
+                  id="costPrice"
+                  value={formData.costPrice}
+                  onValueChange={handleNumberChange}
+                  mode="decimal"
+                  min={0}
+                  minFractionDigits={2}
+                  maxFractionDigits={4}
+                  placeholder="0.00"
+                  required
+                />
+              </FormField>
+            </div>
+            <div className="col-12 md:col-6">
+              <FormField label="Moneda" htmlFor="currency" required>
+                <CurrencyDropdown
+                  id="currency"
+                  value={formData.currency}
+                  onChange={handleCurrencyChange}
+                  placeholder="Moneda"
+                  onlyActive={true}
+                />
+              </FormField>
+            </div>
+
+            <div className="col-12">
+              <SecurityEntitySelector
+                onSelectionChange={handleSecurityEntitiesChange}
+                initialValues={{
+                  businessId: formData.businessId,
+                  officeId: formData.officeId,
+                  departmentId: formData.departmentId,
+                  teamId: formData.teamId,
+                }}
+              />
+            </div>
           </div>
         )}
       </Dialog>

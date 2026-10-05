@@ -8,7 +8,9 @@ import { Calendar } from "primereact/calendar";
 import { useMutation, useQuery } from "@apollo/client";
 import { GET_SALE_BY_ID, UPDATE_SALE } from "../graphql/queries";
 import { Toast } from "primereact/toast";
+import { Message } from "primereact/message";
 import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
+import { FormField } from "../../../../components/ui";
 import { useLazyQuery } from "@apollo/client";
 import { GET_CUSTOMERS } from "../../customer/graphql/queries";
 
@@ -128,12 +130,12 @@ export const SaleEditForm = ({ saleId, visible, onHide, onSuccess }) => {
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Guardar"
@@ -141,7 +143,7 @@ export const SaleEditForm = ({ saleId, visible, onHide, onSuccess }) => {
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -150,86 +152,91 @@ export const SaleEditForm = ({ saleId, visible, onHide, onSuccess }) => {
       <Dialog
         header="Editar Venta"
         visible={visible}
-        style={{ width: "70vw" }}
+        className="w-full md:w-8 xl:w-6"
         footer={footer}
         onHide={onHide}
       >
         {loading ? (
-          <p>Cargando...</p>
+          <p className="text-color-secondary">Cargando...</p>
         ) : error ? (
-          <p>Error al cargar venta</p>
+          <Message severity="error" className="w-full" text="Error al cargar venta" />
         ) : (
-          <div className="p-fluid grid">
-            <div className="field col-12 md:col-6">
-              <label htmlFor="effectiveDate">Fecha*</label>
-              <Calendar
-                id="effectiveDate"
-                value={formData.effectiveDate}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, effectiveDate: e.value }))
-                }
-                dateFormat="dd/mm/yy"
-                showIcon
-                required
-              />
+          <div className="formgrid grid">
+            <div className="col-12 md:col-6">
+              <FormField label="Fecha" htmlFor="effectiveDate" required>
+                <Calendar
+                  id="effectiveDate"
+                  value={formData.effectiveDate}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, effectiveDate: e.value }))
+                  }
+                  dateFormat="dd/mm/yy"
+                  showIcon
+                  required
+                />
+              </FormField>
             </div>
 
-            <div className="field col-12 md:col-6">
-              <label htmlFor="paymentMethod">Método de Pago*</label>
-              <Dropdown
-                id="paymentMethod"
-                value={formData.paymentMethod}
-                options={paymentMethods}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, paymentMethod: e.value }))
-                }
-                optionLabel="label"
-                placeholder="Seleccione método"
-                required
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Método de Pago" htmlFor="paymentMethod" required>
+                <Dropdown
+                  id="paymentMethod"
+                  value={formData.paymentMethod}
+                  options={paymentMethods}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, paymentMethod: e.value }))
+                  }
+                  optionLabel="label"
+                  placeholder="Seleccione método"
+                  required
+                />
+              </FormField>
             </div>
 
-            <div className="field col-12 md:col-6">
-              <label htmlFor="totalAmount">Monto Total*</label>
-              <InputNumber
-                id="totalAmount"
-                value={formData.totalAmount || 0} // ✅ Valor por defecto
-                onValueChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    totalAmount: e.value || 0,
-                  }))
-                }
-                mode="currency"
-                currency="USD"
-                locale="en-US"
-                required
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Monto Total" htmlFor="totalAmount" required>
+                <InputNumber
+                  id="totalAmount"
+                  value={formData.totalAmount || 0} // ✅ Valor por defecto
+                  onValueChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      totalAmount: e.value || 0,
+                    }))
+                  }
+                  mode="currency"
+                  currency="USD"
+                  locale="en-US"
+                  required
+                />
+              </FormField>
             </div>
 
-            <div className="field col-12 md:col-6">
-              <label htmlFor="invoiceNumber">Número de Factura</label>
-              <InputText
-                id="invoiceNumber"
-                name="invoiceNumber"
-                value={formData.invoiceNumber}
-                onChange={handleChange}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Número de Factura" htmlFor="invoiceNumber">
+                <InputText
+                  id="invoiceNumber"
+                  name="invoiceNumber"
+                  value={formData.invoiceNumber}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
 
-            <div className="field col-12 md:col-6">
-              <label htmlFor="customerId">Cliente</label>
-              <Dropdown
-                id="customerId"
-                value={formData.customerId}
-                options={customers}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, customerId: e.value }))
-                }
-                optionLabel="label"
-                placeholder="Seleccione cliente"
-                filter
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Cliente" htmlFor="customerId">
+                <Dropdown
+                  id="customerId"
+                  value={formData.customerId}
+                  options={customers}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, customerId: e.value }))
+                  }
+                  optionLabel="label"
+                  placeholder="Seleccione cliente"
+                  filter
+                />
+              </FormField>
             </div>
 
             <div className="col-12">

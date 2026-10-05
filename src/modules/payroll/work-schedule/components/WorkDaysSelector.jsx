@@ -1,6 +1,5 @@
 import React from 'react';
 import { Checkbox } from 'primereact/checkbox';
-import { classNames } from 'primereact/utils';
 
 export const WorkDaysSelector = ({ workingDays, onChange }) => {
   const days = [
@@ -21,10 +20,10 @@ export const WorkDaysSelector = ({ workingDays, onChange }) => {
   };
 
   return (
-    <div className="p-grid">
+    <div className="grid">
       {days.map((day) => (
-        <div key={day.field} className="p-col-12 p-md-3">
-          <div className="field-checkbox">
+        <div key={day.field} className="col-6 md:col-3">
+          <div className="flex align-items-center gap-2">
             <Checkbox
               inputId={day.field}
               checked={workingDays[day.field]}

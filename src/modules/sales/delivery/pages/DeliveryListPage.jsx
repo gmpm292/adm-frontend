@@ -1,14 +1,15 @@
 import React from 'react';
-import { Card } from 'primereact/card';
 import { DeliveryTable } from '../components/DeliveryTable';
-import '../styles/DeliveryList.css';
+import { PageHeader } from '../../../../components/ui';
 
 export function DeliveryListPage() {
     return (
-        <div className="delivery-list-page">
-            <Card title="Gestión de Mensajerías">
-                <DeliveryTable />
-            </Card>
-        </div>
+        <>
+            <PageHeader
+                title="Mensajerías"
+                subtitle="Da seguimiento a las ventas con entrega y confirma las pendientes."
+            />
+            <DeliveryTable />
+        </>
     );
 }

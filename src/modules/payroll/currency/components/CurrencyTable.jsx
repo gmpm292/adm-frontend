@@ -6,15 +6,17 @@ import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { Toast } from 'primereact/toast';
+import { Tag } from 'primereact/tag';
 import { CurrencyEditForm } from './CurrencyEditForm';
 import { CurrencyCreateForm } from './CurrencyCreateForm';
 import { CurrencyDetailForm } from './CurrencyDetailForm';
 
 const statusBodyTemplate = (rowData) => {
   return (
-    <span className={`badge status-${rowData.isActive ? 'active' : 'inactive'}`}>
-      {rowData.isActive ? 'Activo' : 'Inactivo'}
-    </span>
+    <Tag
+      severity={rowData.isActive ? 'success' : 'danger'}
+      value={rowData.isActive ? 'Activo' : 'Inactivo'}
+    />
   );
 };
 
@@ -135,21 +137,26 @@ export function CurrencyTable() {
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
           tooltip="Editar moneda"
           tooltipOptions={{ position: 'top' }}
           onClick={() => handleEdit(rowData.code)}
         />
         <Button
           icon={rowData.isActive ? 'pi pi-ban' : 'pi pi-check'}
-          className={`p-button-rounded p-button-text ${rowData.isActive ? 'p-button-warning' : 'p-button-success'}`}
+          text
+          rounded
+          severity={rowData.isActive ? 'warning' : 'success'}
           tooltip={rowData.isActive ? 'Desactivar' : 'Activar'}
           tooltipOptions={{ position: 'top' }}
           onClick={() => handleToggleStatus(rowData.code, rowData.isActive)}
         />
         <Button
           icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
+          text
+          rounded
+          severity="info"
           tooltip="Ver detalles"
           tooltipOptions={{ position: 'top' }}
           onClick={() => handleViewDetails(rowData.code)}
@@ -222,8 +229,7 @@ export function CurrencyTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: '10rem' }}
-          bodyStyle={{ textAlign: 'center' }}
+          headerClassName="w-10rem"
         />
       </GenericDataTable>
 

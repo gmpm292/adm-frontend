@@ -17,6 +17,9 @@ const GET_PROFILE = gql`
   query Profile {
     profile {
       id
+      email
+      name
+      lastName
       role
       business {
         id
@@ -106,6 +109,12 @@ const FINISH_CONFIGURE_2FA = gql`
   }
 `;
 
+const DISABLE_OWN_2FA = gql`
+  mutation DisableOwn2FA($token2Fa: String!) {
+    disableOwn2FA(token2fa: $token2Fa)
+  }
+`;
+
 const LOGOUT = gql`
   mutation Logout {
     logout {
@@ -143,6 +152,7 @@ export {
   GENERATE_2FA_SECRET,
   VERIFY_2FA,
   FINISH_CONFIGURE_2FA,
+  DISABLE_OWN_2FA,
   LOGOUT,
   RESET_2FA_SETTINGS,
   ENABLE_2FA,

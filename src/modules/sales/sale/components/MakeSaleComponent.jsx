@@ -8,13 +8,13 @@ import { MAKE_SALE } from "../graphql/queries";
 import { SalePaymentValidation } from "./SalePaymentValidation";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Message } from "primereact/message";
+import { FormField } from "../../../../components/ui";
 
 export const MakeSaleComponent = ({
   saleId,
   visible,
   onHide,
   onSuccess,
-  saleDetails,
 }) => {
   const [customDate, setCustomDate] = useState(null);
   const [showValidation, setShowValidation] = useState(false);
@@ -92,30 +92,26 @@ export const MakeSaleComponent = ({
   };
 
   const footer = (
-    <div className="flex justify-content-between align-items-center">
-      <div>
-        <Button
-          label="Cancelar"
-          icon="pi pi-times"
-          onClick={handleClose}
-          className="p-button-text"
-        />
-      </div>
-      <div className="flex gap-2">
-        <Button
-          label="Validar Pagos"
-          icon="pi pi-check-circle"
-          onClick={() => setShowValidation(true)}
-          className="p-button-outlined p-button-help"
-        />
-        <Button
-          label="Procesar Venta"
-          icon="pi pi-shopping-cart"
-          onClick={handleProcessSale}
-          disabled={!validationResult?.valid || processing}
-        />
-      </div>
-    </div>
+    <>
+      <Button
+        label="Cancelar"
+        icon="pi pi-times"
+        onClick={handleClose}
+        severity="secondary"
+      />
+      <Button
+        label="Validar Pagos"
+        icon="pi pi-check-circle"
+        onClick={() => setShowValidation(true)}
+        severity="secondary"
+      />
+      <Button
+        label="Procesar Venta"
+        icon="pi pi-shopping-cart"
+        onClick={handleProcessSale}
+        disabled={!validationResult?.valid || processing}
+      />
+    </>
   );
 
   const totalValidated =
@@ -128,36 +124,34 @@ export const MakeSaleComponent = ({
       <Dialog
         header="Realizar Venta"
         visible={visible}
-        style={{ width: "800px" }}
+        className="w-full md:w-8 xl:w-6"
         footer={footer}
         onHide={handleClose}
         modal
       >
-        <div className="p-fluid">
+        <div>
           <div className="mb-4">
-            <h4>Procesar Venta #{saleId}</h4>
-            <p className="text-sm text-color-secondary">
+            <h4 className="mt-0 mb-1">Procesar Venta #{saleId}</h4>
+            <p className="m-0 text-sm text-color-secondary">
               Complete la información para finalizar la venta
             </p>
           </div>
 
-          <div className="grid">
-            <div className="field col-12">
-              <label htmlFor="customDate">Fecha Personalizada (Opcional)</label>
-              <Calendar
-                id="customDate"
-                value={customDate}
-                onChange={(e) => setCustomDate(e.value)}
-                dateFormat="dd/mm/yy"
-                showIcon
-                showButtonBar
-              />
-            </div>
-          </div>
+          <FormField label="Fecha Personalizada (Opcional)" htmlFor="customDate">
+            <Calendar
+              id="customDate"
+              value={customDate}
+              onChange={(e) => setCustomDate(e.value)}
+              dateFormat="dd/mm/yy"
+              showIcon
+              showButtonBar
+            />
+          </FormField>
 
           {validationResult && (
             <div className="mt-4">
               <Message
+                className="w-full"
                 severity={validationResult.valid ? "success" : "warn"}
                 text={
                   validationResult.valid
@@ -168,7 +162,7 @@ export const MakeSaleComponent = ({
 
               {validationResult.valid && validatedPayments && (
                 <div className="mt-3 p-3 border-round border-1 surface-border">
-                  <h5>Resumen de Pagos Validados:</h5>
+                  <h5 className="mt-0 mb-3">Resumen de Pagos Validados:</h5>
                   {validatedPayments.map((payment, index) => (
                     <div
                       key={index}
@@ -184,7 +178,7 @@ export const MakeSaleComponent = ({
                       </span>
                     </div>
                   ))}
-                  <div className="flex justify-content-between mt-2 pt-2 border-top-1">
+                  <div className="flex justify-content-between mt-2 pt-2 border-top-1 surface-border">
                     <span className="font-bold">Total:</span>
                     <span className="font-bold text-lg">
                       {totalValidated.toLocaleString("en-US", {
@@ -199,21 +193,18 @@ export const MakeSaleComponent = ({
           )}
 
           {processing && (
-            <div className="flex justify-content-center align-items-center mt-3">
-              <ProgressSpinner style={{ width: "30px", height: "30px" }} />
-              <span className="ml-2">Procesando venta...</span>
+            <div className="flex justify-content-center align-items-center gap-2 mt-3 text-color-secondary">
+              <ProgressSpinner className="w-2rem h-2rem m-0" />
+              <span>Procesando venta...</span>
             </div>
           )}
 
           {!validationResult && (
-            <div className="mt-4 p-3 border-round border-1 surface-border bg-blue-50">
-              <div className="flex align-items-center">
-                <i className="pi pi-info-circle text-blue-500 mr-2"></i>
-                <span>
-                  Por favor valide los pagos antes de procesar la venta
-                </span>
-              </div>
-            </div>
+            <Message
+              severity="info"
+              className="w-full mt-4"
+              text="Por favor valide los pagos antes de procesar la venta"
+            />
           )}
         </div>
       </Dialog>

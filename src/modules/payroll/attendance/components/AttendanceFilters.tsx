@@ -4,6 +4,7 @@ import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
 import { MultiSelect } from "primereact/multiselect";
+import { FormField } from "../../../../components/ui";
 
 interface AttendanceFiltersProps {
   onFilterChange: (filters: any) => void;
@@ -64,93 +65,83 @@ export const AttendanceFilters: React.FC<AttendanceFiltersProps> = ({
   };
 
   return (
-    <div className="card p-fluid mb-4">
-      <div className="grid p-fluid">
+    <div className="surface-card border-1 surface-border border-round p-3 mb-4">
+      <div className="formgrid grid align-items-end">
         <div className="col-12 md:col-3">
-          <label htmlFor="dateRange" className="block text-sm font-medium mb-2">
-            Rango de Fechas
-          </label>
-          <Calendar
-            id="dateRange"
-            value={filters.dateRange}
-            onChange={(e) => handleFilterChange("dateRange", e.value)}
-            selectionMode="range"
-            readOnlyInput
-            dateFormat="dd/mm/yy"
-            placeholder="Seleccione rango"
-            className="w-full"
-            showIcon
-          />
+          <FormField label="Rango de Fechas" htmlFor="dateRange">
+            <Calendar
+              id="dateRange"
+              value={filters.dateRange}
+              onChange={(e) => handleFilterChange("dateRange", e.value)}
+              selectionMode="range"
+              readOnlyInput
+              dateFormat="dd/mm/yy"
+              placeholder="Seleccione rango"
+              className="w-full"
+              showIcon
+            />
+          </FormField>
         </div>
 
         <div className="col-12 md:col-2">
-          <label htmlFor="status" className="block text-sm font-medium mb-2">
-            Estado
-          </label>
-          <Dropdown
-            id="status"
-            value={filters.status}
-            options={statusOptions}
-            onChange={(e) => handleFilterChange("status", e.value)}
-            placeholder="Todos"
-            className="w-full"
-          />
+          <FormField label="Estado" htmlFor="status">
+            <Dropdown
+              id="status"
+              value={filters.status}
+              options={statusOptions}
+              onChange={(e) => handleFilterChange("status", e.value)}
+              placeholder="Todos"
+              className="w-full"
+            />
+          </FormField>
         </div>
 
         <div className="col-12 md:col-2">
-          <label
-            htmlFor="workerName"
-            className="block text-sm font-medium mb-2"
-          >
-            Trabajador
-          </label>
-          <InputText
-            id="workerName"
-            value={filters.workerName}
-            onChange={(e) => handleFilterChange("workerName", e.target.value)}
-            placeholder="Nombre..."
-            className="w-full"
-          />
+          <FormField label="Trabajador" htmlFor="workerName">
+            <InputText
+              id="workerName"
+              value={filters.workerName}
+              onChange={(e) => handleFilterChange("workerName", e.target.value)}
+              placeholder="Nombre..."
+              className="w-full"
+            />
+          </FormField>
         </div>
 
         <div className="col-12 md:col-2">
-          <label
-            htmlFor="department"
-            className="block text-sm font-medium mb-2"
-          >
-            Departamento
-          </label>
-          <MultiSelect
-            id="department"
-            value={filters.department}
-            options={departmentOptions}
-            onChange={(e) => handleFilterChange("department", e.value)}
-            placeholder="Todos"
-            className="w-full"
-            maxSelectedLabels={2}
-          />
+          <FormField label="Departamento" htmlFor="department">
+            <MultiSelect
+              id="department"
+              value={filters.department}
+              options={departmentOptions}
+              onChange={(e) => handleFilterChange("department", e.value)}
+              placeholder="Todos"
+              className="w-full"
+              maxSelectedLabels={2}
+            />
+          </FormField>
         </div>
 
         <div className="col-12 md:col-2">
-          <label htmlFor="isPaid" className="block text-sm font-medium mb-2">
-            Estado de Pago
-          </label>
-          <Dropdown
-            id="isPaid"
-            value={filters.isPaid}
-            options={paidOptions}
-            onChange={(e) => handleFilterChange("isPaid", e.value)}
-            placeholder="Todos"
-            className="w-full"
-          />
+          <FormField label="Estado de Pago" htmlFor="isPaid">
+            <Dropdown
+              id="isPaid"
+              value={filters.isPaid}
+              options={paidOptions}
+              onChange={(e) => handleFilterChange("isPaid", e.value)}
+              placeholder="Todos"
+              className="w-full"
+            />
+          </FormField>
         </div>
 
-        <div className="col-12 md:col-1 flex align-items-end">
+        <div className="col-12 md:col-1 mb-3">
           <Button
             icon="pi pi-filter-slash"
             label="Limpiar"
             onClick={handleClearFilters}
-            className="p-button-outlined w-full"
+            outlined
+            className="w-full"
             severity="secondary"
           />
         </div>

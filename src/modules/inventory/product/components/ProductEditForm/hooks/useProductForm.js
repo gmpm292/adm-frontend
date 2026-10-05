@@ -64,7 +64,7 @@ export const useProductForm = (productId, visible) => {
   });
 
   // Query para obtener el producto a editar
-  const { loading, error, data } = useQuery(GET_PRODUCT_BY_ID, {
+  const { loading, error } = useQuery(GET_PRODUCT_BY_ID, {
     variables: { id: productId },
     skip: !productId || !visible,
     onCompleted: (data) => {

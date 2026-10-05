@@ -15,23 +15,27 @@ export function BusinessTabs({ selectedBusiness, onBusinessChange }) {
 
   const businesses = data?.businesses?.data || [];
 
+  // Pestaña activa: contorno principal; el resto, texto neutro
+  const tabProps = (isActive) => ({
+    size: "small",
+    outlined: isActive,
+    text: !isActive,
+    severity: isActive ? undefined : "secondary",
+  });
+
   return (
-    <div className="flex align-items-center gap-1">
+    <div className="flex flex-wrap align-items-center gap-1">
       <Button
         icon="pi pi-building"
         label="Todos"
-        className={selectedBusiness === "ALL" ? "" : "p-button-outlined"}
+        {...tabProps(selectedBusiness === "ALL")}
         onClick={() => onBusinessChange("ALL")}
       />
       {businesses.map((business) => (
         <Button
           key={business.id}
           label={business.name}
-          className={
-            selectedBusiness === business.id.toString()
-              ? ""
-              : "p-button-outlined"
-          }
+          {...tabProps(selectedBusiness === business.id.toString())}
           onClick={() => onBusinessChange(business.id.toString())}
         />
       ))}

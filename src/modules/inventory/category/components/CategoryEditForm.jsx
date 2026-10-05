@@ -6,6 +6,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import { GET_CATEGORY_BY_ID, UPDATE_CATEGORY } from "../graphql/queries";
 import { Toast } from "primereact/toast";
 import { useRef } from "react";
+import { FormField } from "../../../../components/ui";
 
 export const CategoryEditForm = ({
   categoryId,
@@ -69,12 +70,12 @@ export const CategoryEditForm = ({
   };
 
   const footer = (
-    <div>
+    <>
       <Button
         label="Cancelar"
         icon="pi pi-times"
         onClick={onHide}
-        className="p-button-text"
+        severity="secondary"
       />
       <Button
         label="Guardar"
@@ -82,7 +83,7 @@ export const CategoryEditForm = ({
         onClick={handleSubmit}
         autoFocus
       />
-    </div>
+    </>
   );
 
   return (
@@ -91,7 +92,7 @@ export const CategoryEditForm = ({
       <Dialog
         header="Editar Categoría"
         visible={visible}
-        style={{ width: "50vw" }}
+        className="w-full md:w-8 lg:w-6"
         footer={footer}
         onHide={onHide}
       >
@@ -100,25 +101,27 @@ export const CategoryEditForm = ({
         ) : error ? (
           <p>Error al cargar categoría</p>
         ) : (
-          <div className="p-fluid">
-            <div className="p-field">
-              <label htmlFor="name">Nombre</label>
-              <InputText
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-              />
+          <div className="formgrid grid p-fluid">
+            <div className="col-12 md:col-6">
+              <FormField label="Nombre" htmlFor="name">
+                <InputText
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
 
-            <div className="p-field">
-              <label htmlFor="description">Descripción</label>
-              <InputText
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-              />
+            <div className="col-12 md:col-6">
+              <FormField label="Descripción" htmlFor="description">
+                <InputText
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                />
+              </FormField>
             </div>
           </div>
         )}

@@ -1,0 +1,9 @@
+/* Punto de entrada único de estilos del sistema. El orden importa:
+   tema de PrimeReact -> utilidades -> tokens -> componentes -> estructura. */
+@import "./primereact.generated.css";
+@import "primereact/resources/primereact.min.css";
+@import "primeicons/primeicons.css";
+@import "primeflex/primeflex.css";
+@import "./tokens.css";
+@import "./components.css";
+@import "./layout.css";

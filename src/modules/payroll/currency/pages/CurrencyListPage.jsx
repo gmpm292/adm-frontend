@@ -1,14 +1,15 @@
 import React from 'react';
-import { Card } from 'primereact/card';
+import { PageHeader } from '../../../../components/ui';
 import { CurrencyTable } from '../components/CurrencyTable';
-import '../styles/CurrencyList.css';
 
 export function CurrencyListPage() {
   return (
-    <div className="currency-list-page">
-      <Card title="Gestión de Monedas">
-        <CurrencyTable />
-      </Card>
-    </div>
+    <>
+      <PageHeader
+        title="Monedas"
+        subtitle="Administra las monedas disponibles y su tasa de cambio frente al CUP."
+      />
+      <CurrencyTable />
+    </>
   );
 }

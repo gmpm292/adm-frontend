@@ -122,14 +122,17 @@ export function BusinessTable() {
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
           tooltip="Editar empresa"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
         <Button
           icon="pi pi-trash"
-          className="p-button-rounded p-button-text p-button-danger"
+          text
+          rounded
+          severity="danger"
           tooltip="Eliminar empresa"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleDelete(rowData.id)}
@@ -195,8 +198,7 @@ export function BusinessTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "10rem" }}
-          bodyStyle={{ textAlign: "center" }}
+          headerClassName="w-10rem"
         />
       </GenericDataTable>
 

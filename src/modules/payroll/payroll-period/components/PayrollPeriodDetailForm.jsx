@@ -12,6 +12,8 @@ import { Badge } from "primereact/badge";
 import { Chip } from "primereact/chip";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
+import { Message } from "primereact/message";
+import { EmptyState } from "../../../../components/ui";
 
 // ==================== LABELS ====================
 
@@ -199,7 +201,7 @@ const paymentWorkerTemplate = (rowData) => {
   return (
     <div className="flex flex-column">
       <span className="font-medium">{getWorkerFullName(worker)}</span>
-      <small className="text-secondary">ID: {worker.id}</small>
+      <small className="text-color-secondary">ID: {worker.id}</small>
     </div>
   );
 };
@@ -214,7 +216,7 @@ const GeneralInfoSection = ({ period }) => (
     <div className="grid">
       <div className="col-12 md:col-6 lg:col-3">
         <div className="field">
-          <label className="font-bold block text-secondary">
+          <label className="block text-sm font-medium text-color-secondary mb-1">
             ID del Período
           </label>
           <Badge value={`#${period.id}`} size="large" severity="info" />
@@ -223,26 +225,25 @@ const GeneralInfoSection = ({ period }) => (
 
       <div className="col-12 md:col-6 lg:col-3">
         <div className="field">
-          <label className="font-bold block text-secondary">Nombre</label>
+          <label className="block text-sm font-medium text-color-secondary mb-1">Nombre</label>
           <span className="text-lg font-medium">{period.name}</span>
         </div>
       </div>
 
       <div className="col-12 md:col-6 lg:col-3">
         <div className="field">
-          <label className="font-bold block text-secondary">Estado</label>
+          <label className="block text-sm font-medium text-color-secondary mb-1">Estado</label>
           <Tag
             value={period.isClosed ? "Cerrado" : "Abierto"}
             severity={period.isClosed ? "danger" : "success"}
             icon={period.isClosed ? "pi pi-lock" : "pi pi-lock-open"}
-            className="text-base"
           />
         </div>
       </div>
 
       <div className="col-12 md:col-6 lg:col-3">
         <div className="field">
-          <label className="font-bold block text-secondary">Descripción</label>
+          <label className="block text-sm font-medium text-color-secondary mb-1">Descripción</label>
           <span>{period.description || "Sin descripción"}</span>
         </div>
       </div>
@@ -258,14 +259,14 @@ const DateRangeSection = ({ period }) => (
     <div className="grid">
       <div className="col-12 md:col-6">
         <div className="field">
-          <label className="font-bold block text-secondary">
+          <label className="block text-sm font-medium text-color-secondary mb-1">
             Fecha de Inicio
           </label>
           <div className="flex align-items-center gap-2">
             <i className="pi pi-calendar"></i>
             <span className="text-lg">{formatDate(period.startDate)}</span>
           </div>
-          <small className="text-secondary block mt-1">
+          <small className="text-color-secondary block mt-1">
             {formatDate(period.startDate, true)}
           </small>
         </div>
@@ -273,12 +274,12 @@ const DateRangeSection = ({ period }) => (
 
       <div className="col-12 md:col-6">
         <div className="field">
-          <label className="font-bold block text-secondary">Fecha de Fin</label>
+          <label className="block text-sm font-medium text-color-secondary mb-1">Fecha de Fin</label>
           <div className="flex align-items-center gap-2">
             <i className="pi pi-calendar"></i>
             <span className="text-lg">{formatDate(period.endDate)}</span>
           </div>
-          <small className="text-secondary block mt-1">
+          <small className="text-color-secondary block mt-1">
             {formatDate(period.endDate, true)}
           </small>
         </div>
@@ -289,8 +290,8 @@ const DateRangeSection = ({ period }) => (
       <div className="mt-2">
         <Divider />
         <div className="flex align-items-center gap-2">
-          <i className="pi pi-clock text-secondary"></i>
-          <span className="text-secondary">
+          <i className="pi pi-clock text-color-secondary"></i>
+          <span className="text-color-secondary">
             Duración:{" "}
             {Math.ceil(
               (new Date(period.endDate) - new Date(period.startDate)) /
@@ -342,7 +343,7 @@ const SecurityEntitiesSection = ({ period }) => {
   if (entities.length === 0) {
     return (
       <Panel header="Estructura Organizativa" className="mb-3">
-        <span className="text-secondary">
+        <span className="text-color-secondary">
           No hay información organizativa disponible
         </span>
       </Panel>
@@ -356,13 +357,13 @@ const SecurityEntitiesSection = ({ period }) => {
           <AccordionTab key={index} header={`${entity.type}: ${entity.name}`}>
             <div className="grid">
               <div className="col-12">
-                <label className="font-bold block text-secondary">ID</label>
+                <label className="block text-sm font-medium text-color-secondary mb-1">ID</label>
                 <Badge value={`#${entity.id}`} severity="info" />
               </div>
 
               {entity.details.taxId && (
                 <div className="col-12 md:col-6">
-                  <label className="font-bold block text-secondary">
+                  <label className="block text-sm font-medium text-color-secondary mb-1">
                     RIF/NIT
                   </label>
                   <span>{entity.details.taxId}</span>
@@ -371,7 +372,7 @@ const SecurityEntitiesSection = ({ period }) => {
 
               {entity.details.address && (
                 <div className="col-12">
-                  <label className="font-bold block text-secondary">
+                  <label className="block text-sm font-medium text-color-secondary mb-1">
                     Dirección
                   </label>
                   <span>{entity.details.address}</span>
@@ -380,7 +381,7 @@ const SecurityEntitiesSection = ({ period }) => {
 
               {entity.details.contactPhone && (
                 <div className="col-12 md:col-6">
-                  <label className="font-bold block text-secondary">
+                  <label className="block text-sm font-medium text-color-secondary mb-1">
                     Teléfono
                   </label>
                   <span>{entity.details.contactPhone}</span>
@@ -389,7 +390,7 @@ const SecurityEntitiesSection = ({ period }) => {
 
               {entity.details.contactEmail && (
                 <div className="col-12 md:col-6">
-                  <label className="font-bold block text-secondary">
+                  <label className="block text-sm font-medium text-color-secondary mb-1">
                     Email
                   </label>
                   <span>{entity.details.contactEmail}</span>
@@ -398,7 +399,7 @@ const SecurityEntitiesSection = ({ period }) => {
 
               {entity.details.officeType && (
                 <div className="col-12 md:col-6">
-                  <label className="font-bold block text-secondary">
+                  <label className="block text-sm font-medium text-color-secondary mb-1">
                     Tipo de Oficina
                   </label>
                   <Tag
@@ -412,7 +413,7 @@ const SecurityEntitiesSection = ({ period }) => {
 
               {entity.details.departmentType && (
                 <div className="col-12 md:col-6">
-                  <label className="font-bold block text-secondary">
+                  <label className="block text-sm font-medium text-color-secondary mb-1">
                     Tipo de Departamento
                   </label>
                   <Tag
@@ -426,7 +427,7 @@ const SecurityEntitiesSection = ({ period }) => {
 
               {entity.details.teamType && (
                 <div className="col-12 md:col-6">
-                  <label className="font-bold block text-secondary">
+                  <label className="block text-sm font-medium text-color-secondary mb-1">
                     Tipo de Equipo
                   </label>
                   <Tag
@@ -452,10 +453,9 @@ const PaymentsSection = ({ payments }) => {
   if (!payments || payments.length === 0) {
     return (
       <Panel header="Pagos del Período" className="mb-3">
-        <div className="text-center p-3 text-secondary">
-          <i className="pi pi-money-bill text-3xl mb-2"></i>
+        <EmptyState icon="pi pi-money-bill">
           <p>No hay pagos registrados en este período</p>
-        </div>
+        </EmptyState>
       </Panel>
     );
   }
@@ -471,31 +471,31 @@ const PaymentsSection = ({ payments }) => {
   return (
     <Panel header="Pagos del Período" className="mb-3">
       <div className="grid mb-3">
-        <div className="col-12 md:col-3">
-          <div className="p-3 surface-200 border-round text-center">
-            <span className="text-secondary block">Total Pagos</span>
+        <div className="col-6 md:col-3">
+          <div className="p-3 surface-100 border-round text-center">
+            <span className="text-color-secondary block">Total Pagos</span>
             <span className="text-2xl font-bold">{payments.length}</span>
           </div>
         </div>
-        <div className="col-12 md:col-3">
-          <div className="p-3 surface-200 border-round text-center">
-            <span className="text-secondary block">Pagados</span>
+        <div className="col-6 md:col-3">
+          <div className="p-3 surface-100 border-round text-center">
+            <span className="text-color-secondary block">Pagados</span>
             <span className="text-2xl font-bold text-green-600">
               {paidCount}
             </span>
           </div>
         </div>
-        <div className="col-12 md:col-3">
-          <div className="p-3 surface-200 border-round text-center">
-            <span className="text-secondary block">Pendientes</span>
+        <div className="col-6 md:col-3">
+          <div className="p-3 surface-100 border-round text-center">
+            <span className="text-color-secondary block">Pendientes</span>
             <span className="text-2xl font-bold text-yellow-600">
               {pendingCount}
             </span>
           </div>
         </div>
-        <div className="col-12 md:col-3">
-          <div className="p-3 surface-200 border-round text-center">
-            <span className="text-secondary block">Monto Total</span>
+        <div className="col-6 md:col-3">
+          <div className="p-3 surface-100 border-round text-center">
+            <span className="text-color-secondary block">Monto Total</span>
             <span className="text-2xl font-bold text-primary">
               {formatCurrency(totalAmount, currencies[0] || "USD")}
             </span>
@@ -512,36 +512,36 @@ const PaymentsSection = ({ payments }) => {
         className="p-datatable-sm"
         size="small"
       >
-        <Column field="id" header="ID" sortable style={{ width: "80px" }} />
+        <Column field="id" header="ID" sortable className="w-6rem" />
         <Column
           header="Trabajador"
           body={paymentWorkerTemplate}
           sortable
-          style={{ minWidth: "200px" }}
+          className="w-14rem"
         />
         <Column
           header="Monto"
           body={paymentAmountTemplate}
           sortable
-          style={{ width: "150px" }}
+          className="w-11rem"
         />
         <Column
           header="Concepto"
           body={paymentConceptTemplate}
           sortable
-          style={{ width: "120px" }}
+          className="w-9rem"
         />
         <Column
           header="Método"
           body={paymentMethodTemplate}
           sortable
-          style={{ width: "120px" }}
+          className="w-9rem"
         />
         <Column
           header="Estado"
           body={paymentStatusTemplate}
           sortable
-          style={{ width: "120px" }}
+          className="w-9rem"
         />
         <Column
           field="paidDate"
@@ -550,7 +550,7 @@ const PaymentsSection = ({ payments }) => {
             rowData.paidDate ? formatDate(rowData.paidDate) : "—"
           }
           sortable
-          style={{ width: "120px" }}
+          className="w-9rem"
         />
       </DataTable>
     </Panel>
@@ -564,26 +564,26 @@ const AuditSection = ({ period }) => (
   <Panel header="Auditoría" className="mb-3">
     <div className="grid">
       <div className="col-12 md:col-6">
-        <label className="font-bold block text-secondary">Creado por</label>
+        <label className="block text-sm font-medium text-color-secondary mb-1">Creado por</label>
         <div className="flex flex-column">
           <span className="font-medium">
             {period.createdBy?.name || period.createdBy?.email || "Sistema"}
           </span>
-          <small className="text-secondary">
+          <small className="text-color-secondary">
             {formatDate(period.createdAt, true)}
           </small>
         </div>
       </div>
 
       <div className="col-12 md:col-6">
-        <label className="font-bold block text-secondary">
+        <label className="block text-sm font-medium text-color-secondary mb-1">
           Última actualización
         </label>
         <div className="flex flex-column">
           <span className="font-medium">
             {period.updatedBy?.name || period.updatedBy?.email || "Sistema"}
           </span>
-          <small className="text-secondary">
+          <small className="text-color-secondary">
             {formatDate(period.updatedAt, true)}
           </small>
         </div>
@@ -593,14 +593,14 @@ const AuditSection = ({ period }) => (
         <div className="col-12">
           <Divider />
           <div className="field">
-            <label className="font-bold block text-secondary text-danger">
+            <label className="block text-sm font-medium text-red-600 mb-1">
               Eliminado
             </label>
             <div className="flex flex-column">
               <span className="font-medium">
                 {period.deletedBy?.name || period.deletedBy?.email || "Sistema"}
               </span>
-              <small className="text-secondary">
+              <small className="text-color-secondary">
                 {formatDate(period.deletedAt, true)}
               </small>
             </div>
@@ -638,10 +638,9 @@ export const PayrollPeriodDetailForm = ({
     <Dialog
       header="Detalles del Período de Nómina"
       visible={visible}
-      style={{ width: "1000px", maxWidth: "95vw" }}
+      className="w-full lg:w-10 xl:w-8"
       onHide={onHide}
       modal
-      className="payroll-period-detail-dialog"
       maximizable
     >
       {loading ? (
@@ -649,12 +648,13 @@ export const PayrollPeriodDetailForm = ({
           <ProgressSpinner />
         </div>
       ) : error ? (
-        <div className="p-3 bg-red-50 border-round text-red-600">
-          <i className="pi pi-exclamation-triangle mr-2"></i>
-          Error al cargar los detalles del período: {error.message}
-        </div>
+        <Message
+          severity="error"
+          text={`Error al cargar los detalles del período: ${error.message}`}
+          className="w-full"
+        />
       ) : period ? (
-        <div className="payroll-period-detail">
+        <div>
           {/* Badge de estado principal */}
           <div className="flex justify-content-between align-items-center mb-3">
             <Badge value={`ID: ${period.id}`} size="large" severity="info" />
@@ -663,14 +663,12 @@ export const PayrollPeriodDetailForm = ({
                 value="CERRADO"
                 severity="danger"
                 icon="pi pi-lock"
-                size="large"
               />
             ) : (
               <Tag
                 value="ABIERTO"
                 severity="success"
                 icon="pi pi-lock-open"
-                size="large"
               />
             )}
           </div>
@@ -685,52 +683,11 @@ export const PayrollPeriodDetailForm = ({
           <AuditSection period={period} />
         </div>
       ) : (
-        <div className="text-center p-5 text-secondary">
-          <i className="pi pi-info-circle text-4xl mb-3"></i>
+        <EmptyState icon="pi pi-info-circle">
           <p>No se encontró información del período de nómina solicitado.</p>
-        </div>
+        </EmptyState>
       )}
 
-      <style jsx="true">{`
-        .payroll-period-detail-dialog .field {
-          margin-bottom: 1rem;
-        }
-
-        .payroll-period-detail-dialog .field label {
-          margin-bottom: 0.25rem;
-          font-size: 0.875rem;
-        }
-
-        .payroll-period-detail-dialog .p-panel .p-panel-header {
-          padding: 0.75rem 1rem;
-        }
-
-        .payroll-period-detail-dialog .p-panel .p-panel-content {
-          padding: 1rem;
-        }
-
-        .payroll-period-detail-dialog .p-accordion .p-accordion-header {
-          padding: 0.5rem;
-        }
-
-        .payroll-period-detail-dialog
-          .p-datatable
-          .p-datatable-thead
-          > tr
-          > th {
-          padding: 0.5rem;
-          font-size: 0.875rem;
-        }
-
-        .payroll-period-detail-dialog
-          .p-datatable
-          .p-datatable-tbody
-          > tr
-          > td {
-          padding: 0.5rem;
-          font-size: 0.875rem;
-        }
-      `}</style>
     </Dialog>
   );
 };

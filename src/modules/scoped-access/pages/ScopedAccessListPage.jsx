@@ -1,19 +1,15 @@
 import React from "react";
-import { Card } from "primereact/card";
-import "../styles/ScopedAccessList.css";
+import { PageHeader } from "../../../components/ui";
 import ScopedAccessTable from "../components/ScopedAccessTable";
 
 export function ScopedAccessListPage() {
   return (
-    <div className="scoped-access-list-page">
-      <Card title="Gestión de Niveles de Acceso">
-        <p className="p-text-secondary mb-4">
-          Configure los niveles de acceso por negocio y operación. Cada nivel de
-          acceso define qué alcance tendrán los usuarios para ejecutar
-          operaciones específicas.
-        </p>
-        <ScopedAccessTable />
-      </Card>
-    </div>
+    <>
+      <PageHeader
+        title="Niveles de Acceso"
+        subtitle="Configure qué alcance tendrán los usuarios al ejecutar cada operación en cada negocio."
+      />
+      <ScopedAccessTable />
+    </>
   );
 }

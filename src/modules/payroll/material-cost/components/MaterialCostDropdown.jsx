@@ -3,6 +3,7 @@ import { Dropdown } from "primereact/dropdown";
 import { useLazyQuery } from "@apollo/client";
 import { GET_MATERIAL_COSTS } from "../graphql/queries";
 import { Skeleton } from "primereact/skeleton";
+import { Tag } from "primereact/tag";
 
 export const MaterialCostDropdown = ({
   value,
@@ -85,7 +86,7 @@ export const MaterialCostDropdown = ({
           </span>
         </div>
         <div className="flex align-items-center gap-2">
-          <span className="font-mono">
+          <span>
             {option.data?.currency?.symbol || option.data?.currency?.code}{" "}
             {option.data?.costPrice?.toLocaleString("es-ES", {
               minimumFractionDigits: 2,
@@ -93,7 +94,7 @@ export const MaterialCostDropdown = ({
             })}
           </span>
           {!option.data?.isActive && (
-            <span className="badge status-inactive">Inactivo</span>
+            <Tag severity="danger" value="Inactivo" />
           )}
         </div>
       </div>
@@ -101,7 +102,7 @@ export const MaterialCostDropdown = ({
   };
 
   if (loading) {
-    return <Skeleton height="40px" className={className} />;
+    return <Skeleton height="2.5rem" className={className} />;
   }
 
   return (

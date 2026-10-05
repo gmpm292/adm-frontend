@@ -11,7 +11,7 @@ const CurrencyDetails = ({ currency, amount, className = "" }) => {
 
   return (
     <div
-      className={`p-2 border-round border-1 surface-border bg-gray-50 mt-2 ${className}`}
+      className={`p-2 border-round border-1 surface-border surface-50 mt-2 ${className}`}
     >
       <div className="text-sm text-color-secondary">
         <div className="flex justify-content-between">
@@ -138,8 +138,8 @@ export const CurrencyAmountInput = ({
   if (loading) {
     return (
       <div className={`flex gap-2 ${className}`}>
-        <Skeleton height="40px" className="flex-1" />
-        <Skeleton height="40px" className="w-8rem" />
+        <Skeleton height="2.5rem" className="flex-1" />
+        <Skeleton height="2.5rem" className="w-8rem" />
       </div>
     );
   }

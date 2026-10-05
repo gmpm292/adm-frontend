@@ -8,6 +8,13 @@ import { Column } from "primereact/column";
 import { Link } from "react-router-dom";
 import { Button } from "primereact/button"; // Asegurar que Button esté importado
 
+const DetailItem = ({ label, children }) => (
+  <div className="col-12 md:col-6">
+    <span className="block text-sm text-color-secondary mb-1">{label}</span>
+    <span className="font-medium">{children}</span>
+  </div>
+);
+
 export function SaleDetailForm({ saleId, visible, onHide }) {
   const [getSale, { data, loading }] = useLazyQuery(GET_SALE_BY_ID, {
     variables: { id: saleId },
@@ -58,57 +65,47 @@ export function SaleDetailForm({ saleId, visible, onHide }) {
     <Dialog
       header="Detalles de la Venta"
       visible={visible}
-      style={{ width: "800px" }}
+      className="w-full md:w-8 xl:w-6"
       onHide={onHide}
       modal
     >
       {loading ? (
-        <div className="flex justify-center">
+        <div className="flex justify-content-center">
           <ProgressSpinner />
         </div>
       ) : sale ? (
-        <div className="p-fluid">
+        <div>
           <div className="grid">
-            <div className="col-12 md:col-6">
-              <div className="field">
-                <b>Fecha:</b>{" "}
-                {new Date(sale.effectiveDate).toLocaleDateString()}
-              </div>
-              <div className="field">
-                <b>Monto Total:</b> {formatCurrency(sale.totalAmount)}
-              </div>
-              <div className="field">
-                <b>Método de Pago:</b>{" "}
-                {sale.paymentMethod === "CASH"
-                  ? "Efectivo"
-                  : sale.paymentMethod === "CARD"
+            <DetailItem label="Fecha">
+              {new Date(sale.effectiveDate).toLocaleDateString()}
+            </DetailItem>
+            <DetailItem label="Factura">{sale.invoiceNumber || "N/A"}</DetailItem>
+            <DetailItem label="Monto Total">
+              {formatCurrency(sale.totalAmount)}
+            </DetailItem>
+            <DetailItem label="Vendedor">
+              {sale.salesUser?.name || "N/A"}
+            </DetailItem>
+            <DetailItem label="Método de Pago">
+              {sale.paymentMethod === "CASH"
+                ? "Efectivo"
+                : sale.paymentMethod === "CARD"
                   ? "Tarjeta"
                   : sale.paymentMethod === "TRANSFER"
-                  ? "Transferencia"
-                  : "Otro"}
-              </div>
-            </div>
-            <div className="col-12 md:col-6">
-              <div className="field">
-                <b>Factura:</b> {sale.invoiceNumber || "N/A"}
-              </div>
-              <div className="field">
-                <b>Vendedor:</b> {sale.salesUser?.name || "N/A"}
-              </div>
-              <div className="field">
-                <b>Cliente:</b> {sale.customer?.name || "N/A"}
-              </div>
-            </div>
+                    ? "Transferencia"
+                    : "Otro"}
+            </DetailItem>
+            <DetailItem label="Cliente">{sale.customer?.name || "N/A"}</DetailItem>
           </div>
 
           <div className="mt-4">
-            <div className="flex justify-content-between align-items-center">
-              <h5>Detalles de Productos</h5>
+            <div className="flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+              <h5 className="m-0">Detalles de Productos</h5>
               <Link to={`/sales/sales/${sale.id}/details`}>
                 <Button
                   label="Administrar detalles"
                   icon="pi pi-external-link"
-                  className="p-button-sm"
+                  size="small"
                 />
               </Link>
             </div>
@@ -131,7 +128,7 @@ export function SaleDetailForm({ saleId, visible, onHide }) {
           </div>
         </div>
       ) : (
-        <p>No se encontró información de la venta.</p>
+        <p className="text-color-secondary">No se encontró información de la venta.</p>
       )}
     </Dialog>
   );

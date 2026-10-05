@@ -61,7 +61,7 @@ export const UserSelector = ({ onUserSelected, selectedUserId, disabled = false 
     );
   };
 
-  if (loading) return <ProgressSpinner style={{ width: '30px', height: '30px' }} />;
+  if (loading) return <ProgressSpinner className="w-2rem h-2rem" />;
   if (error) return <Message severity="error" text="Error cargando usuarios" />;
 
   return (

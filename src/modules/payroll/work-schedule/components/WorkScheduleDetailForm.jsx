@@ -4,6 +4,8 @@ import { useLazyQuery } from '@apollo/client';
 import { GET_WORK_SCHEDULE_BY_ID } from '../graphql/queries';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Tag } from 'primereact/tag';
+import { Message } from 'primereact/message';
+import { FormField } from '../../../../components/ui';
 
 const dayLabels = {
   monday: 'Lunes',
@@ -40,7 +42,7 @@ export const WorkScheduleDetailForm = ({ workScheduleId, visible, onHide }) => {
     if (!workingDays) return null;
 
     return (
-      <div className="flex flex-wrap gap-2 mt-2">
+      <div className="flex flex-wrap gap-2">
         {Object.entries(workingDays).map(([day, isWorking]) => (
           <Tag 
             key={day}
@@ -57,71 +59,76 @@ export const WorkScheduleDetailForm = ({ workScheduleId, visible, onHide }) => {
     <Dialog
       header="Detalles del Horario de Trabajo"
       visible={visible}
-      style={{ width: '600px' }}
+      className="w-full md:w-30rem"
       onHide={onHide}
       modal
     >
       {loading ? (
-        <div className="flex justify-center">
+        <div className="flex justify-content-center">
           <ProgressSpinner />
         </div>
       ) : error ? (
-        <div className="p-message p-message-error">
-          Error al cargar los detalles del horario
-        </div>
+        <Message
+          severity="error"
+          text="Error al cargar los detalles del horario"
+          className="w-full"
+        />
       ) : workSchedule ? (
-        <div className="p-fluid">
-          <div className="field">
-            <label className="font-bold">Nombre</label>
-            <p>{workSchedule.name || 'N/A'}</p>
+        <div className="grid">
+          <div className="col-12">
+            <FormField label="Nombre">
+              <span>{workSchedule.name || 'N/A'}</span>
+            </FormField>
           </div>
-
-          <div className="field">
-            <label className="font-bold">Fecha de Inicio</label>
-            <p>{new Date(workSchedule.startDate).toLocaleDateString()}</p>
+          <div className="col-12 md:col-6">
+            <FormField label="Fecha de Inicio">
+              <span>{new Date(workSchedule.startDate).toLocaleDateString()}</span>
+            </FormField>
           </div>
-
-          <div className="field">
-            <label className="font-bold">Fecha de Fin</label>
-            <p>{new Date(workSchedule.endDate).toLocaleDateString()}</p>
+          <div className="col-12 md:col-6">
+            <FormField label="Fecha de Fin">
+              <span>{new Date(workSchedule.endDate).toLocaleDateString()}</span>
+            </FormField>
           </div>
-
-          <div className="field">
-            <label className="font-bold">Días de Trabajo</label>
-            {renderWorkingDays(workSchedule.workingDays)}
+          <div className="col-12">
+            <FormField label="Días de Trabajo">
+              {renderWorkingDays(workSchedule.workingDays)}
+            </FormField>
           </div>
-
-          <div className="field">
-            <label className="font-bold">Recurrente</label>
-            <Tag
-              value={workSchedule.isRecurring ? 'Sí' : 'No'}
-              severity={workSchedule.isRecurring ? 'success' : 'danger'}
-              icon={workSchedule.isRecurring ? 'pi pi-check' : 'pi pi-times'}
-            />
+          <div className="col-12 md:col-6">
+            <FormField label="Recurrente">
+              <div>
+                <Tag
+                  value={workSchedule.isRecurring ? 'Sí' : 'No'}
+                  severity={workSchedule.isRecurring ? 'success' : 'danger'}
+                  icon={workSchedule.isRecurring ? 'pi pi-check' : 'pi pi-times'}
+                />
+              </div>
+            </FormField>
           </div>
-
-          <div className="field">
-            <label className="font-bold">Ámbito</label>
-            <p>{scopeLabels[workSchedule.scope] || 'N/A'}</p>
+          <div className="col-12 md:col-6">
+            <FormField label="Ámbito">
+              <span>{scopeLabels[workSchedule.scope] || 'N/A'}</span>
+            </FormField>
           </div>
-
-          <div className="field">
-            <label className="font-bold">Business</label>
-            <p>{workSchedule.business?.name || 'N/A'}</p>
+          <div className="col-12 md:col-6">
+            <FormField label="Business">
+              <span>{workSchedule.business?.name || 'N/A'}</span>
+            </FormField>
           </div>
-
-          <div className="field">
-            <label className="font-bold">Oficina</label>
-            <p>{workSchedule.office?.name || 'N/A'}</p>
+          <div className="col-12 md:col-6">
+            <FormField label="Oficina">
+              <span>{workSchedule.office?.name || 'N/A'}</span>
+            </FormField>
           </div>
-
-          <div className="field">
-            <label className="font-bold">Notas</label>
-            <p>{workSchedule.notes || 'Ninguna'}</p>
+          <div className="col-12">
+            <FormField label="Notas">
+              <span>{workSchedule.notes || 'Ninguna'}</span>
+            </FormField>
           </div>
         </div>
       ) : (
-        <p>No se encontró información del horario de trabajo.</p>
+        <p className="text-color-secondary">No se encontró información del horario de trabajo.</p>
       )}
     </Dialog>
   );

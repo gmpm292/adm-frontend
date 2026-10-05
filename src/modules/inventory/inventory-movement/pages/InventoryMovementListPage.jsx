@@ -1,14 +1,15 @@
-import React from 'react';
-import { Card } from 'primereact/card';
-import { InventoryMovementTable } from '../components/InventoryMovementTable';
-import '../styles/InventoryMovementList.css';
+import React from "react";
+import { PageHeader } from "../../../../components/ui";
+import { InventoryMovementTable } from "../components/InventoryMovementTable";
 
 export function InventoryMovementListPage() {
-    return (
-        <div className="inventory-movement-list-page">
-            <Card title="Gestión de Movimientos de Inventario">
-                <InventoryMovementTable />
-            </Card>
-        </div>
-    );
+  return (
+    <>
+      <PageHeader
+        title="Movimientos de inventario"
+        subtitle="Revisa las entradas, salidas y ajustes de existencias."
+      />
+      <InventoryMovementTable />
+    </>
+  );
 }

@@ -8,8 +8,8 @@ import { formatCurrency } from "../../../../utils/numberUtils";
 import { Tag } from "primereact/tag";
 import { Panel } from "primereact/panel";
 import { DataView } from "primereact/dataview";
-import { Badge } from "primereact/badge";
 import { Divider } from "primereact/divider";
+import { DetailField } from "../../components/DetailField";
 
 export function ProductDetailForm({ productId, visible, onHide }) {
   const [getProduct, { data, loading }] = useLazyQuery(GET_PRODUCT_BY_ID, {
@@ -28,103 +28,68 @@ export function ProductDetailForm({ productId, visible, onHide }) {
 
   const renderSecurityEntities = (product) => {
     return (
-      <div className="p-grid">
-        <div className="p-col-6 p-md-3">
-          <div className="field">
-            <b>Empresa:</b> {product.business?.name || 'N/A'}
-          </div>
-        </div>
-        <div className="p-col-6 p-md-3">
-          <div className="field">
-            <b>Oficina:</b> {product.office?.name || 'N/A'}
-          </div>
-        </div>
-        <div className="p-col-6 p-md-3">
-          <div className="field">
-            <b>Departamento:</b> {product.department?.name || 'N/A'}
-          </div>
-        </div>
-        <div className="p-col-6 p-md-3">
-          <div className="field">
-            <b>Equipo:</b> {product.team?.name || 'N/A'}
-          </div>
-        </div>
+      <div className="grid">
+        <DetailField label="Empresa" className="col-6 md:col-3">
+          {product.business?.name || 'N/A'}
+        </DetailField>
+        <DetailField label="Oficina" className="col-6 md:col-3">
+          {product.office?.name || 'N/A'}
+        </DetailField>
+        <DetailField label="Departamento" className="col-6 md:col-3">
+          {product.department?.name || 'N/A'}
+        </DetailField>
+        <DetailField label="Equipo" className="col-6 md:col-3">
+          {product.team?.name || 'N/A'}
+        </DetailField>
       </div>
     );
   };
 
   const renderBasicInfo = (product) => {
     return (
-      <div className="p-grid">
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Nombre:</b> {product.name}
-          </div>
-        </div>
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Categoría:</b> {product.category?.name || 'N/A'}
-          </div>
-        </div>
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Unidad de Medida:</b> {product.unitOfMeasure}
-          </div>
-        </div>
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Garantía:</b> {product.warranty || 'N/A'}
-          </div>
-        </div>
+      <div className="grid">
+        <DetailField label="Nombre">{product.name}</DetailField>
+        <DetailField label="Categoría">
+          {product.category?.name || 'N/A'}
+        </DetailField>
+        <DetailField label="Unidad de Medida">
+          {product.unitOfMeasure}
+        </DetailField>
+        <DetailField label="Garantía">{product.warranty || 'N/A'}</DetailField>
       </div>
     );
   };
 
   const renderPricingInfo = (product) => {
     const margin = ((product.basePrice - product.costPrice) / product.costPrice * 100).toFixed(2);
-    
+
     return (
-      <div className="p-grid">
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Precio Costo:</b> {formatCurrency(product.costPrice, product.costCurrency)}
+      <div className="grid">
+        <DetailField label="Precio Costo">
+          {formatCurrency(product.costPrice, product.costCurrency)}
+        </DetailField>
+        <DetailField label="Precio Venta">
+          {formatCurrency(product.basePrice, product.baseCurrency)}
+        </DetailField>
+        <DetailField label="Margen">
+          <Tag
+            value={`${margin}%`}
+            severity={margin > 0 ? "success" : "danger"}
+          />
+        </DetailField>
+        <DetailField label="Monedas aceptadas">
+          <div className="flex flex-wrap gap-1">
+            {product.pricingConfig?.acceptedCurrencies?.map(currency => (
+              <Tag key={currency} value={currency} />
+            ))}
           </div>
-        </div>
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Precio Venta:</b> {formatCurrency(product.basePrice, product.baseCurrency)}
-          </div>
-        </div>
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Margen:</b> 
-            <Tag 
-              value={`${margin}%`} 
-              severity={margin > 0 ? "success" : "danger"}
-              className="ml-2"
-            />
-          </div>
-        </div>
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Monedas aceptadas:</b>
-            <div className="mt-1">
-              {product.pricingConfig?.acceptedCurrencies?.map(currency => (
-                <Tag key={currency} value={currency} className="mr-1" />
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="p-col-12">
-          <div className="field">
-            <b>Margen sobre tipo de cambio:</b> {product.pricingConfig?.exchangeRateMargin || 0}%
-          </div>
-        </div>
-        <div className="p-col-12">
-          <div className="field">
-            <b>Decimales para redondeo:</b> {product.pricingConfig?.decimalPlaces || 2}
-          </div>
-        </div>
+        </DetailField>
+        <DetailField label="Margen sobre tipo de cambio">
+          {product.pricingConfig?.exchangeRateMargin || 0}%
+        </DetailField>
+        <DetailField label="Decimales para redondeo">
+          {product.pricingConfig?.decimalPlaces || 2}
+        </DetailField>
       </div>
     );
   };
@@ -135,16 +100,11 @@ export function ProductDetailForm({ productId, visible, onHide }) {
     }
 
     return (
-      <div className="p-grid">
+      <div className="grid">
         {fixedPrices.map((price, index) => (
-          <div className="p-col-12 p-md-6" key={index}>
-            <div className="p-inputgroup">
-              <span className="p-inputgroup-addon">{price.currency}</span>
-              <span className="p-inputgroup-addon">
-                {formatCurrency(price.amount, price.currency)}
-              </span>
-            </div>
-          </div>
+          <DetailField label={price.currency} key={index}>
+            {formatCurrency(price.amount, price.currency)}
+          </DetailField>
         ))}
       </div>
     );
@@ -156,14 +116,11 @@ export function ProductDetailForm({ productId, visible, onHide }) {
     }
 
     return (
-      <div className="p-grid">
+      <div className="grid">
         {Object.entries(attributes).map(([key, value]) => (
-          <div className="p-col-12 p-md-6" key={key}>
-            <div className="p-inputgroup">
-              <span className="p-inputgroup-addon">{key}</span>
-              <span className="p-inputgroup-addon">{value}</span>
-            </div>
-          </div>
+          <DetailField label={key} key={key}>
+            {value}
+          </DetailField>
         ))}
       </div>
     );
@@ -173,18 +130,14 @@ export function ProductDetailForm({ productId, visible, onHide }) {
     if (!saleRules) return <p>No hay reglas de venta definidas</p>;
 
     return (
-      <div className="p-grid">
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Cantidad mínima:</b> {saleRules.minQuantity || 'N/A'}
-          </div>
-        </div>
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Cantidad máxima:</b> {saleRules.maxQuantity || 'N/A'}
-          </div>
-        </div>
-        <div className="p-col-12">
+      <div className="grid">
+        <DetailField label="Cantidad mínima">
+          {saleRules.minQuantity || 'N/A'}
+        </DetailField>
+        <DetailField label="Cantidad máxima">
+          {saleRules.maxQuantity || 'N/A'}
+        </DetailField>
+        <div className="col-12">
           <Divider align="left">
             <b>Descuentos por volumen</b>
           </Divider>
@@ -192,27 +145,20 @@ export function ProductDetailForm({ productId, visible, onHide }) {
             <DataView
               value={saleRules.bulkDiscounts}
               itemTemplate={(discount) => (
-                <div className="p-grid p-fluid">
-                  <div className="p-col-12 p-md-3">
-                    <div className="field">
-                      <b>Cantidad mínima:</b> {discount.minQty}
+                <div className="grid w-full">
+                  <DetailField label="Cantidad mínima" className="col-12 md:col-3">
+                    {discount.minQty}
+                  </DetailField>
+                  <DetailField label="Descuento" className="col-12 md:col-3">
+                    {discount.discount}%
+                  </DetailField>
+                  <DetailField label="Monedas aplicables">
+                    <div className="flex flex-wrap gap-1">
+                      {discount.applicableCurrencies.map(currency => (
+                        <Tag key={currency} value={currency} />
+                      ))}
                     </div>
-                  </div>
-                  <div className="p-col-12 p-md-3">
-                    <div className="field">
-                      <b>Descuento:</b> {discount.discount}%
-                    </div>
-                  </div>
-                  <div className="p-col-12 p-md-6">
-                    <div className="field">
-                      <b>Monedas aplicables:</b>
-                      <div className="mt-1">
-                        {discount.applicableCurrencies.map(currency => (
-                          <Badge key={currency} value={currency} className="mr-1" />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                  </DetailField>
                 </div>
               )}
             />
@@ -226,32 +172,28 @@ export function ProductDetailForm({ productId, visible, onHide }) {
 
   const renderAuditInfo = (product) => {
     return (
-      <div className="p-grid">
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Creado por:</b> {product.createdBy?.name || 'N/A'}
-          </div>
-          <div className="field">
-            <b>Fecha creación:</b> {formatDate(product.createdAt)}
-          </div>
-        </div>
-        <div className="p-col-12 p-md-6">
-          <div className="field">
-            <b>Actualizado por:</b> {product.updatedBy?.name || 'N/A'}
-          </div>
-          <div className="field">
-            <b>Última actualización:</b> {formatDate(product.updatedAt)}
-          </div>
-        </div>
+      <div className="grid">
+        <DetailField label="Creado por">
+          {product.createdBy?.name || 'N/A'}
+        </DetailField>
+        <DetailField label="Actualizado por">
+          {product.updatedBy?.name || 'N/A'}
+        </DetailField>
+        <DetailField label="Fecha creación">
+          {formatDate(product.createdAt)}
+        </DetailField>
+        <DetailField label="Última actualización">
+          {formatDate(product.updatedAt)}
+        </DetailField>
         {product.deletedAt && (
-          <div className="p-col-12 p-md-6">
-            <div className="field">
-              <b>Eliminado por:</b> {product.deletedBy?.name || 'N/A'}
-            </div>
-            <div className="field">
-              <b>Fecha eliminación:</b> {formatDate(product.deletedAt)}
-            </div>
-          </div>
+          <>
+            <DetailField label="Eliminado por">
+              {product.deletedBy?.name || 'N/A'}
+            </DetailField>
+            <DetailField label="Fecha eliminación">
+              {formatDate(product.deletedAt)}
+            </DetailField>
+          </>
         )}
       </div>
     );
@@ -261,18 +203,18 @@ export function ProductDetailForm({ productId, visible, onHide }) {
     <Dialog
       header={`Detalles del Producto: ${product?.name || ''}`}
       visible={visible}
-      style={{ width: "70vw" }}
+      className="w-full lg:w-8"
       onHide={onHide}
       modal
       resizable
       draggable
     >
       {loading ? (
-        <div className="flex justify-center">
+        <div className="flex justify-content-center">
           <ProgressSpinner />
         </div>
       ) : product ? (
-        <div className="p-fluid">
+        <div>
           <Panel header="Entidades de Seguridad" toggleable>
             {renderSecurityEntities(product)}
           </Panel>

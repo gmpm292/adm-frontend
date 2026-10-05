@@ -6,6 +6,7 @@ import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
+import { Tag } from "primereact/tag";
 import { SaleEditForm } from "./SaleEditForm";
 import { SaleCreateForm } from "./SaleCreateForm";
 import { SaleDetailForm } from "./SaleDetailForm";
@@ -52,17 +53,10 @@ const canProcessSale = (sale) => {
 // ✅ Nueva función para el template del estado de la venta
 const saleStatusBodyTemplate = (rowData) => {
   const isProcessed = !!rowData.effectiveDate;
-  return (
-    <div className="flex align-items-center gap-2">
-      <i
-        className={`pi ${
-          isProcessed
-            ? "pi-check-circle text-green-500"
-            : "pi-clock text-orange-500"
-        }`}
-      ></i>
-      <span>{isProcessed ? "Completada" : "Pendiente"}</span>
-    </div>
+  return isProcessed ? (
+    <Tag severity="success" value="Completada" icon="pi pi-check-circle" />
+  ) : (
+    <Tag severity="warning" value="Pendiente" icon="pi pi-clock" />
   );
 };
 
@@ -169,7 +163,7 @@ export function SaleTable() {
   };
 
   // ✅ Nueva función para manejar validación exitosa
-  const handleValidationSuccess = (result, payments, saleId) => {
+  const handleValidationSuccess = (result) => {
     if (result.valid) {
       toast.current.show({
         severity: "success",
@@ -220,7 +214,9 @@ export function SaleTable() {
         {canProcess && (
           <Button
             icon="pi pi-shopping-cart"
-            className="p-button-rounded p-button-text p-button-success"
+            text
+            rounded
+            severity="success"
             tooltip="Realizar venta"
             tooltipOptions={{ position: "top" }}
             onClick={() => handleMakeSale(rowData.id)}
@@ -245,7 +241,8 @@ export function SaleTable() {
         {/* Botón Editar */}
         <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-text"
+          text
+          rounded
           tooltip="Editar venta"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
@@ -254,7 +251,9 @@ export function SaleTable() {
         {/* Botón Ver Detalles */}
         <Button
           icon="pi pi-eye"
-          className="p-button-rounded p-button-text p-button-info"
+          text
+          rounded
+          severity="info"
           tooltip="Ver detalles"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleViewDetails(rowData.id)}
@@ -263,7 +262,9 @@ export function SaleTable() {
         {/* Botón Eliminar */}
         <Button
           icon="pi pi-trash"
-          className="p-button-rounded p-button-text p-button-danger"
+          text
+          rounded
+          severity="danger"
           tooltip="Eliminar venta"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleDelete(rowData.id)}
@@ -357,8 +358,7 @@ export function SaleTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerStyle={{ width: "14rem" }} // ✅ Aumentado para más botones
-          bodyStyle={{ textAlign: "center" }}
+          className="w-14rem"
         />
       </GenericDataTable>
 
