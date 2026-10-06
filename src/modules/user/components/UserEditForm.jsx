@@ -107,7 +107,7 @@ export const UserEditForm = ({ userId, visible, onHide, onSuccess }) => {
       <Dialog
         header="Editar Usuario"
         visible={visible}
-        className="w-full md:w-40rem"
+        className="ui-dialog--wide"
         footer={footer}
         onHide={onHide}
       >

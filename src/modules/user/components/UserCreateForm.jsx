@@ -165,7 +165,7 @@ export const UserCreateForm = ({ visible, onHide, onSuccess }) => {
       <Dialog
         header="Crear Nuevo Usuario"
         visible={visible}
-        className="w-full md:w-40rem"
+        className="ui-dialog--wide"
         footer={footer}
         onHide={onHide}
       >

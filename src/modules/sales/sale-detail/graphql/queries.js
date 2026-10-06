@@ -6,18 +6,31 @@ export const GET_SALE_DETAILS = gql`
       totalCount
       data {
         id
+        createdAt
         quantity
         unitPrice
         subtotal
-        discountPercentage
-        reservationId
-        isConfirmed
+        currency
+        saleDetailStatus
         product {
+          id
           name
         }
         sale {
           id
           invoiceNumber
+          saleStatus
+          effectiveDate
+        }
+        publicists {
+          id
+          tempFirstName
+          tempLastName
+          user {
+            id
+            name
+            lastName
+          }
         }
       }
     }
@@ -45,8 +58,13 @@ export const GET_SALE_DETAIL_BY_ID = gql`
       }
       publicists {
         id
-        name
-        email
+        tempFirstName
+        tempLastName
+        user {
+          id
+          name
+          lastName
+        }
       }
     }
   }
@@ -59,25 +77,25 @@ export const GET_SALE_DETAILS_BY_SALE = gql`
       quantity
       unitPrice
       subtotal
-      discountPercentage
-      productSnapshot
-      productPaymentOptions
-      reservationId
-      isConfirmed
+      currency
+      saleDetailStatus
       product {
         id
         name
       }
       sale {
         id
+        invoiceNumber
+        saleStatus
       }
       publicists {
         id
+        tempFirstName
+        tempLastName
         user {
           id
           name
-          email
-          mobile
+          lastName
         }
       }
     }
@@ -98,8 +116,7 @@ export const CREATE_SALE_DETAIL = gql`
         user {
           id
           name
-          email
-          mobile
+          lastName
         }
       }
     }

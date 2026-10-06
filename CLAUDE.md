@@ -119,6 +119,29 @@ estados con `<Tag severity>`; formularios con `FormField` sobre
   muestran un aviso. Nunca cifras de ejemplo en el código.
 - Los importes llevan siempre su moneda (`formatMoney`).
 
+## Ventas (`src/modules/sales`)
+
+- **Venta integrada** (`integrated-sale/pages/SalePointPage.jsx`): catálogo a la
+  izquierda y ticket a la derecha. Lee `saleCatalog` (una consulta con
+  productos, precios, existencias, monedas y personal), cotiza con `quoteSale`
+  y cobra con `createSale` enviando `payments`: la venta nace ya cobrada. Sin
+  pagos queda en borrador («Guardar borrador», reserva existencias).
+- El estado del carrito y las cuentas viven en `integrated-sale/saleCart.js`.
+  Los importes definitivos siempre los da el backend.
+- «En espera» guarda carritos en `localStorage` (`pos.parkedSales`): no
+  reservan existencias.
+- `PaymentDialog` (cobro en una o varias monedas) lo comparten la venta
+  integrada y el cobro de borradores (`sale/components/MakeSaleComponent.jsx`).
+- **Ventas y Mensajerías** son la misma tabla (`sale/components/SaleTable.jsx`;
+  Mensajerías la usa con `deliveryOnly`). Las acciones dependen de
+  `saleStatus`: un borrador se cobra, edita o cancela; una venta cobrada solo
+  se devuelve (entera o por producto, desde su ficha).
+- **Clientes**: un solo formulario, `customer/components/CustomerForm.jsx`,
+  para crear y editar; lo usa también la venta integrada.
+- Textos de estado, nombres de trabajador y fechas: `sales/format.js`. Mensajes
+  de error del backend: `utils/errors.js` (`getErrorMessage`).
+- Los estilos de la venta integrada están en `src/theme/pages/pos.css`.
+
 ## Trampas conocidas
 
 - Los tipos de GraphQL cuyo `id` no identifica la fila (por ejemplo

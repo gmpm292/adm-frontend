@@ -1,22 +1,66 @@
 import { gql } from "@apollo/client";
 
+const WORKER_FIELDS = `
+  id
+  workerType
+  tempFirstName
+  tempLastName
+  user {
+    id
+    name
+    lastName
+  }
+`;
+
+const SALE_FIELDS = `
+  id
+  createdAt
+  deletedAt
+  effectiveDate
+  saleStatus
+  isConfirmed
+  invoiceNumber
+  totalAmount
+  totalAmountCurrency
+  payments
+  hasDelivery
+  deliveryNotes
+  customer {
+    id
+    fullName
+    phone
+    ci
+    email
+  }
+  salesWorker {
+    ${WORKER_FIELDS}
+  }
+  deliveryWorker {
+    ${WORKER_FIELDS}
+  }
+`;
+
+const SALE_LINES = `
+  details {
+    id
+    quantity
+    unitPrice
+    subtotal
+    currency
+    saleDetailStatus
+    product {
+      id
+      name
+    }
+  }
+`;
+
 export const GET_SALES = gql`
   query Sales($options: ListOptions) {
     sales(options: $options) {
       totalCount
       data {
-        id
-        effectiveDate
-        isConfirmed
-        totalAmount
-        paymentMethod
-        invoiceNumber
-        salesUser {
-          name
-        }
-        customer {
-          name
-        }
+        ${SALE_FIELDS}
       }
     }
   }
@@ -25,21 +69,8 @@ export const GET_SALES = gql`
 export const GET_SALE_BY_ID = gql`
   query Sale($id: Int!) {
     sale(id: $id) {
-      id
-      effectiveDate
-      isConfirmed
-      totalAmount
-      paymentMethod
-      invoiceNumber
-      paymentDetails
-      salesUser {
-        id
-        name
-      }
-      customer {
-        id
-        name
-      }
+      ${SALE_FIELDS}
+      ${SALE_LINES}
       business {
         id
         name
@@ -48,23 +79,9 @@ export const GET_SALE_BY_ID = gql`
         id
         name
       }
-      department {
+      createdBy {
         id
         name
-      }
-      team {
-        id
-        name
-      }
-      details {
-        id
-        quantity
-        unitPrice
-        subtotal
-        product {
-          id
-          name
-        }
       }
     }
   }
@@ -74,13 +91,6 @@ export const CREATE_SALE = gql`
   mutation CreateSale($sale: CreateSaleInput!) {
     createSale(createSaleInput: $sale) {
       id
-      details {
-        id
-        product {
-          id
-        }
-        quantity
-      }
     }
   }
 `;
@@ -88,10 +98,7 @@ export const CREATE_SALE = gql`
 export const UPDATE_SALE = gql`
   mutation UpdateSale($sale: UpdateSaleInput!) {
     updateSale(updateSaleInput: $sale) {
-      id
-      totalAmount
-      paymentMethod
-      invoiceNumber
+      ${SALE_FIELDS}
     }
   }
 `;
@@ -104,12 +111,27 @@ export const DELETE_SALES = gql`
   }
 `;
 
-export const GET_PAYMENT_METHODS = gql`
-  query {
-    __type(name: "PaymentMethod") {
-      enumValues {
-        name
-      }
+export const RESTORE_SALES = gql`
+  mutation RestoreSales($ids: [Int!]!) {
+    restoreSales(ids: $ids)
+  }
+`;
+
+export const CANCEL_SALE = gql`
+  mutation CancelSale($id: Int!) {
+    cancelSale(id: $id) {
+      id
+      saleStatus
+    }
+  }
+`;
+
+// Devuelve la venta completa (saleId) o algunas de sus líneas (saleDetailIds)
+export const REFUND_SALE = gql`
+  mutation RefundSale($refund: RefundSaleInput!) {
+    refundSale(refundSaleInput: $refund) {
+      ${SALE_FIELDS}
+      ${SALE_LINES}
     }
   }
 `;
@@ -117,35 +139,12 @@ export const GET_PAYMENT_METHODS = gql`
 export const MAKE_SALE = gql`
   mutation MakeSale($makeSaleInput: MakeSaleInput!) {
     makeSale(makeSaleInput: $makeSaleInput) {
-      id
-      effectiveDate
-      isConfirmed
-      totalAmount
-      paymentMethod
-      invoiceNumber
-      paymentDetails
-      salesUser {
-        id
-        name
-      }
-      customer {
-        id
-        name
-      }
-      details {
-        id
-        quantity
-        unitPrice
-        subtotal
-        product {
-          id
-          name
-        }
-      }
+      ${SALE_FIELDS}
     }
   }
 `;
 
+// Con una lista de pagos vacía devuelve el precio de la venta en cada moneda
 export const VALIDATE_SALE_PAYMENTS = gql`
   mutation ValidateSalePayments(
     $validateSalePaymentsInput: ValidateSalePaymentsInput!
@@ -155,7 +154,12 @@ export const VALIDATE_SALE_PAYMENTS = gql`
     ) {
       valid
       message
+      currency
       totalInBaseCurrency
+      totals {
+        currency
+        total
+      }
     }
   }
 `;

@@ -37,7 +37,8 @@ const describeChange = (current, previous) => {
  * Resumen del negocio: cómo van los ingresos y qué requiere atención
  */
 export function Analytics() {
-  const { statistics, loading, error, refetch, filters } = useStatistics(
+  const { statistics, loading, updatedAt, error, refetch, filters } =
+    useStatistics(
     DASHBOARD_STATISTICS,
     "dashboardStatistics"
   );
@@ -102,6 +103,7 @@ export function Analytics() {
         <StatisticsFilters
           filters={filters}
           loading={loading}
+          updatedAt={updatedAt}
           onRefresh={refetch}
         />
         {error ? (
@@ -134,6 +136,7 @@ export function Analytics() {
       <StatisticsFilters
         filters={filters}
         loading={loading}
+        updatedAt={updatedAt}
         onRefresh={refetch}
       />
 

@@ -178,6 +178,14 @@
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
+  /* Nunca a sangre: siempre queda margen con la ventana */
+  max-width: calc(100vw - 2 * var(--space-4));
+  max-height: calc(100vh - 2 * var(--space-4));
+}
+
+/* Diálogo ancho (fichas con listas): PrimeFlex solo llega a 30rem */
+.p-dialog.ui-dialog--wide {
+  width: var(--dialog-width-wide);
 }
 
 .p-dialog .p-dialog-header {
@@ -205,6 +213,25 @@
 
 .p-dialog .p-dialog-footer button {
   margin: 0;
+}
+
+/* --- Opciones excluyentes (SelectButton): píldoras separadas ---------------- */
+.p-selectbutton {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.p-selectbutton .p-button,
+.p-selectbutton .p-button:first-of-type,
+.p-selectbutton .p-button:last-of-type,
+.p-selectbutton .p-button:not(:first-of-type):not(:last-of-type) {
+  border: 1px solid var(--surface-300);
+  border-radius: var(--radius-full);
+}
+
+.p-selectbutton .p-button.p-highlight {
+  border-color: var(--primary-600);
 }
 
 /* --- Etiquetas, mensajes y avisos ------------------------------------------ */

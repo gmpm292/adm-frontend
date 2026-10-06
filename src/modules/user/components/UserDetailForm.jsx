@@ -27,7 +27,7 @@ export function UserDetailForm({ userId, visible, onHide }) {
     <Dialog
       header="Detalles del Usuario"
       visible={visible}
-      className="w-full md:w-40rem"
+      className="ui-dialog--wide"
       onHide={onHide}
       modal
     >

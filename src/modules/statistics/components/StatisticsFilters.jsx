@@ -11,7 +11,12 @@ import { PERIOD_PRESETS } from "../hooks/useStatistics";
  * Barra de filtros de las estadísticas: periodo, moneda y, para quien ve
  * varias empresas, la empresa.
  */
-export function StatisticsFilters({ filters, loading, onRefresh }) {
+export function StatisticsFilters({
+  filters,
+  loading,
+  updatedAt,
+  onRefresh,
+}) {
   const { user } = useAuthContext();
   const seesAllBusinesses = user?.role?.includes("SUPER");
 
@@ -65,6 +70,17 @@ export function StatisticsFilters({ filters, loading, onRefresh }) {
             tooltipOptions={{ position: "bottom" }}
           />
         )}
+
+        <span className="text-sm text-color-secondary" role="status">
+          {loading
+            ? "Actualizando..."
+            : updatedAt &&
+              `Actualizado a las ${updatedAt.toLocaleTimeString("es-ES", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })}`}
+        </span>
 
         <Button
           icon="pi pi-refresh"

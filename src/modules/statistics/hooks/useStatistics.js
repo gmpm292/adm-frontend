@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@apollo/client";
 import { startOfMonth, startOfYear, subDays } from "date-fns";
 import { toCalendarDay } from "../format";
@@ -13,6 +13,7 @@ export const PERIOD_PRESETS = [
 ];
 
 const DEFAULT_PRESET = "30d";
+const MIN_REFRESH_MS = 600;
 
 /** Primer y último día (inclusive) de cada periodo predefinido */
 const getPresetRange = (preset) => {
@@ -63,16 +64,44 @@ export function useStatistics(query, field) {
     variables: { input },
     fetchPolicy: "cache-and-network",
     skip: preset === "custom" && !customReady,
+    // Sin esto `loading` no cambia al repetir la consulta
+    notifyOnNetworkStatusChange: true,
   });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState(null);
+
+  // Hora de los datos que se están viendo
+  useEffect(() => {
+    if (data) setUpdatedAt(new Date());
+  }, [data]);
+
+  // La respuesta puede llegar en milisegundos: el indicador dura lo bastante
+  // para que se note que se actualizó.
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetch(),
+        new Promise((resolve) => setTimeout(resolve, MIN_REFRESH_MS)),
+      ]);
+      setUpdatedAt(new Date());
+    } catch {
+      // El error llega por `error`
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch]);
 
   // Mientras llega un periodo nuevo se sigue mostrando el anterior
   const statistics = (data ?? previousData)?.[field] ?? null;
 
   return {
     statistics,
-    loading,
+    loading: loading || refreshing,
+    updatedAt,
     error,
-    refetch,
+    refetch: refresh,
     filters: {
       preset,
       setPreset,

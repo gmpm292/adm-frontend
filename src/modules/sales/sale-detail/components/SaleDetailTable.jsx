@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef } from "react";
+import { useCallback, useState, useRef } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
 import {
   GET_SALE_DETAILS_BY_SALE,
@@ -11,37 +11,14 @@ import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
 import { SaleDetailEditForm } from "./SaleDetailEditForm";
 import { SaleDetailCreateForm } from "./SaleDetailCreateForm";
-import { Chip } from "primereact/chip";
+import { Tag } from "primereact/tag";
+import { SALE_DETAIL_STATUS, formatMoney, workerName } from "../../format";
+import { getErrorMessage } from "../../../../utils/errors";
 
-const formatCurrency = (value) => {
-    // ✅ Agregar validación para valores nulos o undefined
-    if (value === null || value === undefined) {
-      return "$0.00";
-    }
+const EMPTY = <span className="text-color-secondary">—</span>;
 
-    // ✅ Asegurar que value sea un número
-    const numericValue =
-      typeof value === "number" ? value : parseFloat(value) || 0;
-
-    return numericValue.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-    });
-  };
-
-const publicistsBodyTemplate = (rowData) => {
-  if (!rowData.publicists || rowData.publicists.length === 0) {
-    return <span className="text-color-secondary">Sin publicistas</span>;
-  }
-
-  return (
-    <div className="flex flex-wrap gap-1">
-      {rowData.publicists.map((publicist) => (
-        <Chip key={publicist.id} label={publicist.name} className="text-xs" />
-      ))}
-    </div>
-  );
-};
+const money = (field) => (row) =>
+  row[field] != null ? formatMoney(row[field], row.currency) : EMPTY;
 
 export function SaleDetailTable({ saleId }) {
   const [getSaleDetails, { loading, data, error }] = useLazyQuery(
@@ -129,8 +106,11 @@ export function SaleDetailTable({ saleId }) {
 
   const handleDelete = (saleDetailId) => {
     confirmDialog({
-      message: "¿Estás seguro de que deseas eliminar este detalle de venta?",
-      header: "Confirmación",
+      message: "El producto se quitará de la venta y volverá a estar disponible.",
+      header: "Quitar producto",
+      acceptLabel: "Quitar",
+      rejectLabel: "Cancelar",
+      acceptClassName: "p-button-danger",
       icon: "pi pi-exclamation-triangle",
       accept: async () => {
         try {
@@ -148,7 +128,7 @@ export function SaleDetailTable({ saleId }) {
           toast.current.show({
             severity: "error",
             summary: "Error",
-            detail: err.message,
+            detail: getErrorMessage(err),
             life: 3000,
           });
         }
@@ -156,14 +136,16 @@ export function SaleDetailTable({ saleId }) {
     });
   };
 
+  // Solo se cambian las líneas de una venta que sigue en borrador
   const actionBodyTemplate = (rowData) => {
+    if (rowData.saleDetailStatus !== "DRAFT") return null;
     return (
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
           text
           rounded
-          tooltip="Editar detalle"
+          tooltip="Cambiar cantidad"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
@@ -172,7 +154,7 @@ export function SaleDetailTable({ saleId }) {
           text
           rounded
           severity="danger"
-          tooltip="Eliminar detalle"
+          tooltip="Quitar producto"
           tooltipOptions={{ position: "top" }}
           onClick={() => handleDelete(rowData.id)}
         />
@@ -184,47 +166,48 @@ export function SaleDetailTable({ saleId }) {
     {
       field: "product.name",
       header: "Producto",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "product.id", // Cambiado de "product.code" a "product.id"
-      header: "ID Producto",
-      sortable: true,
-      filter: true,
     },
     {
       field: "quantity",
       header: "Cantidad",
-      sortable: true,
-      filter: true,
     },
     {
       field: "unitPrice",
-      header: "Precio Unitario",
-      body: (rowData) => formatCurrency(rowData.unitPrice),
-      sortable: true,
-      filter: true,
+      header: "Precio",
+      body: money("unitPrice"),
     },
     {
       field: "subtotal",
-      header: "Subtotal",
-      body: (rowData) => formatCurrency(rowData.subtotal),
-      sortable: true,
-      filter: true,
+      header: "Importe",
+      body: money("subtotal"),
     },
     {
       field: "publicists",
       header: "Publicistas",
-      body: publicistsBodyTemplate,
-      sortable: false,
+      body: (row) =>
+        row.publicists?.length
+          ? row.publicists.map(workerName).join(", ")
+          : EMPTY,
+    },
+    {
+      field: "saleDetailStatus",
+      header: "Estado",
+      body: (row) => {
+        const status = SALE_DETAIL_STATUS[row.saleDetailStatus];
+        return status ? (
+          <Tag severity={status.severity} value={status.label} />
+        ) : (
+          EMPTY
+        );
+      },
     },
   ];
 
-  const addSaleDetailButton = (
+  const isDraft = data?.saleDetailsBySale?.[0]?.sale?.saleStatus === "DRAFT";
+  const addSaleDetailButton = isDraft && (
     <Button
+      label="Agregar producto"
       icon="pi pi-plus"
-      tooltip="Agregar producto"
       onClick={() => setCreateDialogVisible(true)}
     />
   );
@@ -240,7 +223,7 @@ export function SaleDetailTable({ saleId }) {
         totalRecords={data?.saleDetailsBySale?.length || 0}
         loading={loading}
         error={error}
-        globalFilterFields={["product.name", "product.id"]} // Actualizado
+        globalFilterFields={[]}
         emptyMessage="No se encontraron detalles de venta"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} detalles"
         onRefresh={handleRefresh} // ✅ Pasar la función handleRefresh

@@ -129,6 +129,11 @@ export const routePermissions = {
     requiredRoles: [],
     title: "Detalles de Venta",
   },
+  "/sales/deliveries": {
+    permissions: [],
+    requiredRoles: [],
+    title: "Mensajerías",
+  },
   "/system/email": {
     permissions: [],
     requiredRoles: ["SUPER"],
