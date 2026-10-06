@@ -19,13 +19,6 @@ import { Badge } from "primereact/badge";
 // ==================== BODY TEMPLATES ====================
 
 /**
- * Template para mostrar el ID
- */
-const idBodyTemplate = (rowData) => {
-  return <Badge value={`#${rowData.id}`} severity="info" />;
-};
-
-/**
  * Template para mostrar la categoría del producto
  */
 const categoryBodyTemplate = (rowData) => {
@@ -279,14 +272,6 @@ export function InventoryMovementTable() {
   const columns = useMemo(
     () => [
       {
-        field: "id",
-        header: "ID",
-        body: idBodyTemplate,
-        sortable: true,
-        className: "w-6rem",
-        visible: false, // Oculta por defecto
-      },
-      {
         field: "category",
         header: "Categoría",
         body: categoryBodyTemplate,
@@ -383,14 +368,6 @@ export function InventoryMovementTable() {
         header: "Auditoría",
         body: auditBodyTemplate,
         className: "w-14rem",
-        visible: false, // Oculta por defecto
-      },
-      {
-        field: "reservationId",
-        header: "ID Reserva",
-        body: (rowData) => rowData.reservationId || "—",
-        sortable: true,
-        className: "w-10rem",
         visible: false, // Oculta por defecto
       },
       {

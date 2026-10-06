@@ -20,13 +20,6 @@ import { PayrollPeriodCalculateDialog } from './PayrollPeriodCalculateDialog';
 // ==================== BODY TEMPLATES ====================
 
 /**
- * Template para mostrar el ID
- */
-const idBodyTemplate = (rowData) => {
-  return <Badge value={`#${rowData.id}`} severity="info" />;
-};
-
-/**
  * Template para el estado del período
  */
 const statusBodyTemplate = (rowData) => {
@@ -186,13 +179,6 @@ export function PayrollPeriodTable() {
   // Definir todas las columnas disponibles del backend
   const columns = useMemo(
     () => [
-      {
-        field: 'id',
-        header: 'ID',
-        body: idBodyTemplate,
-        sortable: true,
-        className: 'w-6rem',
-      },
       {
         field: 'name',
         header: 'Nombre',

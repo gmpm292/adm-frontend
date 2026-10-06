@@ -193,13 +193,6 @@ export function InventoryTable() {
 
   const columns = [
     {
-      field: "id",
-      header: "ID",
-      sortable: true,
-      filter: true,
-      visible: false,
-    },
-    {
       field: "product.name",
       header: "Producto",
       body: productBodyTemplate,

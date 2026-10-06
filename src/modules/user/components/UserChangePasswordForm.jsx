@@ -5,6 +5,7 @@ import { Password } from "primereact/password";
 import { useMutation } from "@apollo/client";
 import { CHANGE_PASSWORD_BY_EMAIL } from "../graphql/queries";
 import { Toast } from "primereact/toast";
+import { getErrorMessage } from "../../../utils/errors";
 import { useRef } from "react";
 import { Message } from "primereact/message";
 import { FormField } from "../../../components/ui";
@@ -28,8 +29,8 @@ export const UserChangePasswordForm = ({
 
     if (!formData.newPassword) {
       newErrors.newPassword = "La nueva contraseña es requerida";
-    } else if (formData.newPassword.length < 4) {
-      newErrors.newPassword = "Mínimo 4 caracteres";
+    } else if (formData.newPassword.length < 8) {
+      newErrors.newPassword = "Mínimo 8 caracteres";
     }
 
     if (formData.newPassword !== formData.confirmPassword) {
@@ -76,7 +77,7 @@ export const UserChangePasswordForm = ({
       toast.current.show({
         severity: "error",
         summary: "Error",
-        detail: err.message,
+        detail: getErrorMessage(err),
         life: 3000,
       });
     }

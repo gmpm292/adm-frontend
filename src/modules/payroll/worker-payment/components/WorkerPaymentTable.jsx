@@ -53,13 +53,6 @@ const getWorkerFullName = (worker) => {
 // ==================== BODY TEMPLATES ====================
 
 /**
- * Template para mostrar el ID
- */
-const idBodyTemplate = (rowData) => {
-  return <Badge value={`#${rowData.id}`} severity="info" />;
-};
-
-/**
  * Template para mostrar el trabajador con toda su información
  */
 const workerBodyTemplate = (rowData) => {
@@ -336,13 +329,6 @@ export function WorkerPaymentTable() {
   // Definir todas las columnas importantes
   const columns = useMemo(
     () => [
-      {
-        field: "id",
-        header: "ID",
-        body: idBodyTemplate,
-        sortable: true,
-        className: "w-6rem",
-      },
       {
         field: "worker",
         header: "Trabajador",

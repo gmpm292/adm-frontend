@@ -18,8 +18,10 @@ import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
-import { UserEditForm } from "./UserEditForm";
-import { UserCreateForm } from "./UserCreateForm";
+import { UserFormDialog } from "./UserForm";
+import { useAuthContext } from "../../auth/components/AuthContext";
+import { getErrorMessage } from "../../../utils/errors";
+import { SYSTEM_USER_EMAIL, roleLabel, userPlace } from "../roles";
 import { UserDetailForm } from "./UserDetailForm";
 import { UserChangePasswordForm } from "./UserChangePasswordForm";
 import { FilterMatchMode, FilterOperator } from "primereact/api";
@@ -27,9 +29,6 @@ import {
   PrimeReactSortMeta,
   PrimeReactFilters,
 } from "../../../components/BaseTable/types";
-
-// Cuenta del sistema: su verificación en dos pasos no se administra desde aquí
-const SYSTEM_USER_EMAIL = "system@admin.com";
 
 const statusBodyTemplate = (rowData) => {
   return (
@@ -114,6 +113,7 @@ const dateFilterTemplate = (options) => {
 };
 
 export function UserTable() {
+  const { user: currentUser } = useAuthContext();
   const [getUsers, { loading, data, error }] = useLazyQuery(GET_USERS, {
     fetchPolicy: "network-only",
   });
@@ -126,40 +126,18 @@ export function UserTable() {
   const [disableTwoFactor] = useMutation(DISABLE_2FA);
   const [resetTwoFactor] = useMutation(RESET_2FA_SETTINGS);
   const twoFactorMenu = useRef(null);
+  const passwordMenu = useRef(null);
+  const [passwordUser, setPasswordUser] = useState(null);
   const [twoFactorUser, setTwoFactorUser] = useState(null);
   const [selectedUserId, setSelectedUserId] = useState(null);
-  const [editDialogVisible, setEditDialogVisible] = useState(false);
-  const [createDialogVisible, setCreateDialogVisible] = useState(false);
+  // null, "create" o "edit"
+  const [formMode, setFormMode] = useState(null);
   const [globalFilter, setGlobalFilter] = useState("");
   const toast = useRef(null);
   const [detailDialogVisible, setDetailDialogVisible] = useState(false);
   const [changePasswordDialogVisible, setChangePasswordDialogVisible] =
     useState(false);
   const [selectedUserEmail, setSelectedUserEmail] = useState("");
-
-  // Ejemplo para pasar filtros iniciales o por defecto.
-  // const defaultFilters: PrimeReactFilters = {
-  //   name: {
-  //     operator: FilterOperator.AND,
-  //     constraints: [
-  //       {
-  //         value: "carlos",
-  //         matchMode: FilterMatchMode.CONTAINS,
-  //       },
-  //     ],
-  //   },
-  // };
-  const defaultFilters: PrimeReactFilters = {
-    enabled: {
-      operator: FilterOperator.AND,
-      constraints: [
-        {
-          value: "true",
-          matchMode: FilterMatchMode.EQUALS,
-        },
-      ],
-    },
-  };
 
   // Ejemplo para pasar ordenamientos iniciales o por defecto. Pasar a la lista base(initialSorts={defaultSorts})
   const defaultSorts: PrimeReactSortMeta[] = [
@@ -183,7 +161,6 @@ export function UserTable() {
   const handleFetchData = useCallback(
     async (params) => {
       try {
-        console.log("params", params);
         tableStateRef.current = {
           filters: params.filters || {},
           sorts: params.sorts || [],
@@ -231,17 +208,22 @@ export function UserTable() {
     });
   }, [handleFetchData]);
 
-  const handleEditSuccess = useCallback(() => {
+  const handleSaved = (saved) => {
+    setFormMode(null);
     handleRefresh();
-  }, [handleRefresh]);
-
-  const handleCreateSuccess = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
+    toast.current.show({
+      severity: "success",
+      summary: saved.created ? "Usuario creado" : "Usuario actualizado",
+      detail: saved.created
+        ? `${saved.email} recibirá un correo para crear su contraseña.`
+        : saved.email,
+      life: 5000,
+    });
+  };
 
   const handleEdit = (userId) => {
     setSelectedUserId(userId);
-    setEditDialogVisible(true);
+    setFormMode("edit");
   };
 
   const handleViewDetails = (userId) => {
@@ -251,9 +233,13 @@ export function UserTable() {
 
   const handleDelete = (userId) => {
     confirmDialog({
-      message: "¿Estás seguro de que deseas eliminar este usuario?",
-      header: "Confirmación",
+      message:
+        "El usuario dejará de poder entrar y su sesión se cerrará. Puedes restaurarlo después.",
+      header: "Eliminar usuario",
       icon: "pi pi-exclamation-triangle",
+      acceptLabel: "Eliminar",
+      rejectLabel: "Cancelar",
+      acceptClassName: "p-button-danger",
       accept: async () => {
         try {
           await deleteUsers({ variables: { ids: [userId] } });
@@ -270,7 +256,7 @@ export function UserTable() {
           toast.current.show({
             severity: "error",
             summary: "Error",
-            detail: err.message,
+            detail: getErrorMessage(err),
             life: 3000,
           });
         }
@@ -299,7 +285,7 @@ export function UserTable() {
           toast.current.show({
             severity: "error",
             summary: "Error",
-            detail: err.message,
+            detail: getErrorMessage(err),
             life: 3000,
           });
         }
@@ -309,8 +295,10 @@ export function UserTable() {
 
   const handleRequestPasswordChange = (email) => {
     confirmDialog({
-      message: `¿Estás seguro de que deseas solicitar un cambio de contraseña para ${email}?`,
-      header: "Confirmación",
+      message: `Se enviará a ${email} un enlace para que cree una contraseña nueva.`,
+      header: "Enviar enlace de contraseña",
+      acceptLabel: "Enviar",
+      rejectLabel: "Cancelar",
       icon: "pi pi-exclamation-triangle",
       accept: async () => {
         try {
@@ -333,7 +321,7 @@ export function UserTable() {
           toast.current.show({
             severity: "error",
             summary: "Error",
-            detail: `No se pudo enviar la solicitud de cambio de contraseña: ${err.message}`,
+            detail: getErrorMessage(err),
             life: 5000,
           });
         }
@@ -362,13 +350,29 @@ export function UserTable() {
           toast.current.show({
             severity: "error",
             summary: "Error",
-            detail: err.message,
+            detail: getErrorMessage(err),
             life: 3000,
           });
         }
       },
     });
   };
+
+  // Las dos formas de darle una contraseña nueva a un usuario
+  const passwordMenuItems = passwordUser
+    ? [
+        {
+          label: "Enviar enlace por correo",
+          icon: "pi pi-send",
+          command: () => handleRequestPasswordChange(passwordUser.email),
+        },
+        {
+          label: "Asignar una contraseña",
+          icon: "pi pi-lock",
+          command: () => handleDirectPasswordChange(passwordUser.email),
+        },
+      ]
+    : [];
 
   // Opciones del menú de verificación en dos pasos según el estado del usuario
   const getTwoFactorMenuItems = (user) => {
@@ -452,15 +456,17 @@ export function UserTable() {
           tooltipOptions={{ position: "top" }}
           onClick={() => handleEdit(rowData.id)}
         />
-        <Button
-          icon="pi pi-trash"
-          text
-          rounded
-          severity="danger"
-          tooltip="Eliminar usuario"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleDelete(rowData.id)}
-        />
+        {rowData.id !== currentUser?.id && (
+          <Button
+            icon="pi pi-trash"
+            text
+            rounded
+            severity="danger"
+            tooltip="Eliminar usuario"
+            tooltipOptions={{ position: "top" }}
+            onClick={() => handleDelete(rowData.id)}
+          />
+        )}
         <Button
           icon="pi pi-eye"
           text
@@ -471,22 +477,17 @@ export function UserTable() {
           onClick={() => handleViewDetails(rowData.id)}
         />
         <Button
-          icon="pi pi-envelope"
-          text
-          rounded
-          severity="help"
-          tooltip="Solicitar cambio de contraseña (envía correo)"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleRequestPasswordChange(rowData.email)}
-        />
-        <Button
           icon="pi pi-key"
           text
           rounded
           severity="warning"
-          tooltip="Cambiar contraseña directamente"
+          tooltip="Contraseña"
           tooltipOptions={{ position: "top" }}
-          onClick={() => handleDirectPasswordChange(rowData.email)}
+          aria-haspopup
+          onClick={(event) => {
+            setPasswordUser(rowData);
+            passwordMenu.current.toggle(event);
+          }}
         />
         {rowData.email !== SYSTEM_USER_EMAIL && (
           <Button
@@ -506,19 +507,8 @@ export function UserTable() {
 
   const columns = [
     {
-      field: "id",
-      header: "Id",
-      sortable: true,
-      filter: true,
-      visible: false,
-      filterMatchModeOptions: [
-        { label: "Igual a", value: FilterMatchMode.EQUALS },
-        { label: "Diferente a", value: FilterMatchMode.NOT_EQUALS },
-      ],
-    },
-    {
       field: "name",
-      header: "Nombres",
+      header: "Nombre",
       sortable: true,
       filter: true,
     },
@@ -530,7 +520,7 @@ export function UserTable() {
     },
     {
       field: "email",
-      header: "Email",
+      header: "Correo",
       sortable: true,
       filter: true,
     },
@@ -539,6 +529,15 @@ export function UserTable() {
       header: "Rol",
       sortable: true,
       filter: true,
+      body: (rowData) => roleLabel(rowData.role?.[0]),
+    },
+    {
+      field: "office.id",
+      header: "Ubicación",
+      body: (rowData) =>
+        userPlace(rowData) ?? (
+          <span className="text-color-secondary">—</span>
+        ),
     },
     {
       field: "enabled",
@@ -591,9 +590,9 @@ export function UserTable() {
   // Botón de nuevo usuario que se pasará al header
   const addUserButton = (
     <Button
+      label="Nuevo usuario"
       icon="pi pi-plus"
-      tooltip="Crear Usuario Nuevo"
-      onClick={() => setCreateDialogVisible(true)}
+      onClick={() => setFormMode("create")}
     />
   );
 
@@ -601,6 +600,7 @@ export function UserTable() {
     <>
       <Toast ref={toast} />
       <ConfirmDialog />
+      <Menu model={passwordMenuItems} popup ref={passwordMenu} />
       <Menu
         model={getTwoFactorMenuItems(twoFactorUser)}
         popup
@@ -614,13 +614,12 @@ export function UserTable() {
         loading={loading}
         error={error}
         globalFilter={globalFilter}
-        globalFilterFields={["name", "lastName", "email", "fullName"]}
+        globalFilterFields={["fullName", "email", "mobile"]}
         emptyMessage="No se encontraron usuarios"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        initialFilters={defaultFilters}
         initialSorts={defaultSorts}
         header={addUserButton}
         showDeleted={true}
@@ -628,22 +627,18 @@ export function UserTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerClassName="w-16rem"
+          headerClassName="w-14rem"
         />
       </GenericDataTable>
 
-      <UserEditForm
-        userId={selectedUserId}
-        visible={editDialogVisible}
-        onHide={() => setEditDialogVisible(false)}
-        onSuccess={handleEditSuccess}
-      />
-
-      <UserCreateForm
-        visible={createDialogVisible}
-        onHide={() => setCreateDialogVisible(false)}
-        onSuccess={handleCreateSuccess}
-      />
+      {formMode && (
+        <UserFormDialog
+          userId={formMode === "edit" ? selectedUserId : null}
+          currentUserId={currentUser?.id}
+          onHide={() => setFormMode(null)}
+          onSaved={handleSaved}
+        />
+      )}
 
       <UserDetailForm
         userId={selectedUserId}

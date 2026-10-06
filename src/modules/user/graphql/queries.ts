@@ -26,6 +26,22 @@ export const GET_USERS = gql`
         role
         isTwoFactorEnabled
         isTwoFactorConfigured
+        business {
+          id
+          name
+        }
+        office {
+          id
+          name
+        }
+        department {
+          id
+          name
+        }
+        team {
+          id
+          name
+        }
       }
     }
   }
@@ -35,6 +51,8 @@ export const GET_USER_BY_ID = gql`
   query User($id: Int!) {
     user(id: $id) {
       deletedAt
+      createdAt
+      updatedAt
 
       id
       email
@@ -59,7 +77,7 @@ export const GET_USER_BY_ID = gql`
       }
       team {
         id
-        #name
+        name
       }
     }
   }
@@ -83,6 +101,55 @@ export const UPDATE_USER = gql`
       lastName
       mobile
       role
+    }
+  }
+`;
+
+// Cambia el rol y, con él, la empresa, oficina, departamento y equipo
+export const UPDATE_USER_ROLE = gql`
+  mutation UpdateUserRole($user: UpdateUserRoleInput!) {
+    updateUserRole(updateUserRoleInput: $user) {
+      id
+      role
+    }
+  }
+`;
+
+// Estructura de la empresa, para ubicar a un usuario según su rol
+export const GET_USER_ORGANIZATION = gql`
+  query UserOrganization {
+    businesses(options: { skip: 0 }) {
+      data {
+        id
+        name
+      }
+    }
+    offices(options: { skip: 0 }) {
+      data {
+        id
+        name
+        business {
+          id
+        }
+      }
+    }
+    departments(options: { skip: 0 }) {
+      data {
+        id
+        name
+        office {
+          id
+        }
+      }
+    }
+    teams(options: { skip: 0 }) {
+      data {
+        id
+        name
+        department {
+          id
+        }
+      }
     }
   }
 `;
