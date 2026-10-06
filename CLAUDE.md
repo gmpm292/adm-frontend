@@ -142,6 +142,18 @@ estados con `<Tag severity>`; formularios con `FormField` sobre
   de error del backend: `utils/errors.js` (`getErrorMessage`).
 - Los estilos de la venta integrada están en `src/theme/pages/pos.css`.
 
+## Empresa y usuarios
+
+- **Empresa** (`src/modules/company`): Empresas, Oficinas, Departamentos y
+  Equipos comparten `shared/CompanyUnitTable.jsx` y `shared/CompanyUnitForm.jsx`.
+  Cada nivel se describe en `shared/units.js` (textos, operaciones, columnas y
+  campos); para cambiar una pantalla se cambia ahí.
+- **Usuarios** (`src/modules/user`): `components/UserForm.jsx` crea y edita, con
+  el rol y el lugar de la empresa que ese rol exige (`roles.js`).
+- Ninguna tabla muestra la columna Id.
+- Al reemplazar un componente se borra el anterior en el mismo cambio: no se
+  dejan archivos sin uso, copias `.old` ni `.txt`.
+
 ## Trampas conocidas
 
 - Los tipos de GraphQL cuyo `id` no identifica la fila (por ejemplo
@@ -166,6 +178,4 @@ estados con `<Tag severity>`; formularios con `FormField` sobre
   espera `showDeleted`.
 - Textos en inglés en `SecurityEntitySelector` («Business», «Select a
   business», «Clear»).
-- Archivos de respaldo sin uso: `ProductCreateForm.jsx.old`,
-  `PublicistSection.jsx.txt`, `SaleSummary.jsx.txt`.
 - El botón «Imprimir ticket» de la barra superior imprime un ticket de ejemplo.

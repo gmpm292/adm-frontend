@@ -137,22 +137,6 @@ export const GET_CUSTOMER_SALES = gql`
   }
 `;
 
-// Tiendas donde puede registrarse un cliente
-export const GET_CUSTOMER_OFFICES = gql`
-  query CustomerOffices {
-    offices(options: { skip: 0 }) {
-      data {
-        id
-        name
-        business {
-          id
-          name
-        }
-      }
-    }
-  }
-`;
-
 export const DELETE_CUSTOMERS = gql`
   mutation RemoveCustomers($ids: [Int!]!) {
     removeCustomers(ids: $ids) {

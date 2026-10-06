@@ -7,11 +7,8 @@ import { InputText } from "primereact/inputtext";
 import { Message } from "primereact/message";
 import { FormField } from "../../../../components/ui";
 import { getErrorMessage } from "../../../../utils/errors";
-import {
-  CREATE_CUSTOMER,
-  GET_CUSTOMER_OFFICES,
-  UPDATE_CUSTOMER,
-} from "../graphql/queries";
+import { CREATE_CUSTOMER, UPDATE_CUSTOMER } from "../graphql/queries";
+import { GET_SALE_CATALOG } from "../../integrated-sale/graphql/queries";
 
 const PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -41,11 +38,13 @@ export function CustomerFormDialog({
 
   // La tienda solo se pregunta al crear desde el listado
   const needsOffice = !isEdit && !office;
-  const { data: officesData, loading: loadingOffices } = useQuery(
-    GET_CUSTOMER_OFFICES,
-    { skip: !needsOffice },
+  // Las tiendas donde el usuario puede vender: la misma lista que la venta
+  // integrada, disponible también para quien no administra la empresa.
+  const { data: catalogData, loading: loadingOffices } = useQuery(
+    GET_SALE_CATALOG,
+    { variables: { officeId: null }, skip: !needsOffice },
   );
-  const offices = officesData?.offices?.data ?? [];
+  const offices = catalogData?.saleCatalog?.offices ?? [];
   const selectedOffice = needsOffice
     ? (offices.find((o) => o.id === officeId) ??
       (offices.length === 1 ? offices[0] : null))
@@ -99,7 +98,7 @@ export function CustomerFormDialog({
         const { data } = await createCustomer({
           variables: {
             customer: {
-              businessId: office?.businessId ?? selectedOffice.business.id,
+              businessId: office?.businessId ?? selectedOffice.businessId,
               officeId: office?.id ?? selectedOffice.id,
               ...values,
             },
@@ -212,7 +211,7 @@ export function CustomerFormDialog({
                   inputId="customer-office"
                   value={selectedOffice?.id ?? null}
                   options={offices.map((o) => ({
-                    label: [o.name, o.business?.name]
+                    label: [o.name, o.businessName]
                       .filter(Boolean)
                       .join(" · "),
                     value: o.id,

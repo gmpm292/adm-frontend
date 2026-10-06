@@ -10,7 +10,7 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { FormField, NoData } from "../../../../components/ui";
 import { getErrorMessage } from "../../../../utils/errors";
 import { CustomerPicker } from "../../integrated-sale/components/CustomerPicker";
-import { GET_SALE_CATALOG } from "../../integrated-sale/graphql/saleQueries";
+import { GET_SALE_CATALOG } from "../../integrated-sale/graphql/queries";
 import { saleLabel } from "../../format";
 import { GET_SALE_BY_ID, UPDATE_SALE } from "../graphql/queries";
 
