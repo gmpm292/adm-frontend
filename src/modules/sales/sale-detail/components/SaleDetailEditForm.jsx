@@ -26,6 +26,7 @@ export const SaleDetailEditForm = ({
   const { loading, error } = useQuery(GET_SALE_DETAIL_BY_ID, {
     variables: { id: saleDetailId },
     skip: !saleDetailId,
+    fetchPolicy: "network-only",
     onCompleted: (data) => {
       if (data?.saleDetail) {
         setFormData({

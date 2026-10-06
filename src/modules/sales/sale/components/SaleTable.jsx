@@ -1,334 +1,376 @@
-import React, { useCallback, useState, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useLazyQuery, useMutation } from "@apollo/client";
-import { GET_SALES, DELETE_SALES } from "../graphql/queries";
-import GenericDataTable from "../../../../components/BaseTable/index";
-import { Column } from "primereact/column";
 import { Button } from "primereact/button";
+import { Column } from "primereact/column";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { Toast } from "primereact/toast";
+import { Dropdown } from "primereact/dropdown";
 import { Tag } from "primereact/tag";
-import { SaleEditForm } from "./SaleEditForm";
-import { SaleCreateForm } from "./SaleCreateForm";
+import { Toast } from "primereact/toast";
+import GenericDataTable from "../../../../components/BaseTable/index";
+import { getErrorMessage } from "../../../../utils/errors";
+import {
+  SALE_STATUS,
+  formatDateTime,
+  formatMoney,
+  isPaid,
+  saleLabel,
+  workerName,
+} from "../../format";
+import {
+  CANCEL_SALE,
+  DELETE_SALES,
+  GET_SALES,
+  RESTORE_SALES,
+} from "../graphql/queries";
+import { MakeSaleComponent } from "./MakeSaleComponent";
 import { SaleDetailForm } from "./SaleDetailForm";
-import { MakeSaleComponent } from "./MakeSaleComponent"; // ✅ Nueva importación
-import { ValidatePaymentButton } from "./ValidatePaymentButton"; // ✅ Nueva importación
+import { SaleEditForm } from "./SaleEditForm";
 
-const formatCurrency = (value) => {
-  if (value === null || value === undefined) {
-    return "$0.00";
+const EMPTY = <span className="text-color-secondary">—</span>;
+
+const STATUS_OPTIONS = Object.entries(SALE_STATUS).map(([value, status]) => ({
+  value,
+  label: status.label,
+}));
+
+// En mensajería lo que importa es lo que falta por entregar o por cobrar
+const DELIVERY_OPTIONS = [
+  { value: "DRAFT", label: "Por cobrar" },
+  { value: "CONFIRMED", label: "Cobradas" },
+  { value: "UNASSIGNED", label: "Sin mensajero" },
+];
+
+const equal = (property, value) => ({
+  property,
+  operator: "EQUAL",
+  value: String(value),
+});
+
+/** Filtros que la vista añade a los de la tabla */
+const viewFilters = (deliveryOnly, view) => {
+  const filters = [];
+  if (deliveryOnly) filters.push(equal("hasDelivery", true));
+  if (view === "UNASSIGNED") {
+    filters.push({ property: "deliveryWorker.id", operator: "IS_NULL" });
+  } else if (view) {
+    filters.push(equal("saleStatus", view));
   }
-  const numericValue =
-    typeof value === "number" ? value : parseFloat(value) || 0;
-  return numericValue.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-  });
+  return filters;
 };
 
-const formatDate = (dateString) => {
-  if (!dateString) return "-";
-  const date = new Date(dateString);
-  if (isNaN(date.getTime()) || date.getTime() === 0) {
-    return "-";
-  }
-  return date.toLocaleDateString();
+const saleColumn = {
+  field: "invoiceNumber",
+  header: "Venta",
+  sortable: true,
+  filter: true,
+  body: (row) => (
+    <span className="flex align-items-center gap-2 font-medium text-900">
+      {saleLabel(row)}
+      {row.hasDelivery && (
+        <i
+          className="pi pi-truck text-color-secondary"
+          title="Lleva mensajería"
+        />
+      )}
+    </span>
+  ),
 };
 
-const paymentMethodBodyTemplate = (rowData) => {
-  return rowData.paymentMethod === "CASH"
-    ? "Efectivo"
-    : rowData.paymentMethod === "CARD"
-    ? "Tarjeta"
-    : rowData.paymentMethod === "TRANSFER"
-    ? "Transferencia"
-    : "";
+const statusColumn = {
+  field: "saleStatus",
+  header: "Estado",
+  sortable: true,
+  body: (row) => {
+    const status = SALE_STATUS[row.saleStatus];
+    return status ? (
+      <Tag severity={status.severity} value={status.label} />
+    ) : (
+      EMPTY
+    );
+  },
 };
 
-// ✅ Nueva función para determinar si una venta puede ser procesada
-const canProcessSale = (sale) => {
-  // Una venta puede ser procesada si no tiene fecha efectiva (no está finalizada)
-  return !sale.effectiveDate;
+const dateColumn = {
+  field: "createdAt",
+  header: "Fecha",
+  sortable: true,
+  body: (row) => formatDateTime(row.effectiveDate ?? row.createdAt),
 };
 
-// ✅ Nueva función para el template del estado de la venta
-const saleStatusBodyTemplate = (rowData) => {
-  const isProcessed = !!rowData.effectiveDate;
-  return isProcessed ? (
-    <Tag severity="success" value="Completada" icon="pi pi-check-circle" />
-  ) : (
-    <Tag severity="warning" value="Pendiente" icon="pi pi-clock" />
-  );
+const customerColumn = {
+  field: "customer.fullName",
+  header: "Cliente",
+  filter: true,
+  body: (row) =>
+    row.customer?.fullName ?? (
+      <span className="text-color-secondary">Cliente ocasional</span>
+    ),
 };
 
-export function SaleTable() {
+const totalColumn = {
+  field: "totalAmount",
+  header: "Total",
+  sortable: true,
+  bodyClassName: "text-right font-medium white-space-nowrap",
+  headerClassName: "text-right",
+  body: (row) =>
+    row.totalAmount != null
+      ? formatMoney(row.totalAmount, row.totalAmountCurrency)
+      : EMPTY,
+};
+
+const SALE_COLUMNS = [
+  saleColumn,
+  dateColumn,
+  customerColumn,
+  {
+    field: "salesWorker.id",
+    header: "Vendedor",
+    body: (row) => workerName(row.salesWorker) ?? EMPTY,
+  },
+  totalColumn,
+  statusColumn,
+];
+
+const DELIVERY_COLUMNS = [
+  saleColumn,
+  dateColumn,
+  customerColumn,
+  {
+    field: "deliveryWorker.id",
+    header: "Mensajero",
+    body: (row) =>
+      workerName(row.deliveryWorker) ?? (
+        <Tag severity="warning" value="Sin asignar" />
+      ),
+  },
+  {
+    field: "deliveryNotes",
+    header: "Indicaciones",
+    bodyClassName: "max-w-20rem white-space-nowrap overflow-hidden text-overflow-ellipsis",
+    body: (row) => row.deliveryNotes || EMPTY,
+  },
+  totalColumn,
+  statusColumn,
+];
+
+/**
+ * Listado de ventas. Con `deliveryOnly` muestra solo las que llevan
+ * mensajería, con su mensajero e indicaciones: es la pantalla de Mensajerías.
+ */
+export function SaleTable({ deliveryOnly = false }) {
+  const toast = useRef(null);
+  const navigate = useNavigate();
   const [getSales, { loading, data, error }] = useLazyQuery(GET_SALES, {
     fetchPolicy: "network-only",
   });
   const [deleteSales] = useMutation(DELETE_SALES);
-  const [selectedSaleId, setSelectedSaleId] = useState(null);
-  const [editDialogVisible, setEditDialogVisible] = useState(false);
-  const [createDialogVisible, setCreateDialogVisible] = useState(false);
-  const [detailDialogVisible, setDetailDialogVisible] = useState(false);
-  const [makeSaleDialogVisible, setMakeSaleDialogVisible] = useState(false); // ✅ Nuevo estado
-  const toast = useRef(null);
-  const tableStateRef = useRef({
-    filters: {},
-    sorts: [],
-    pagination: { first: 0, rows: 10 },
-  });
+  const [restoreSales] = useMutation(RESTORE_SALES);
+  const [cancelSale] = useMutation(CANCEL_SALE);
+  // { mode: "view" | "edit" | "charge", sale }
+  const [dialog, setDialog] = useState(null);
+  const [view, setView] = useState(null);
+  const lastParams = useRef(null);
+  const viewRef = useRef(view);
 
   const handleFetchData = useCallback(
     async (params) => {
+      lastParams.current = params;
       try {
-        tableStateRef.current = {
-          filters: params.filters || {},
-          sorts: params.sorts || [],
-          pagination: {
-            first: params.skip,
-            rows: params.take,
-          },
-        };
-
-        const { data: responseData } = await getSales({
+        const { data: response } = await getSales({
           variables: {
             options: {
               skip: params.skip,
               take: params.take,
-              filters: params.filters,
+              withDeleted: params.showDeleted,
+              filters: [
+                ...(params.filters ?? []),
+                ...viewFilters(deliveryOnly, viewRef.current),
+              ],
               sorts: params.sorts,
             },
           },
         });
-
         return {
-          data: responseData?.sales?.data,
-          totalCount: responseData?.sales?.totalCount,
+          data: response?.sales?.data,
+          totalCount: response?.sales?.totalCount,
         };
-      } catch (err) {
-        console.error("Error fetching sales:", err);
-        return {
-          data: [],
-          totalCount: 0,
-        };
+      } catch {
+        return { data: [], totalCount: 0 };
       }
     },
-    [getSales]
+    [getSales, deliveryOnly],
   );
 
   const handleRefresh = useCallback(() => {
-    handleFetchData({
-      skip: tableStateRef.current.pagination.first,
-      take: tableStateRef.current.pagination.rows,
-      filters: tableStateRef.current.filters,
-      sorts: tableStateRef.current.sorts,
-    });
+    if (lastParams.current) handleFetchData(lastParams.current);
   }, [handleFetchData]);
 
-  const handleEditSuccess = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
+  // Al cambiar de vista se vuelve a la primera página
+  useEffect(() => {
+    if (viewRef.current === view) return;
+    viewRef.current = view;
+    if (lastParams.current) {
+      handleFetchData({ ...lastParams.current, skip: 0 });
+    }
+  }, [view, handleFetchData]);
 
-  const handleCreateSuccess = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
+  const notify = (severity, summary, detail) =>
+    toast.current?.show({ severity, summary, detail, life: 5000 });
 
-  // ✅ Nueva función para manejar el éxito de realizar venta
-  const handleMakeSaleSuccess = useCallback(
-    (sale) => {
-      toast.current.show({
-        severity: "success",
-        summary: "Venta Realizada",
-        detail: `La venta #${sale.id} ha sido procesada exitosamente`,
-        life: 3000,
-      });
+  const run = async (action, success, failure) => {
+    try {
+      await action();
+      notify("success", success);
       handleRefresh();
-    },
-    [handleRefresh]
-  );
-
-  const handleEdit = (saleId) => {
-    setSelectedSaleId(saleId);
-    setEditDialogVisible(true);
-  };
-
-  const handleViewDetails = (saleId) => {
-    setSelectedSaleId(saleId);
-    setDetailDialogVisible(true);
-  };
-
-  // ✅ Nueva función para manejar realizar venta
-  const handleMakeSale = (saleId) => {
-    setSelectedSaleId(saleId);
-    setMakeSaleDialogVisible(true);
-  };
-
-  // ✅ Nueva función para manejar validación exitosa
-  const handleValidationSuccess = (result) => {
-    if (result.valid) {
-      toast.current.show({
-        severity: "success",
-        summary: "Pagos Válidos",
-        detail: `Los pagos son válidos. Total: ${result.totalInBaseCurrency.toFixed(
-          2
-        )}`,
-        life: 3000,
-      });
+    } catch (err) {
+      notify("error", failure, getErrorMessage(err));
     }
   };
 
-  const handleDelete = (saleId) => {
+  const handleCancel = (sale) =>
     confirmDialog({
-      message: "¿Estás seguro de que deseas eliminar esta venta?",
-      header: "Confirmación",
-      icon: "pi pi-exclamation-triangle",
-      accept: async () => {
-        try {
-          await deleteSales({ variables: { ids: [saleId] } });
-
-          toast.current.show({
-            severity: "success",
-            summary: "Éxito",
-            detail: "Venta eliminada correctamente",
-            life: 3000,
-          });
-
-          handleRefresh();
-        } catch (err) {
-          toast.current.show({
-            severity: "error",
-            summary: "Error",
-            detail: err.message,
-            life: 3000,
-          });
-        }
-      },
+      header: "Cancelar la venta",
+      message: `${saleLabel(sale)} quedará cancelada y sus productos volverán a estar disponibles.`,
+      icon: "pi pi-ban",
+      acceptLabel: "Cancelar la venta",
+      rejectLabel: "Volver",
+      acceptClassName: "p-button-danger",
+      accept: () =>
+        run(
+          () => cancelSale({ variables: { id: sale.id } }),
+          "Venta cancelada",
+          "No se pudo cancelar",
+        ),
     });
+
+  const handleDelete = (sale) =>
+    confirmDialog({
+      header: "Eliminar la venta",
+      message: `${saleLabel(sale)} dejará de aparecer en el listado. Puedes restaurarla después.`,
+      icon: "pi pi-exclamation-triangle",
+      acceptLabel: "Eliminar",
+      rejectLabel: "Cancelar",
+      acceptClassName: "p-button-danger",
+      accept: () =>
+        run(
+          () => deleteSales({ variables: { ids: [sale.id] } }),
+          "Venta eliminada",
+          "No se pudo eliminar",
+        ),
+    });
+
+  const handleRestore = (sale) =>
+    run(
+      () => restoreSales({ variables: { ids: [sale.id] } }),
+      "Venta restaurada",
+      "No se pudo restaurar",
+    );
+
+  const handleCharged = (sale, change) => {
+    setDialog(null);
+    handleRefresh();
+    notify(
+      "success",
+      `${saleLabel(sale)} cobrada`,
+      change > 0
+        ? `Cambio a devolver: ${formatMoney(change, sale.totalAmountCurrency)}`
+        : formatMoney(sale.totalAmount, sale.totalAmountCurrency),
+    );
   };
 
-  const actionBodyTemplate = (rowData) => {
-    const canProcess = canProcessSale(rowData);
+  const action = (props) => (
+    <Button
+      text
+      rounded
+      tooltipOptions={{ position: "top" }}
+      aria-label={props.tooltip}
+      {...props}
+    />
+  );
+
+  const actionBodyTemplate = (row) => {
+    if (row.deletedAt) {
+      return (
+        <div className="actions-column">
+          {action({
+            icon: "pi pi-history",
+            severity: "success",
+            tooltip: "Restaurar venta",
+            onClick: () => handleRestore(row),
+          })}
+        </div>
+      );
+    }
+
+    const isDraft = row.saleStatus === "DRAFT";
+    const paid = isPaid(row);
 
     return (
       <div className="actions-column">
-        {/* Botón Realizar Venta - Solo muestra si la venta está pendiente */}
-        {canProcess && (
-          <Button
-            icon="pi pi-shopping-cart"
-            text
-            rounded
-            severity="success"
-            tooltip="Realizar venta"
-            tooltipOptions={{ position: "top" }}
-            onClick={() => handleMakeSale(rowData.id)}
-          />
-        )}
-
-        {/* Botón Validar Pago - Solo muestra si la venta está pendiente */}
-        {canProcess && (
-          <ValidatePaymentButton
-            saleId={rowData.id}
-            onValidationSuccess={(result, payments) =>
-              handleValidationSuccess(result, payments, rowData.id)
-            }
-            label=""
-            icon="pi pi-check-circle"
-            size="small"
-            variant="text"
-            tooltip="Validar pagos"
-          />
-        )}
-
-        {/* Botón Editar */}
-        <Button
-          icon="pi pi-pencil"
-          text
-          rounded
-          tooltip="Editar venta"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleEdit(rowData.id)}
-        />
-
-        {/* Botón Ver Detalles */}
-        <Button
-          icon="pi pi-eye"
-          text
-          rounded
-          severity="info"
-          tooltip="Ver detalles"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleViewDetails(rowData.id)}
-        />
-
-        {/* Botón Eliminar */}
-        <Button
-          icon="pi pi-trash"
-          text
-          rounded
-          severity="danger"
-          tooltip="Eliminar venta"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleDelete(rowData.id)}
-        />
+        {action({
+          icon: "pi pi-eye",
+          severity: "secondary",
+          tooltip: paid ? "Ver venta y devoluciones" : "Ver venta",
+          onClick: () => setDialog({ mode: "view", sale: row }),
+        })}
+        {isDraft &&
+          action({
+            icon: "pi pi-wallet",
+            severity: "success",
+            tooltip: "Cobrar",
+            onClick: () => setDialog({ mode: "charge", sale: row }),
+          })}
+        {(isDraft || paid) &&
+          action({
+            icon: isDraft ? "pi pi-pencil" : "pi pi-truck",
+            tooltip: isDraft ? "Cliente y mensajería" : "Mensajería",
+            onClick: () => setDialog({ mode: "edit", sale: row }),
+          })}
+        {isDraft &&
+          action({
+            icon: "pi pi-list",
+            severity: "secondary",
+            tooltip: "Cambiar productos",
+            onClick: () => navigate(`/sales/sales/${row.id}/details`),
+          })}
+        {isDraft &&
+          action({
+            icon: "pi pi-ban",
+            severity: "danger",
+            tooltip: "Cancelar venta",
+            onClick: () => handleCancel(row),
+          })}
+        {!isDraft &&
+          !paid &&
+          action({
+            icon: "pi pi-trash",
+            severity: "danger",
+            tooltip: "Eliminar venta",
+            onClick: () => handleDelete(row),
+          })}
       </div>
     );
   };
 
-  const columns = [
-    // ✅ Nueva columna para el estado
-    {
-      field: "effectiveDate",
-      header: "Estado",
-      body: saleStatusBodyTemplate,
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "id",
-      header: "ID",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "effectiveDate",
-      header: "Fecha",
-      body: (rowData) => formatDate(rowData.effectiveDate),
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "totalAmount",
-      header: "Total",
-      body: (rowData) => formatCurrency(rowData.totalAmount),
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "paymentMethod",
-      header: "Método de Pago",
-      body: paymentMethodBodyTemplate,
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "salesUser.name",
-      header: "Vendedor",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "customer.name",
-      header: "Cliente",
-      sortable: true,
-      filter: true,
-    },
-  ];
-
-  const addSaleButton = (
-    <Button
-      icon="pi pi-plus"
-      tooltip="Crear nueva venta"
-      onClick={() => setCreateDialogVisible(true)}
-    />
+  const header = (
+    <>
+      <Dropdown
+        value={view}
+        options={deliveryOnly ? DELIVERY_OPTIONS : STATUS_OPTIONS}
+        onChange={(e) => setView(e.value ?? null)}
+        placeholder={deliveryOnly ? "Todas las entregas" : "Todos los estados"}
+        showClear
+        className="w-14rem"
+        aria-label="Filtrar por estado"
+      />
+      <Button
+        label="Nueva venta"
+        icon="pi pi-plus"
+        onClick={() => navigate("/sales/integrated-sale")}
+      />
+    </>
   );
 
   return (
@@ -337,23 +379,23 @@ export function SaleTable() {
       <ConfirmDialog />
 
       <GenericDataTable
-        columns={columns}
+        columns={deliveryOnly ? DELIVERY_COLUMNS : SALE_COLUMNS}
         data={data?.sales?.data}
         totalRecords={data?.sales?.totalCount}
         loading={loading}
         error={error}
-        globalFilterFields={[
-          "id",
-          "invoiceNumber",
-          "salesUser.name",
-          "customer.name",
-        ]}
-        emptyMessage="No se encontraron ventas"
+        globalFilterFields={["invoiceNumber", "customer.fullName"]}
+        emptyMessage={
+          deliveryOnly
+            ? "No hay ventas con mensajería"
+            : "No se encontraron ventas"
+        }
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} ventas"
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        header={addSaleButton}
+        header={header}
+        showDeleted={true}
       >
         <Column
           body={actionBodyTemplate}
@@ -362,32 +404,31 @@ export function SaleTable() {
         />
       </GenericDataTable>
 
-      <SaleEditForm
-        saleId={selectedSaleId}
-        visible={editDialogVisible}
-        onHide={() => setEditDialogVisible(false)}
-        onSuccess={handleEditSuccess}
-      />
-
-      <SaleCreateForm
-        visible={createDialogVisible}
-        onHide={() => setCreateDialogVisible(false)}
-        onSuccess={handleCreateSuccess}
-      />
-
-      <SaleDetailForm
-        saleId={selectedSaleId}
-        visible={detailDialogVisible}
-        onHide={() => setDetailDialogVisible(false)}
-      />
-
-      {/* ✅ Nuevo diálogo para realizar venta */}
-      <MakeSaleComponent
-        saleId={selectedSaleId}
-        visible={makeSaleDialogVisible}
-        onHide={() => setMakeSaleDialogVisible(false)}
-        onSuccess={handleMakeSaleSuccess}
-      />
+      {dialog?.mode === "view" && (
+        <SaleDetailForm
+          saleId={dialog.sale.id}
+          onHide={() => setDialog(null)}
+          onChanged={handleRefresh}
+        />
+      )}
+      {dialog?.mode === "edit" && (
+        <SaleEditForm
+          saleId={dialog.sale.id}
+          onHide={() => setDialog(null)}
+          onSaved={(saved) => {
+            setDialog(null);
+            handleRefresh();
+            notify("success", `${saleLabel(saved)} actualizada`);
+          }}
+        />
+      )}
+      {dialog?.mode === "charge" && (
+        <MakeSaleComponent
+          sale={dialog.sale}
+          onHide={() => setDialog(null)}
+          onCharged={handleCharged}
+        />
+      )}
     </>
   );
 }

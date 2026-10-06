@@ -89,6 +89,12 @@ export const CREATE_CUSTOMER = gql`
   mutation CreateCustomer($customer: CreateCustomerInput!) {
     createCustomer(createCustomerInput: $customer) {
       id
+      name
+      lastName
+      fullName
+      ci
+      email
+      phone
     }
   }
 `;
@@ -98,9 +104,51 @@ export const UPDATE_CUSTOMER = gql`
     updateCustomer(updateCustomerInput: $customer) {
       id
       name
+      lastName
+      fullName
+      ci
       email
       phone
       loyaltyPoints
+    }
+  }
+`;
+
+// Historial de compras de un cliente, de la más reciente a la más antigua
+export const GET_CUSTOMER_SALES = gql`
+  query CustomerSales($customerId: Int!) {
+    salesByCustomer(customerId: $customerId) {
+      id
+      createdAt
+      effectiveDate
+      saleStatus
+      invoiceNumber
+      totalAmount
+      totalAmountCurrency
+      details {
+        id
+        quantity
+        product {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+
+// Tiendas donde puede registrarse un cliente
+export const GET_CUSTOMER_OFFICES = gql`
+  query CustomerOffices {
+    offices(options: { skip: 0 }) {
+      data {
+        id
+        name
+        business {
+          id
+          name
+        }
+      }
     }
   }
 `;

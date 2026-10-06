@@ -1,263 +1,175 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Dialog } from "primereact/dialog";
-import { Button } from "primereact/button";
-import { InputText } from "primereact/inputtext";
-import { InputNumber } from "primereact/inputnumber";
-import { Dropdown } from "primereact/dropdown";
-import { Calendar } from "primereact/calendar";
+import { useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
-import { GET_SALE_BY_ID, UPDATE_SALE } from "../graphql/queries";
-import { Toast } from "primereact/toast";
+import { Button } from "primereact/button";
+import { Dialog } from "primereact/dialog";
+import { Dropdown } from "primereact/dropdown";
+import { InputSwitch } from "primereact/inputswitch";
+import { InputTextarea } from "primereact/inputtextarea";
 import { Message } from "primereact/message";
-import SecurityEntitySelector from "../../../../components/SecurityEntitySelector/SecurityEntitySelector";
-import { FormField } from "../../../../components/ui";
-import { useLazyQuery } from "@apollo/client";
-import { GET_CUSTOMERS } from "../../customer/graphql/queries";
+import { ProgressSpinner } from "primereact/progressspinner";
+import { FormField, NoData } from "../../../../components/ui";
+import { getErrorMessage } from "../../../../utils/errors";
+import { CustomerPicker } from "../../integrated-sale/components/CustomerPicker";
+import { GET_SALE_CATALOG } from "../../integrated-sale/graphql/saleQueries";
+import { saleLabel } from "../../format";
+import { GET_SALE_BY_ID, UPDATE_SALE } from "../graphql/queries";
 
-const paymentMethods = [
-  { label: "Efectivo", value: "CASH" },
-  { label: "Tarjeta", value: "CARD" },
-  { label: "Transferencia", value: "TRANSFER" },
-  { label: "Otro", value: "OTHER" },
-];
+/** Formulario ya con la venta cargada: su estado inicial sale de ella */
+function SaleEditFields({ sale, workers, onHide, onSaved }) {
+  const isDraft = sale.saleStatus === "DRAFT";
+  const [customer, setCustomer] = useState(sale.customer);
+  const [hasDelivery, setHasDelivery] = useState(!!sale.hasDelivery);
+  const [deliveryWorkerId, setDeliveryWorkerId] = useState(
+    sale.deliveryWorker?.id ?? null,
+  );
+  const [deliveryNotes, setDeliveryNotes] = useState(sale.deliveryNotes ?? "");
+  const [updateSale, { loading, error }] = useMutation(UPDATE_SALE);
 
-export const SaleEditForm = ({ saleId, visible, onHide, onSuccess }) => {
-  const [formData, setFormData] = useState({
-    effectiveDate: new Date(),
-    totalAmount: 0,
-    paymentMethod: null,
-    invoiceNumber: "",
-    salesWorkerId: null,
-    customerId: null,
-    businessId: null,
-    officeId: null,
-    departmentId: null,
-    teamId: null,
-  });
+  const couriers = workers.filter((w) => w.workerType === "COURIER");
+  const courierOptions = (couriers.length ? couriers : workers).map((w) => ({
+    label: w.name,
+    value: w.id,
+  }));
 
-  const [customers, setCustomers] = useState([]);
-  const toast = useRef(null);
-  const [updateSale] = useMutation(UPDATE_SALE);
-  const [getCustomers] = useLazyQuery(GET_CUSTOMERS, {
-    onCompleted: (data) => {
-      setCustomers(
-        data?.customers?.data?.map((c) => ({
-          label: c.name,
-          value: c.id,
-        })) || []
-      );
-    },
-  });
-
-  const { loading, error } = useQuery(GET_SALE_BY_ID, {
-    variables: { id: saleId },
-    skip: !saleId,
-    onCompleted: (data) => {
-      if (data?.sale) {
-        setFormData({
-          effectiveDate: new Date(data.sale.effectiveDate),
-          totalAmount: data.sale.totalAmount,
-          paymentMethod: data.sale.paymentMethod,
-          invoiceNumber: data.sale.invoiceNumber || "",
-          salesWorkerId: data.sale.salesUser?.id || null,
-          customerId: data.sale.customer?.id || null,
-          businessId: data.sale.business?.id || null,
-          officeId: data.sale.office?.id || null,
-          departmentId: data.sale.department?.id || null,
-          teamId: data.sale.team?.id || null,
-        });
-      }
-    },
-  });
-
-  useEffect(() => {
-    if (visible) {
-      getCustomers();
-    }
-  }, [visible, getCustomers]);
-
-  const handleSecurityEntitiesChange = (entities) => {
-    setFormData((prev) => ({
-      ...prev,
-      ...entities,
-    }));
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async () => {
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     try {
-      if (
-        !formData.paymentMethod //||
-        //!formData.salesWorkerId ||
-        //formData.totalAmount <= 0
-      ) {
-        throw new Error(
-          "Método de pago, vendedor y monto total son requeridos"
-        );
-      }
-
-      await updateSale({
+      const { data } = await updateSale({
         variables: {
           sale: {
-            id: saleId,
-            ...formData,
-            effectiveDate: formData.effectiveDate.toISOString(),
+            id: sale.id,
+            // El cliente solo puede cambiarse mientras la venta no se cobra
+            ...(isDraft && { customerId: customer?.id ?? null }),
+            hasDelivery,
+            deliveryWorkerId: hasDelivery ? deliveryWorkerId : null,
+            deliveryNotes: hasDelivery ? deliveryNotes.trim() : "",
           },
         },
       });
-
-      toast.current.show({
-        severity: "success",
-        summary: "Éxito",
-        detail: "Venta actualizada correctamente",
-        life: 3000,
-      });
-
-      onSuccess();
-      onHide();
-    } catch (err) {
-      toast.current.show({
-        severity: "error",
-        summary: "Error",
-        detail: err.message,
-        life: 3000,
-      });
+      onSaved(data.updateSale);
+    } catch {
+      // El mensaje se muestra desde `error`
     }
   };
 
-  const footer = (
-    <>
-      <Button
-        label="Cancelar"
-        icon="pi pi-times"
-        onClick={onHide}
-        severity="secondary"
-      />
-      <Button
-        label="Guardar"
-        icon="pi pi-check"
-        onClick={handleSubmit}
-        autoFocus
-      />
-    </>
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-column gap-3">
+      {error && (
+        <Message
+          severity="error"
+          text={getErrorMessage(error)}
+          className="w-full"
+        />
+      )}
+
+      {isDraft && sale.office && sale.business && (
+        <FormField label="Cliente">
+          <CustomerPicker
+            office={{ id: sale.office.id, businessId: sale.business.id }}
+            customer={customer}
+            onChange={setCustomer}
+          />
+        </FormField>
+      )}
+
+      <div className="flex align-items-center justify-content-between gap-3">
+        <label htmlFor="sale-delivery" className="ui-field__label">
+          Lleva mensajería
+        </label>
+        <InputSwitch
+          inputId="sale-delivery"
+          checked={hasDelivery}
+          onChange={(e) => setHasDelivery(e.value)}
+        />
+      </div>
+
+      {hasDelivery && (
+        <>
+          <FormField
+            label="Mensajero"
+            htmlFor="sale-courier"
+            hint={
+              isDraft ? "Hace falta para poder cobrar la venta" : undefined
+            }
+          >
+            <Dropdown
+              inputId="sale-courier"
+              value={deliveryWorkerId}
+              options={courierOptions}
+              onChange={(e) => setDeliveryWorkerId(e.value ?? null)}
+              placeholder="Selecciona el mensajero"
+              emptyMessage="La tienda no tiene mensajeros"
+              showClear
+            />
+          </FormField>
+          <FormField label="Indicaciones de la entrega" htmlFor="sale-notes">
+            <InputTextarea
+              id="sale-notes"
+              value={deliveryNotes}
+              onChange={(e) => setDeliveryNotes(e.target.value)}
+              placeholder="Dirección, horario, persona que recibe..."
+              rows={3}
+              autoResize
+            />
+          </FormField>
+        </>
+      )}
+
+      <div className="flex justify-content-end gap-2 mt-2">
+        <Button
+          type="button"
+          label="Cancelar"
+          severity="secondary"
+          onClick={onHide}
+          disabled={loading}
+        />
+        <Button type="submit" label="Guardar cambios" loading={loading} />
+      </div>
+    </form>
   );
+}
+
+/**
+ * Datos generales de una venta: su cliente (solo en borrador) y su
+ * mensajería. Los productos y el cobro tienen sus propias acciones.
+ */
+export function SaleEditForm({ saleId, onHide, onSaved }) {
+  const { data, loading, error } = useQuery(GET_SALE_BY_ID, {
+    variables: { id: saleId },
+    fetchPolicy: "network-only",
+  });
+  const sale = data?.sale;
+
+  const { data: catalogData, loading: loadingCatalog } = useQuery(
+    GET_SALE_CATALOG,
+    { variables: { officeId: sale?.office?.id }, skip: !sale },
+  );
+  const workers = catalogData?.saleCatalog?.workers;
 
   return (
-    <>
-      <Toast ref={toast} />
-      <Dialog
-        header="Editar Venta"
-        visible={visible}
-        className="w-full md:w-8 xl:w-6"
-        footer={footer}
-        onHide={onHide}
-      >
-        {loading ? (
-          <p className="text-color-secondary">Cargando...</p>
-        ) : error ? (
-          <Message severity="error" className="w-full" text="Error al cargar venta" />
-        ) : (
-          <div className="formgrid grid">
-            <div className="col-12 md:col-6">
-              <FormField label="Fecha" htmlFor="effectiveDate" required>
-                <Calendar
-                  id="effectiveDate"
-                  value={formData.effectiveDate}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, effectiveDate: e.value }))
-                  }
-                  dateFormat="dd/mm/yy"
-                  showIcon
-                  required
-                />
-              </FormField>
-            </div>
-
-            <div className="col-12 md:col-6">
-              <FormField label="Método de Pago" htmlFor="paymentMethod" required>
-                <Dropdown
-                  id="paymentMethod"
-                  value={formData.paymentMethod}
-                  options={paymentMethods}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, paymentMethod: e.value }))
-                  }
-                  optionLabel="label"
-                  placeholder="Seleccione método"
-                  required
-                />
-              </FormField>
-            </div>
-
-            <div className="col-12 md:col-6">
-              <FormField label="Monto Total" htmlFor="totalAmount" required>
-                <InputNumber
-                  id="totalAmount"
-                  value={formData.totalAmount || 0} // ✅ Valor por defecto
-                  onValueChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      totalAmount: e.value || 0,
-                    }))
-                  }
-                  mode="currency"
-                  currency="USD"
-                  locale="en-US"
-                  required
-                />
-              </FormField>
-            </div>
-
-            <div className="col-12 md:col-6">
-              <FormField label="Número de Factura" htmlFor="invoiceNumber">
-                <InputText
-                  id="invoiceNumber"
-                  name="invoiceNumber"
-                  value={formData.invoiceNumber}
-                  onChange={handleChange}
-                />
-              </FormField>
-            </div>
-
-            <div className="col-12 md:col-6">
-              <FormField label="Cliente" htmlFor="customerId">
-                <Dropdown
-                  id="customerId"
-                  value={formData.customerId}
-                  options={customers}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, customerId: e.value }))
-                  }
-                  optionLabel="label"
-                  placeholder="Seleccione cliente"
-                  filter
-                />
-              </FormField>
-            </div>
-
-            <div className="col-12">
-              <SecurityEntitySelector
-                initialValues={{
-                  businessId: formData.businessId,
-                  officeId: formData.officeId,
-                  departmentId: formData.departmentId,
-                  teamId: formData.teamId,
-                }}
-                showWorkerSelector
-                initialWorkerId={formData.salesWorkerId}
-                onSelectionChange={handleSecurityEntitiesChange}
-                onWorkerSelect={(workerId) =>
-                  setFormData((prev) => ({ ...prev, salesWorkerId: workerId }))
-                }
-              />
-            </div>
-          </div>
-        )}
-      </Dialog>
-    </>
+    <Dialog
+      header={sale ? `Editar ${saleLabel(sale)}` : "Editar venta"}
+      visible
+      onHide={onHide}
+      className="w-full md:w-30rem"
+      modal
+    >
+      {sale && workers ? (
+        <SaleEditFields
+          sale={sale}
+          workers={workers}
+          onHide={onHide}
+          onSaved={onSaved}
+        />
+      ) : loading || loadingCatalog ? (
+        <div className="flex justify-content-center p-5">
+          <ProgressSpinner strokeWidth="4" />
+        </div>
+      ) : (
+        <NoData
+          message={error ? getErrorMessage(error) : "No se encontró la venta"}
+        />
+      )}
+    </Dialog>
   );
-};
+}

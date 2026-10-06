@@ -29,7 +29,8 @@ const pluralize = (count, singular, plural) =>
  * Reporte de ventas: qué se vende, quién vende, a quién y cómo se cobra
  */
 export function Sales() {
-  const { statistics, loading, error, refetch, filters } = useStatistics(
+  const { statistics, loading, updatedAt, error, refetch, filters } =
+    useStatistics(
     SALES_STATISTICS,
     "salesStatistics"
   );
@@ -102,6 +103,7 @@ export function Sales() {
         <StatisticsFilters
           filters={filters}
           loading={loading}
+          updatedAt={updatedAt}
           onRefresh={refetch}
         />
         {error ? (
@@ -127,6 +129,7 @@ export function Sales() {
       <StatisticsFilters
         filters={filters}
         loading={loading}
+        updatedAt={updatedAt}
         onRefresh={refetch}
       />
 

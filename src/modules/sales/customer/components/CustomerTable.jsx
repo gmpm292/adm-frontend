@@ -1,51 +1,76 @@
-import React, { useCallback, useState, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
-import {
-  GET_CUSTOMERS,
-  DELETE_CUSTOMERS,
-  RESTORE_CUSTOMERS,
-} from "../graphql/queries";
-import GenericDataTable from "../../../../components/BaseTable/index";
-import { Column } from "primereact/column";
 import { Button } from "primereact/button";
+import { Column } from "primereact/column";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
-import { CustomerEditForm } from "./CustomerEditForm";
-import { CustomerCreateForm } from "./CustomerCreateForm";
+import GenericDataTable from "../../../../components/BaseTable/index";
+import { getErrorMessage } from "../../../../utils/errors";
+import {
+  DELETE_CUSTOMERS,
+  GET_CUSTOMERS,
+  RESTORE_CUSTOMERS,
+} from "../graphql/queries";
 import { CustomerDetailForm } from "./CustomerDetailForm";
+import { CustomerFormDialog } from "./CustomerForm";
+
+const EMPTY = <span className="text-color-secondary">—</span>;
+const textOrEmpty = (field) => (row) => row[field] || EMPTY;
+
+const COLUMNS = [
+  {
+    field: "fullName",
+    header: "Cliente",
+    sortable: true,
+    filter: true,
+    body: (row) => (
+      <span className="font-medium text-900">{row.fullName || row.name}</span>
+    ),
+  },
+  {
+    field: "phone",
+    header: "Teléfono",
+    sortable: true,
+    filter: true,
+    body: textOrEmpty("phone"),
+  },
+  {
+    field: "ci",
+    header: "Carné",
+    sortable: true,
+    filter: true,
+    body: textOrEmpty("ci"),
+  },
+  {
+    field: "email",
+    header: "Correo",
+    sortable: true,
+    filter: true,
+    body: textOrEmpty("email"),
+  },
+  {
+    field: "office.name",
+    header: "Tienda",
+    body: (row) => row.office?.name || row.business?.name || EMPTY,
+  },
+];
 
 export function CustomerTable() {
+  const toast = useRef(null);
   const [getCustomers, { loading, data, error }] = useLazyQuery(GET_CUSTOMERS, {
     fetchPolicy: "network-only",
   });
   const [deleteCustomers] = useMutation(DELETE_CUSTOMERS);
   const [restoreCustomers] = useMutation(RESTORE_CUSTOMERS);
-  const [selectedCustomerId, setSelectedCustomerId] = useState(null);
-  const [editDialogVisible, setEditDialogVisible] = useState(false);
-  const [createDialogVisible, setCreateDialogVisible] = useState(false);
-  const [globalFilter] = useState("");
-  const [detailDialogVisible, setDetailDialogVisible] = useState(false);
-  const toast = useRef(null);
-  const tableStateRef = useRef({
-    filters: {},
-    sorts: [],
-    pagination: { first: 0, rows: 10 },
-  });
+  // { mode: "create" | "edit" | "detail", customer }
+  const [dialog, setDialog] = useState(null);
+  const lastParams = useRef(null);
 
   const handleFetchData = useCallback(
     async (params) => {
+      lastParams.current = params;
       try {
-        tableStateRef.current = {
-          filters: params.filters || {},
-          sorts: params.sorts || [],
-          pagination: {
-            first: params.skip,
-            rows: params.take,
-          },
-          showDeleted: params.showDeleted,
-        };
-
-        const { data: responseData } = await getCustomers({
+        const { data: response } = await getCustomers({
           variables: {
             options: {
               skip: params.skip,
@@ -56,134 +81,98 @@ export function CustomerTable() {
             },
           },
         });
-
         return {
-          data: responseData?.customers?.data,
-          totalCount: responseData?.customers?.totalCount,
+          data: response?.customers?.data,
+          totalCount: response?.customers?.totalCount,
         };
-      } catch (err) {
-        console.error("Error fetching customers:", err);
-        return {
-          data: [],
-          totalCount: 0,
-        };
+      } catch {
+        return { data: [], totalCount: 0 };
       }
     },
-    [getCustomers]
+    [getCustomers],
   );
 
   const handleRefresh = useCallback(() => {
-    handleFetchData({
-      skip: tableStateRef.current.pagination.first,
-      take: tableStateRef.current.pagination.rows,
-      showDeleted: tableStateRef.current.showDeleted,
-      filters: tableStateRef.current.filters,
-      sorts: tableStateRef.current.sorts,
-    });
+    if (lastParams.current) handleFetchData(lastParams.current);
   }, [handleFetchData]);
 
-  const handleEditSuccess = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
+  const notify = (severity, summary, detail) =>
+    toast.current?.show({ severity, summary, detail, life: 4000 });
 
-  const handleCreateSuccess = useCallback(() => {
+  const handleSaved = (saved) => {
+    const created = dialog?.mode === "create";
+    setDialog(null);
     handleRefresh();
-  }, [handleRefresh]);
-
-  const handleEdit = (customerId) => {
-    setSelectedCustomerId(customerId);
-    setEditDialogVisible(true);
+    notify(
+      "success",
+      created ? "Cliente creado" : "Cliente actualizado",
+      saved.fullName,
+    );
   };
 
-  const handleViewDetails = (customerId) => {
-    setSelectedCustomerId(customerId);
-    setDetailDialogVisible(true);
-  };
-
-  const handleDelete = (customerId) => {
+  const handleDelete = (customer) =>
     confirmDialog({
-      message: "¿Estás seguro de que deseas eliminar este cliente?",
-      header: "Confirmación",
+      header: "Eliminar cliente",
+      message: `Se dará de baja a ${customer.fullName || customer.name}. Sus ventas se conservan y puedes restaurarlo después.`,
       icon: "pi pi-exclamation-triangle",
+      acceptLabel: "Eliminar",
+      rejectLabel: "Cancelar",
+      acceptClassName: "p-button-danger",
       accept: async () => {
         try {
-          await deleteCustomers({ variables: { ids: [customerId] } });
-
-          toast.current.show({
-            severity: "success",
-            summary: "Éxito",
-            detail: "Cliente eliminado correctamente",
-            life: 3000,
-          });
-
+          await deleteCustomers({ variables: { ids: [customer.id] } });
+          notify("success", "Cliente eliminado", customer.fullName);
           handleRefresh();
         } catch (err) {
-          toast.current.show({
-            severity: "error",
-            summary: "Error",
-            detail: err.message,
-            life: 3000,
-          });
+          notify("error", "No se pudo eliminar", getErrorMessage(err));
         }
       },
     });
-  };
 
-  const handleRestore = (customersId) => {
-    confirmDialog({
-      message: "¿Estás seguro de que deseas restaurar este usuario?",
-      header: "Confirmación",
-      icon: "pi pi-exclamation-triangle",
-      accept: async () => {
-        try {
-          await restoreCustomers({ variables: { ids: [customersId] } });
-
-          toast.current.show({
-            severity: "success",
-            summary: "Éxito",
-            detail: "Usuario restaurado correctamente",
-            life: 3000,
-          });
-
-          handleRefresh();
-        } catch (err) {
-          toast.current.show({
-            severity: "error",
-            summary: "Error",
-            detail: err.message,
-            life: 3000,
-          });
-        }
-      },
-    });
-  };
-
-  const actionBodyTemplate = (rowData) => {
-    if (rowData.deletedAt) {
-      return (
-        <div className="actions-column">
-          <Button
-            icon="pi pi-history"
-            text
-            rounded
-            severity="success"
-            tooltip="Restaurar usuario"
-            tooltipOptions={{ position: "top" }}
-            onClick={() => handleRestore(rowData.id)}
-          />
-        </div>
-      );
+  const handleRestore = async (customer) => {
+    try {
+      await restoreCustomers({ variables: { ids: [customer.id] } });
+      notify("success", "Cliente restaurado", customer.fullName);
+      handleRefresh();
+    } catch (err) {
+      notify("error", "No se pudo restaurar", getErrorMessage(err));
     }
+  };
 
-    return (
+  const actionBodyTemplate = (row) =>
+    row.deletedAt ? (
       <div className="actions-column">
+        <Button
+          icon="pi pi-history"
+          text
+          rounded
+          severity="success"
+          tooltip="Restaurar cliente"
+          tooltipOptions={{ position: "top" }}
+          aria-label="Restaurar cliente"
+          onClick={() => handleRestore(row)}
+        />
+      </div>
+    ) : (
+      <div className="actions-column">
+        <Button
+          icon="pi pi-eye"
+          text
+          rounded
+          severity="secondary"
+          tooltip="Ver ficha y compras"
+          tooltipOptions={{ position: "top" }}
+          aria-label="Ver ficha y compras"
+          onClick={() => setDialog({ mode: "detail", customer: row })}
+        />
         <Button
           icon="pi pi-pencil"
           text
           rounded
           tooltip="Editar cliente"
           tooltipOptions={{ position: "top" }}
-          onClick={() => handleEdit(rowData.id)}
+          aria-label="Editar cliente"
+          onClick={() => setDialog({ mode: "edit", customer: row })}
         />
         <Button
           icon="pi pi-trash"
@@ -192,61 +181,11 @@ export function CustomerTable() {
           severity="danger"
           tooltip="Eliminar cliente"
           tooltipOptions={{ position: "top" }}
-          onClick={() => handleDelete(rowData.id)}
-        />
-        <Button
-          icon="pi pi-eye"
-          text
-          rounded
-          severity="info"
-          tooltip="Ver detalles"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleViewDetails(rowData.id)}
+          aria-label="Eliminar cliente"
+          onClick={() => handleDelete(row)}
         />
       </div>
     );
-  };
-
-  const columns = [
-    {
-      field: "name",
-      header: "Nombre",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "email",
-      header: "Email",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "phone",
-      header: "Teléfono",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "business.name",
-      header: "Business",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "loyaltyPoints",
-      header: "Puntos",
-      sortable: true,
-      filter: true,
-    },
-  ];
-
-  const addCustomerButton = (
-    <Button
-      icon="pi pi-plus"
-      tooltip="Crear nuevo cliente"
-      onClick={() => setCreateDialogVisible(true)}
-    />
-  );
 
   return (
     <>
@@ -254,19 +193,24 @@ export function CustomerTable() {
       <ConfirmDialog />
 
       <GenericDataTable
-        columns={columns}
+        columns={COLUMNS}
         data={data?.customers?.data}
         totalRecords={data?.customers?.totalCount}
         loading={loading}
         error={error}
-        globalFilter={globalFilter}
-        globalFilterFields={["name", "email", "phone"]}
+        globalFilterFields={["fullName", "ci", "phone", "email"]}
         emptyMessage="No se encontraron clientes"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} clientes"
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        header={addCustomerButton}
+        header={
+          <Button
+            label="Nuevo cliente"
+            icon="pi pi-plus"
+            onClick={() => setDialog({ mode: "create" })}
+          />
+        }
         showDeleted={true}
       >
         <Column
@@ -276,24 +220,20 @@ export function CustomerTable() {
         />
       </GenericDataTable>
 
-      <CustomerEditForm
-        customerId={selectedCustomerId}
-        visible={editDialogVisible}
-        onHide={() => setEditDialogVisible(false)}
-        onSuccess={handleEditSuccess}
-      />
-
-      <CustomerCreateForm
-        visible={createDialogVisible}
-        onHide={() => setCreateDialogVisible(false)}
-        onSuccess={handleCreateSuccess}
-      />
-
-      <CustomerDetailForm
-        customerId={selectedCustomerId}
-        visible={detailDialogVisible}
-        onHide={() => setDetailDialogVisible(false)}
-      />
+      {(dialog?.mode === "create" || dialog?.mode === "edit") && (
+        <CustomerFormDialog
+          customer={dialog.customer}
+          onHide={() => setDialog(null)}
+          onSaved={handleSaved}
+        />
+      )}
+      {dialog?.mode === "detail" && (
+        <CustomerDetailForm
+          customerId={dialog.customer.id}
+          onHide={() => setDialog(null)}
+          onEdit={() => setDialog({ mode: "edit", customer: dialog.customer })}
+        />
+      )}
     </>
   );
 }

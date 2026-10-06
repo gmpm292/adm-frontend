@@ -1,207 +1,210 @@
-import React, { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLazyQuery } from "@apollo/client";
-import { GET_SALE_DETAILS } from "../graphql/queries";
-import GenericDataTable from "../../../../components/BaseTable/index";
-import { Column } from "primereact/column";
 import { Button } from "primereact/button";
-import { Toast } from "primereact/toast";
-import { Chip } from "primereact/chip";
-import { useNavigate } from "react-router-dom";
+import { Column } from "primereact/column";
+import { ConfirmDialog } from "primereact/confirmdialog";
+import { Dropdown } from "primereact/dropdown";
+import { Tag } from "primereact/tag";
+import GenericDataTable from "../../../../components/BaseTable/index";
+import {
+  SALE_DETAIL_STATUS,
+  formatDateTime,
+  formatMoney,
+  saleLabel,
+  workerName,
+} from "../../format";
+import { SaleDetailForm } from "../../sale/components/SaleDetailForm";
+import { GET_SALE_DETAILS } from "../graphql/queries";
 
-const formatCurrency = (value) => {
-    // ✅ Agregar validación para valores nulos o undefined
-    if (value === null || value === undefined) {
-      return "$0.00";
-    }
+const EMPTY = <span className="text-color-secondary">—</span>;
 
-    // ✅ Asegurar que value sea un número
-    const numericValue =
-      typeof value === "number" ? value : parseFloat(value) || 0;
+const STATUS_OPTIONS = Object.entries(SALE_DETAIL_STATUS).map(
+  ([value, status]) => ({ value, label: status.label }),
+);
 
-    return numericValue.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-    });
-  };
+const money = (field) => (row) =>
+  row[field] != null ? formatMoney(row[field], row.currency) : EMPTY;
 
-const publicistsBodyTemplate = (rowData) => {
-  if (!rowData.publicists || rowData.publicists.length === 0) {
-    return <span className="text-color-secondary">Sin publicistas</span>;
-  }
+const COLUMNS = [
+  {
+    field: "sale.invoiceNumber",
+    header: "Venta",
+    filter: true,
+    body: (row) => (
+      <span className="font-medium text-900">{saleLabel(row.sale)}</span>
+    ),
+  },
+  {
+    field: "createdAt",
+    header: "Fecha",
+    sortable: true,
+    body: (row) => formatDateTime(row.sale?.effectiveDate ?? row.createdAt),
+  },
+  {
+    field: "product.name",
+    header: "Producto",
+    filter: true,
+    body: (row) => row.product?.name ?? EMPTY,
+  },
+  {
+    field: "quantity",
+    header: "Cantidad",
+    sortable: true,
+    bodyClassName: "text-right",
+    headerClassName: "text-right",
+  },
+  {
+    field: "unitPrice",
+    header: "Precio",
+    bodyClassName: "text-right white-space-nowrap",
+    headerClassName: "text-right",
+    body: money("unitPrice"),
+  },
+  {
+    field: "subtotal",
+    header: "Importe",
+    bodyClassName: "text-right font-medium white-space-nowrap",
+    headerClassName: "text-right",
+    body: money("subtotal"),
+  },
+  {
+    field: "saleDetailStatus",
+    header: "Estado",
+    sortable: true,
+    body: (row) => {
+      const status = SALE_DETAIL_STATUS[row.saleDetailStatus];
+      return status ? (
+        <Tag severity={status.severity} value={status.label} />
+      ) : (
+        EMPTY
+      );
+    },
+  },
+  {
+    field: "publicists",
+    header: "Publicistas",
+    body: (row) =>
+      row.publicists?.length
+        ? row.publicists.map(workerName).join(", ")
+        : EMPTY,
+  },
+];
 
-  return (
-    <div className="flex flex-wrap gap-1">
-      {rowData.publicists.map((publicist) => (
-        <Chip key={publicist.id} label={publicist.name} className="text-xs" />
-      ))}
-    </div>
-  );
-};
-
+/** Todos los productos vendidos, línea a línea, con acceso a su venta */
 export function SaleDetailGeneralTable() {
   const [getSaleDetails, { loading, data, error }] = useLazyQuery(
     GET_SALE_DETAILS,
-    {
-      fetchPolicy: "network-only",
-    }
+    { fetchPolicy: "network-only" },
   );
-  const toast = useRef(null);
-  const navigate = useNavigate();
-
-  // Estado para el tableStateRef
-  const tableStateRef = useRef({
-    filters: {},
-    sorts: [],
-    pagination: { first: 0, rows: 10 },
-  });
+  const [saleId, setSaleId] = useState(null);
+  const [status, setStatus] = useState(null);
+  const lastParams = useRef(null);
+  const statusRef = useRef(status);
 
   const handleFetchData = useCallback(
     async (params) => {
+      lastParams.current = params;
       try {
-        tableStateRef.current = {
-          filters: params.filters || {},
-          sorts: params.sorts || [],
-          pagination: {
-            first: params.skip,
-            rows: params.take,
-          },
-        };
-
-        const { data: responseData } = await getSaleDetails({
+        const { data: response } = await getSaleDetails({
           variables: {
             options: {
               skip: params.skip,
               take: params.take,
-              filters: params.filters,
+              filters: [
+                ...(params.filters ?? []),
+                ...(statusRef.current
+                  ? [
+                      {
+                        property: "saleDetailStatus",
+                        operator: "EQUAL",
+                        value: statusRef.current,
+                      },
+                    ]
+                  : []),
+              ],
               sorts: params.sorts,
             },
           },
         });
-
         return {
-          data: responseData?.saleDetails?.data,
-          totalCount: responseData?.saleDetails?.totalCount,
+          data: response?.saleDetails?.data,
+          totalCount: response?.saleDetails?.totalCount,
         };
-      } catch (err) {
-        console.error("Error fetching sale details:", err);
-        toast.current?.show({
-          severity: "error",
-          summary: "Error",
-          detail: "Error al cargar los detalles de venta",
-          life: 3000,
-        });
-        return {
-          data: [],
-          totalCount: 0,
-        };
+      } catch {
+        return { data: [], totalCount: 0 };
       }
     },
-    [getSaleDetails]
+    [getSaleDetails],
   );
 
-  // Función handleRefresh corregida
   const handleRefresh = useCallback(() => {
-    handleFetchData({
-      skip: tableStateRef.current.pagination.first,
-      take: tableStateRef.current.pagination.rows,
-      filters: tableStateRef.current.filters,
-      sorts: tableStateRef.current.sorts,
-    });
+    if (lastParams.current) handleFetchData(lastParams.current);
   }, [handleFetchData]);
 
-  const handleViewSaleDetails = (saleId) => {
-    navigate(`/sales/sales/${saleId}/details`);
-  };
-
-  const actionBodyTemplate = (rowData) => {
-    return (
-      <div className="actions-column">
-        <Button
-          icon="pi pi-external-link"
-          text
-          rounded
-          tooltip="Ver Detalles Completos"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleViewSaleDetails(rowData.sale.id)}
-        />
-      </div>
-    );
-  };
-
-  const columns = [
-    {
-      field: "sale.invoiceNumber",
-      header: "Factura",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "product.name",
-      header: "Producto",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "product.id", // Cambiado de "product.code" a "product.id"
-      header: "ID Producto",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "quantity",
-      header: "Cantidad",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "unitPrice",
-      header: "Precio Unitario",
-      body: (rowData) => formatCurrency(rowData.unitPrice),
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "subtotal",
-      header: "Subtotal",
-      body: (rowData) => formatCurrency(rowData.subtotal),
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "publicists",
-      header: "Publicistas",
-      body: publicistsBodyTemplate,
-      sortable: false,
-    },
-  ];
+  // Al cambiar el estado se vuelve a la primera página
+  useEffect(() => {
+    if (statusRef.current === status) return;
+    statusRef.current = status;
+    if (lastParams.current) {
+      handleFetchData({ ...lastParams.current, skip: 0 });
+    }
+  }, [status, handleFetchData]);
 
   return (
     <>
-      <Toast ref={toast} />
+      <ConfirmDialog />
+
       <GenericDataTable
-        columns={columns}
+        columns={COLUMNS}
         data={data?.saleDetails?.data}
         totalRecords={data?.saleDetails?.totalCount}
         loading={loading}
         error={error}
-        globalFilterFields={[
-          "product.name",
-          "product.id",
-          "sale.invoiceNumber",
-        ]}
-        emptyMessage="No se encontraron detalles de venta"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} detalles"
-        onRefresh={handleRefresh} // ✅ Pasar handleRefresh
+        globalFilterFields={["product.name", "sale.invoiceNumber"]}
+        emptyMessage="No se encontraron productos vendidos"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} líneas"
+        onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        refreshable={true} // ✅ Asegurar que sea refreshable
+        header={
+          <Dropdown
+            value={status}
+            options={STATUS_OPTIONS}
+            onChange={(e) => setStatus(e.value ?? null)}
+            placeholder="Todos los estados"
+            showClear
+            className="w-14rem"
+            aria-label="Filtrar por estado"
+          />
+        }
       >
         <Column
-          body={actionBodyTemplate}
           header="Acciones"
-          className="w-8rem"
+          className="w-6rem"
+          body={(row) => (
+            <div className="actions-column">
+              <Button
+                icon="pi pi-eye"
+                text
+                rounded
+                severity="secondary"
+                tooltip="Ver la venta"
+                tooltipOptions={{ position: "top" }}
+                aria-label="Ver la venta"
+                onClick={() => setSaleId(row.sale.id)}
+              />
+            </div>
+          )}
         />
       </GenericDataTable>
+
+      {saleId && (
+        <SaleDetailForm
+          saleId={saleId}
+          onHide={() => setSaleId(null)}
+          onChanged={handleRefresh}
+        />
+      )}
     </>
   );
 }
