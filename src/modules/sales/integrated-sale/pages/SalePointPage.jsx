@@ -21,7 +21,7 @@ import {
   CHECKOUT_SALE,
   GET_SALE_CATALOG,
   QUOTE_SALE,
-} from "../graphql/saleQueries";
+} from "../graphql/queries";
 import {
   EMPTY_CART,
   cartReducer,

@@ -3,7 +3,7 @@ import { useLazyQuery } from "@apollo/client";
 import { AutoComplete } from "primereact/autocomplete";
 import { Button } from "primereact/button";
 import { CustomerFormDialog } from "../../customer/components/CustomerForm";
-import { SEARCH_CUSTOMERS } from "../graphql/saleQueries";
+import { SEARCH_CUSTOMERS } from "../graphql/queries";
 
 const SEARCH_FIELDS = ["fullName", "ci", "phone", "email"];
 const customerDetail = (customer) =>
