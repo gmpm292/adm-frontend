@@ -512,7 +512,6 @@ const PaymentsSection = ({ payments }) => {
         className="p-datatable-sm"
         size="small"
       >
-        <Column field="id" header="ID" sortable className="w-6rem" />
         <Column
           header="Trabajador"
           body={paymentWorkerTemplate}

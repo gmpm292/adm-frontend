@@ -297,12 +297,6 @@ export const PayrollPeriodCalculateDialog = ({
                     className="p-datatable-sm"
                   >
                     <Column
-                      field="workerId"
-                      header="ID Trabajador"
-                      sortable
-                      className="w-9rem"
-                    />
-                    <Column
                       header="Trabajador"
                       body={workerNameBodyTemplate}
                       sortable
