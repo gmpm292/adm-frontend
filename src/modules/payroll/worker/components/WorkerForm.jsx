@@ -18,7 +18,7 @@ import {
   UPDATE_WORKER,
 } from "../graphql/queries";
 import { WORKER_TYPE_OPTIONS } from "../../format";
-import { useHasRole } from "../../useHasRole";
+import { useHasRole } from "../../../../hooks/useHasRole";
 
 const PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

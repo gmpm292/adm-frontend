@@ -76,7 +76,8 @@ estados con `<Tag severity>`; formularios con `FormField` sobre
 ## Estructura
 
 - `src/layout/components`: `AppShell` (ruta de diseño con `Outlet`; se monta una
-  vez), `Sidebar`, `TopBar`.
+  vez), `Sidebar`, `TopBar`. La barra superior muestra la empresa y la oficina del
+  usuario (del perfil, `GET_PROFILE`); SUPER no tiene empresa y no la ve.
 - `src/config/app.js`: nombre de la aplicación («Panel Administrativo»). Su
   icono es `BrandIcon` (gráfico de barras, en `src/components/ui`); con el menú
   contraído queda solo el icono.
@@ -163,7 +164,8 @@ estados con `<Tag severity>`; formularios con `FormField` sobre
 
 - Textos, formatos y sumas por moneda: `payroll/format.js` (tipos de
   trabajador, estados de asistencia, conceptos, `totalsByCurrency`,
-  `ruleSummary`...). Qué ve cada rol: `useHasRole`.
+  `ruleSummary`...). Qué ve cada rol: `useHasRole` (`src/hooks/useHasRole.js`,
+  común a todos los módulos).
 - **Trabajadores**: `WorkerForm` crea y edita. Nombre y contacto son del
   trabajador (columnas `temp*`); la cuenta de usuario es opcional y solo se
   vincula, no se crea. La empresa sale de la oficina.
@@ -178,6 +180,36 @@ estados con `<Tag severity>`; formularios con `FormField` sobre
 - **Pagos**: filtro Pendientes/Pagados/Todos, «Marcar como pagado»,
   `WorkerPaymentForm` para salarios, bonificaciones y descuentos a mano (las
   comisiones las calcula el sistema).
+
+## Nomencladores
+
+- **Categorías** (`inventory/category`) y **Costos de materiales**
+  (`payroll/material-cost`) son de cada empresa: SUPER elige la empresa al
+  crearlos. Muestran cuántos productos los usan; con productos no se eliminan.
+- **Unidades de medida** y **Monedas** son comunes a todas las empresas y solo
+  SUPER las edita. Categorías de unidad: `unit-of-measure/categories.js`. El
+  código de una moneda no cambia y CUP (referencia) vale siempre 1.
+- Un solo formulario por entidad (`CategoryForm`, `UnitOfMeasureForm`,
+  `CurrencyForm`, `MaterialCostForm`). Las rutas son para SUPER, PRINCIPAL,
+  ADMIN y MANAGER.
+
+## Configuración (solo SUPER)
+
+- **Configuraciones** (`modules/config`): los grupos los define el backend;
+  aquí solo se editan sus valores y se activan. Cada valor conserva su tipo
+  (texto, número, sí/no, JSON). Los secretos llegan enmascarados (`••••••••`):
+  dejar el campo vacío los conserva. Nombres y ayudas: `config/labels.ts`.
+- **Correo**: estado del envío y autorización de la cuenta de Google. Al
+  volver de Google, `App.jsx` redirige a `${BASE_URL}#/system/email` y la
+  pantalla envía el código una sola vez.
+- **Impresión**: certificado de QZ Tray e «Imprimir prueba». Los tickets reales
+  se imprimen desde la venta cobrada y los movimientos de inventario.
+- **Permisos** (`role-guard`): roles por operación. Sin personalizar mandan los
+  del código (`codeRoles`); al personalizar, Super se conserva siempre y se
+  puede volver al código. Las operaciones sin `RoleGuard` no se editan.
+- **Niveles de acceso** (`scoped-access`): qué registros ve cada empresa en una
+  operación; `accessLevels.js` tiene los textos. La API devuelve el estado
+  como número (1 activo).
 
 ## Empresa y usuarios
 
@@ -207,6 +239,12 @@ estados con `<Tag severity>`; formularios con `FormField` sobre
   inglés.
 - Los objetos que devuelve Apollo llevan `__typename`: al reenviarlos como
   `input` de una mutación hay que copiar los campos uno a uno.
+- Una mutación que devuelve una relación a medias (`roleGuard { id }` sin el
+  nombre) sobrescribe en la caché de Apollo los campos que ya tenía esa fila,
+  y otras pantallas los leen como `null`. El backend devuelve el registro
+  completo.
+- Tras borrar o mover archivos, Vite puede quedarse con módulos viejos («does
+  not provide an export named...»): reiniciar `npm run dev`.
 
 - Los tipos de GraphQL cuyo `id` no identifica la fila (por ejemplo
   `StatisticsRanking`, que mezcla productos, vendedores y clientes) necesitan
@@ -223,7 +261,6 @@ estados con `<Tag severity>`; formularios con `FormField` sobre
 
 ## Pendiente
 
-- El botón «Imprimir ticket» de la barra superior imprime un ticket de ejemplo.
 - `SecurityEntitySelector` no acepta valores iniciales: al editar sale vacío.
   Los formularios nuevos eligen la oficina con `GET_OFFICE_OPTIONS`
   (`company/shared/queries.js`) en su lugar.

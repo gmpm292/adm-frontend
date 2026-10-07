@@ -13,7 +13,7 @@ import {
   RESTORE_PAYMENT_RULES,
 } from "../graphql/queries";
 import { PAYMENT_TYPE, ruleSummary, workerTypeLabel } from "../../format";
-import { useHasRole } from "../../useHasRole";
+import { useHasRole } from "../../../../hooks/useHasRole";
 import { PaymentRuleForm } from "./PaymentRuleForm";
 
 const columns = [

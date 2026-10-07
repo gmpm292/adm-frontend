@@ -20,7 +20,7 @@ export const routePermissions = {
     title: "Perfil",
   },
   "/configurations": {
-    permissions: ["configs"],
+    permissions: [],
     requiredRoles: ["SUPER"],
     title: "Configuraciones",
   },
@@ -46,7 +46,7 @@ export const routePermissions = {
   },
   "/inventory/categories": {
     permissions: [],
-    requiredRoles: [],
+    requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER"],
     title: "Categorías",
   },
   "/inventory/products": {
@@ -66,8 +66,8 @@ export const routePermissions = {
   },
   "/inventory/units-of-measure": {
     permissions: [],
-    requiredRoles: [],
-    title: "Unidades de Medida",
+    requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER"],
+    title: "Unidades de medida",
   },
   "/payroll/attendance": {
     permissions: [],
@@ -76,7 +76,7 @@ export const routePermissions = {
   },
   "/payroll/currencies": {
     permissions: [],
-    requiredRoles: [],
+    requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER"],
     title: "Monedas",
   },
   "/payroll/payment-rules": {
@@ -106,8 +106,8 @@ export const routePermissions = {
   },
   "/payroll/material-costs": {
     permissions: [],
-    requiredRoles: [],
-    title: "Costos de Materiales",
+    requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER"],
+    title: "Costos de materiales",
   },
   "/sales/integrated-sale": {
     permissions: [],
@@ -137,22 +137,22 @@ export const routePermissions = {
   "/system/email": {
     permissions: [],
     requiredRoles: ["SUPER"],
-    title: "Correo OAuth2",
+    title: "Correo",
   },
   "/system/printing": {
     permissions: [],
     requiredRoles: ["SUPER"],
-    title: "Impresión Térmica",
+    title: "Impresión",
   },
   "/system/security/role-guards": {
     permissions: [],
     requiredRoles: ["SUPER"],
-    title: "Permisos GraphQL",
+    title: "Permisos",
   },
   "/system/security/scoped-access": {
     permissions: [],
     requiredRoles: ["SUPER"],
-    title: "Niveles de Acceso",
+    title: "Niveles de acceso",
   },
   // ... Agrega aquí el resto de tus rutas
 };

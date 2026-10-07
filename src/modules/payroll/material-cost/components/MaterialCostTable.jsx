@@ -1,166 +1,188 @@
-import React, { useCallback, useState, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
+import { Button } from "primereact/button";
+import { Column } from "primereact/column";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { Tag } from "primereact/tag";
+import { Toast } from "primereact/toast";
+import GenericDataTable from "../../../../components/BaseTable";
+import { getErrorMessage } from "../../../../utils/errors";
+import { useHasRole } from "../../../../hooks/useHasRole";
+import { formatMoney } from "../../../sales/format";
 import {
   GET_MATERIAL_COSTS,
-  TOGGLE_MATERIAL_COST_ACTIVE,
+  REMOVE_MATERIAL_COSTS,
+  RESTORE_MATERIAL_COSTS,
 } from "../graphql/queries";
-import GenericDataTable from "../../../../components/BaseTable/index";
-import { Column } from "primereact/column";
-import { Button } from "primereact/button";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { Toast } from "primereact/toast";
+import { MaterialCostForm } from "./MaterialCostForm";
 
-import { Tag } from "primereact/tag";
-import { MaterialCostCreateForm } from "./MaterialCostCreateForm";
-import { MaterialCostDetailForm } from "./MaterialCostDetailForm";
-import { MaterialCostEditForm } from "./MaterialCostEditForm";
-
-const statusBodyTemplate = (rowData) => {
-  return (
-    <Tag
-      severity={rowData.isActive ? "success" : "danger"}
-      value={rowData.isActive ? "Activo" : "Inactivo"}
-    />
-  );
-};
-
-const priceBodyTemplate = (rowData) => {
-  return (
-    <span>
-      {rowData.currency?.symbol || rowData.currency?.code}{" "}
-      {rowData.costPrice?.toLocaleString("es-ES", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}
+const nameColumn = {
+  field: "name",
+  header: "Material",
+  sortable: true,
+  filter: true,
+  body: (row) => (
+    <span className="flex flex-column">
+      <span className="font-medium text-900">{row.name}</span>
+      {row.description && (
+        <small className="text-color-secondary">{row.description}</small>
+      )}
     </span>
-  );
+  ),
 };
 
-const unitBodyTemplate = (rowData) => {
-  return (
-    <span>
-      {rowData.unitOfMeasure?.name} ({rowData.unitOfMeasure?.symbol})
-    </span>
-  );
+const costColumn = {
+  field: "costPrice",
+  header: "Costo",
+  sortable: true,
+  bodyClassName: "white-space-nowrap",
+  body: (row) =>
+    `${formatMoney(row.costPrice, row.currency?.code)} / ${
+      row.unitOfMeasure?.symbol ?? "unidad"
+    }`,
 };
 
-export const MaterialCostTable = () => {
-  const [getMaterials, { loading, data, error }] = useLazyQuery(
-    GET_MATERIAL_COSTS,
-    {
-      fetchPolicy: "network-only",
-    },
-  );
-  const [toggleActive] = useMutation(TOGGLE_MATERIAL_COST_ACTIVE);
+const businessColumn = {
+  field: "business.name",
+  header: "Empresa",
+  sortable: true,
+  filter: true,
+  body: (row) => row.business?.name,
+};
 
-  const [selectedMaterialId, setSelectedMaterialId] = useState(null);
-  const [editDialogVisible, setEditDialogVisible] = useState(false);
-  const [createDialogVisible, setCreateDialogVisible] = useState(false);
-  const [detailDialogVisible, setDetailDialogVisible] = useState(false);
+const usageColumns = [
+  {
+    field: "productCount",
+    header: "Productos",
+    sortable: false,
+    bodyClassName: "text-right",
+    headerClassName: "text-right",
+    body: (row) => row.productCount ?? 0,
+  },
+  {
+    field: "isActive",
+    header: "Estado",
+    sortable: true,
+    body: (row) =>
+      row.isActive ? (
+        <Tag value="Activo" severity="success" />
+      ) : (
+        <Tag value="Inactivo" severity="secondary" />
+      ),
+  },
+];
 
+export function MaterialCostTable() {
   const toast = useRef(null);
-  const tableStateRef = useRef({
-    filters: {},
-    sorts: [],
-    pagination: { first: 0, rows: 10 },
-  });
+  const lastParams = useRef(null);
+  const hasRole = useHasRole();
+  const canEdit = hasRole("SUPER", "PRINCIPAL");
+  const isSuper = hasRole("SUPER");
+  // { material } al editar, {} al crear
+  const [form, setForm] = useState(null);
+  const [fetchMaterials, { loading, data, error }] = useLazyQuery(
+    GET_MATERIAL_COSTS,
+    { fetchPolicy: "network-only" }
+  );
+  const [removeMaterials] = useMutation(REMOVE_MATERIAL_COSTS);
+  const [restoreMaterials] = useMutation(RESTORE_MATERIAL_COSTS);
 
   const handleFetchData = useCallback(
     async (params) => {
+      lastParams.current = params;
       try {
-        tableStateRef.current = {
-          filters: params.filters || {},
-          sorts: params.sorts || [],
-          pagination: {
-            first: params.skip,
-            rows: params.take,
-          },
-        };
-
-        const { data: responseData } = await getMaterials({
+        const { data: response } = await fetchMaterials({
           variables: {
             options: {
               skip: params.skip,
               take: params.take,
+              withDeleted: params.showDeleted,
               filters: params.filters,
               sorts: params.sorts,
             },
           },
         });
-
         return {
-          data: responseData?.materialCosts?.data,
-          totalCount: responseData?.materialCosts?.totalCount,
+          data: response?.materialCosts?.data,
+          totalCount: response?.materialCosts?.totalCount,
         };
-      } catch (err) {
-        console.error("Error fetching material costs:", err);
-        return {
-          data: [],
-          totalCount: 0,
-        };
+      } catch {
+        return { data: [], totalCount: 0 };
       }
     },
-    [getMaterials],
+    [fetchMaterials]
   );
 
   const handleRefresh = useCallback(() => {
-    handleFetchData({
-      skip: tableStateRef.current.pagination.first,
-      take: tableStateRef.current.pagination.rows,
-      filters: tableStateRef.current.filters,
-      sorts: tableStateRef.current.sorts,
-    });
+    if (lastParams.current) handleFetchData(lastParams.current);
   }, [handleFetchData]);
 
-  const handleEditSuccess = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
+  const notify = (severity, summary, detail) =>
+    toast.current?.show({ severity, summary, detail, life: 6000 });
 
-  const handleCreateSuccess = useCallback(() => {
+  const handleSaved = (saved, { created }) => {
+    setForm(null);
     handleRefresh();
-  }, [handleRefresh]);
-
-  const handleEdit = (materialId) => {
-    setSelectedMaterialId(materialId);
-    setEditDialogVisible(true);
+    notify(
+      "success",
+      created ? "Material creado" : "Material actualizado",
+      saved?.name
+    );
   };
 
-  const handleViewDetails = (materialId) => {
-    setSelectedMaterialId(materialId);
-    setDetailDialogVisible(true);
-  };
-
-  const handleToggleStatus = (materialId, isActive) => {
+  const handleDelete = (row) => {
+    if (row.productCount > 0) {
+      notify(
+        "warn",
+        "No se puede eliminar",
+        `«${row.name}» lo usan ${row.productCount} producto(s): desactívalo en su lugar`
+      );
+      return;
+    }
     confirmDialog({
-      message: `¿Estás seguro de que deseas ${isActive ? "desactivar" : "activar"} este material?`,
-      header: "Confirmación",
+      header: "Eliminar material",
+      message: `Se eliminará el material «${row.name}». Puedes restaurarlo después.`,
       icon: "pi pi-exclamation-triangle",
+      acceptLabel: "Eliminar",
+      rejectLabel: "Cancelar",
+      acceptClassName: "p-button-danger",
       accept: async () => {
         try {
-          await toggleActive({ variables: { id: materialId } });
-
-          toast.current.show({
-            severity: "success",
-            summary: "Éxito",
-            detail: `Material ${isActive ? "desactivado" : "activado"} correctamente`,
-            life: 3000,
-          });
-
+          await removeMaterials({ variables: { ids: [row.id] } });
+          notify("success", "Material eliminado", row.name);
           handleRefresh();
         } catch (err) {
-          toast.current.show({
-            severity: "error",
-            summary: "Error",
-            detail: err.message,
-            life: 3000,
-          });
+          notify("error", "No se pudo eliminar", getErrorMessage(err));
         }
       },
     });
   };
 
-  const actionBodyTemplate = (rowData) => {
-    return (
+  const handleRestore = async (row) => {
+    try {
+      await restoreMaterials({ variables: { ids: [row.id] } });
+      notify("success", "Material restaurado", row.name);
+      handleRefresh();
+    } catch (err) {
+      notify("error", "No se pudo restaurar", getErrorMessage(err));
+    }
+  };
+
+  const actionBodyTemplate = (row) =>
+    row.deletedAt ? (
+      <div className="actions-column">
+        <Button
+          icon="pi pi-history"
+          text
+          rounded
+          severity="success"
+          tooltip="Restaurar material"
+          tooltipOptions={{ position: "top" }}
+          aria-label="Restaurar material"
+          onClick={() => handleRestore(row)}
+        />
+      </div>
+    ) : (
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
@@ -168,71 +190,21 @@ export const MaterialCostTable = () => {
           rounded
           tooltip="Editar material"
           tooltipOptions={{ position: "top" }}
-          onClick={() => handleEdit(rowData.id)}
+          aria-label="Editar material"
+          onClick={() => setForm({ material: row })}
         />
         <Button
-          icon={rowData.isActive ? "pi pi-ban" : "pi pi-check"}
+          icon="pi pi-trash"
           text
           rounded
-          severity={rowData.isActive ? "warning" : "success"}
-          tooltip={rowData.isActive ? "Desactivar" : "Activar"}
+          severity="danger"
+          tooltip="Eliminar material"
           tooltipOptions={{ position: "top" }}
-          onClick={() => handleToggleStatus(rowData.id, rowData.isActive)}
-        />
-        <Button
-          icon="pi pi-eye"
-          text
-          rounded
-          severity="info"
-          tooltip="Ver detalles"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleViewDetails(rowData.id)}
+          aria-label="Eliminar material"
+          onClick={() => handleDelete(row)}
         />
       </div>
     );
-  };
-
-  const columns = [
-    {
-      field: "name",
-      header: "Nombre",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "unitOfMeasure",
-      header: "Unidad de Medida",
-      body: unitBodyTemplate,
-      sortable: true,
-      filter: true,
-      filterField: "unitOfMeasure.name",
-    },
-    {
-      field: "costPrice",
-      header: "Precio de Costo",
-      body: priceBodyTemplate,
-      sortable: true,
-      filter: true,
-      filterPlaceholder: "Precio",
-    },
-    {
-      field: "isActive",
-      header: "Estado",
-      body: statusBodyTemplate,
-      sortable: true,
-      filter: true,
-    },
-  ];
-
-  const renderHeader = () => {
-    return (
-      <Button
-        icon="pi pi-plus"
-        label="Nuevo Material"
-        onClick={() => setCreateDialogVisible(true)}
-      />
-    );
-  };
 
   return (
     <>
@@ -240,46 +212,52 @@ export const MaterialCostTable = () => {
       <ConfirmDialog />
 
       <GenericDataTable
-        columns={columns}
+        columns={[
+          nameColumn,
+          costColumn,
+          ...(isSuper ? [businessColumn] : []),
+          ...usageColumns,
+        ]}
         data={data?.materialCosts?.data}
         totalRecords={data?.materialCosts?.totalCount}
         loading={loading}
         error={error}
-        globalFilterFields={["name", "unitOfMeasure.name", "costPrice"]}
-        emptyMessage="No se encontraron materiales"
+        globalFilterFields={["name", "description", "unitOfMeasure.name"]}
+        emptyMessage="No hay materiales"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} materiales"
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        header={renderHeader()}
+        initialSorts={[{ field: "name", order: 1 }]}
+        header={
+          canEdit && (
+            <Button
+              label="Nuevo material"
+              icon="pi pi-plus"
+              onClick={() => setForm({})}
+            />
+          )
+        }
+        showDeleted={canEdit}
       >
-        <Column
-          body={actionBodyTemplate}
-          header="Acciones"
-          headerClassName="w-10rem"
-        />
+        {canEdit && (
+          <Column
+            body={actionBodyTemplate}
+            header="Acciones"
+            className="w-8rem"
+          />
+        )}
       </GenericDataTable>
 
-      <MaterialCostEditForm
-        materialId={selectedMaterialId}
-        visible={editDialogVisible}
-        onHide={() => setEditDialogVisible(false)}
-        onSuccess={handleEditSuccess}
-      />
-
-      <MaterialCostCreateForm
-        visible={createDialogVisible}
-        onHide={() => setCreateDialogVisible(false)}
-        onSuccess={handleCreateSuccess}
-      />
-
-      <MaterialCostDetailForm
-        materialId={selectedMaterialId}
-        visible={detailDialogVisible}
-        onHide={() => setDetailDialogVisible(false)}
-      />
+      {form && (
+        <MaterialCostForm
+          material={form.material}
+          onHide={() => setForm(null)}
+          onSaved={handleSaved}
+        />
+      )}
     </>
   );
-};
+}
 
 export default MaterialCostTable;

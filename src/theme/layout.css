@@ -324,6 +324,52 @@ a:hover {
   font-size: var(--font-size-xs);
 }
 
+/* Empresa del usuario, junto a su menú */
+.app-company {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding-right: var(--space-3);
+  border-right: 1px solid var(--surface-200);
+}
+
+.app-company__icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-md);
+  background: var(--primary-50);
+  color: var(--primary-600);
+}
+
+.app-company__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: var(--line-height-tight);
+}
+
+.app-company__name {
+  overflow: hidden;
+  max-width: 16rem;
+  color: var(--text-color-strong);
+  font-weight: var(--font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-company__office {
+  overflow: hidden;
+  max-width: 16rem;
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* --- Pantallas de acceso --------------------------------------------------- */
 .auth-layout {
   display: grid;
@@ -588,6 +634,14 @@ a:hover {
   .app-nav-group__items,
   .app-user__text {
     display: none;
+  }
+
+  .app-company__office {
+    display: none;
+  }
+
+  .app-company__name {
+    max-width: 9rem;
   }
 
   .app-content {

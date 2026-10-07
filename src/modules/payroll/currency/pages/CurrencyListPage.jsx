@@ -7,7 +7,7 @@ export function CurrencyListPage() {
     <>
       <PageHeader
         title="Monedas"
-        subtitle="Administra las monedas disponibles y su tasa de cambio frente al CUP."
+        subtitle="Monedas en las que se vende y cobra, con su tasa frente al CUP. Son comunes a todas las empresas."
       />
       <CurrencyTable />
     </>

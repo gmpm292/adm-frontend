@@ -5,29 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../modules/auth/components/AuthContext";
 import { routePermissions } from "../../config/routes";
 import { menuConfig } from "../../config/menuConfig";
-import { PrintButton } from "../../modules/printing/printing.module";
-
-const ticketData = {
-  type: "TICKET",
-  content: [
-    "********************************\n",
-    "         TIENDA XYZ\n",
-    "********************************\n",
-    "Fecha: 2024-01-15 14:30\n",
-    "Vendedor: Juan Pérez\n",
-    "--------------------------------\n",
-    "Producto      Cant.   Precio\n",
-    "--------------------------------\n",
-    "Café Negro    2       $20.00\n",
-    "Azúcar        1       $5.00\n",
-    "--------------------------------\n",
-    "TOTAL: $25.00\n",
-    "********************************\n",
-  ],
-  config: {
-    cutAfterPrint: true,
-  },
-};
+import { roleLabel } from "../../modules/user/roles";
 
 /** Sección del menú a la que pertenece la ruta, para la miga de pan */
 const getSectionLabel = (pathname) =>
@@ -89,14 +67,22 @@ export function TopBar({ onToggleSidebar }) {
       </nav>
 
       <div className="app-topbar__actions">
-        <PrintButton
-          printData={ticketData}
-          label="Imprimir ticket"
-          className="p-button-outlined p-button-sm"
-          onSuccess={() => console.log("Ticket impreso")}
-          onError={(error) => console.error("Error:", error)}
-        />
-
+        {/* Empresa del usuario; SUPER no pertenece a ninguna */}
+        {user?.business?.name && (
+          <div className="app-company">
+            <span className="app-company__icon" aria-hidden>
+              <i className="pi pi-building" />
+            </span>
+            <span className="app-company__text">
+              <span className="app-company__name" title={user.business.name}>
+                {user.business.name}
+              </span>
+              {user.office?.name && (
+                <span className="app-company__office">{user.office.name}</span>
+              )}
+            </span>
+          </div>
+        )}
         <button
           type="button"
           className="app-user"
@@ -109,7 +95,9 @@ export function TopBar({ onToggleSidebar }) {
               {[user?.name, user?.lastName].filter(Boolean).join(" ") ||
                 "Usuario"}
             </span>
-            <span className="app-user__role">{user?.role?.join(", ")}</span>
+            <span className="app-user__role">
+              {user?.role?.map(roleLabel).join(", ")}
+            </span>
           </span>
           <i className="pi pi-chevron-down text-xs" />
         </button>

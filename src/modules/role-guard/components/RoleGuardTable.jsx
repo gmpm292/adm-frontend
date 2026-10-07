@@ -1,364 +1,191 @@
-import React, { useCallback, useState, useRef, useEffect } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
-
-import { Column } from "primereact/column";
 import { Button } from "primereact/button";
+import { Column } from "primereact/column";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { Toast } from "primereact/toast";
-
 import { Tag } from "primereact/tag";
-import { GET_ROLE_GUARDS, UPDATE_ROLE_GUARD } from "../graphql/queries";
+import { Toast } from "primereact/toast";
 import GenericDataTable from "../../../components/BaseTable";
-import { RoleGuardEditForm } from "./RoleGuardEditForm";
-import { RoleGuardDetailForm } from "./RoleGuardDetailForm";
-import { RoleTypeTabs } from "./RoleTypeTabs";
-import { formatDate } from "../../../utils/dateUtils";
 import { ConditionalOperator } from "../../../components/BaseTable/types";
+import { getErrorMessage } from "../../../utils/errors";
+import { roleLabel } from "../../user/roles";
+import { GET_ROLE_GUARDS, UPDATE_ROLE_GUARD } from "../graphql/queries";
+import { RoleGuardForm } from "./RoleGuardForm";
+import { TYPE_LABELS } from "../labels";
+import { RoleTypeTabs } from "./RoleTypeTabs";
+
+const RoleTags = ({ roles }) => (
+  <div className="flex flex-wrap gap-1">
+    {roles.map((role) => (
+      <Tag key={role} value={roleLabel(role)} severity="info" />
+    ))}
+  </div>
+);
+
+/** Quién puede usar la operación y de dónde sale esa regla */
+const accessBody = (row) => {
+  if (!row.usesRoleGuard) {
+    return (
+      <span className="text-color-secondary">
+        No comprueba roles: basta con la sesión o es pública
+      </span>
+    );
+  }
+  if (row.roles) {
+    return (
+      <span className="flex flex-column gap-1">
+        <RoleTags roles={row.roles} />
+        <small className="text-orange-600">Personalizado aquí</small>
+      </span>
+    );
+  }
+  if (!row.codeRoles?.length) {
+    return <span>Cualquier rol</span>;
+  }
+  return (
+    <span className="flex flex-column gap-1">
+      <RoleTags roles={row.codeRoles} />
+      <small className="text-color-secondary">Según el código</small>
+    </span>
+  );
+};
+
+const columns = [
+  {
+    field: "queryOrEndPointURL",
+    header: "Operación",
+    sortable: true,
+    filter: true,
+    body: (row) => (
+      <span className="flex flex-column">
+        <span className="font-medium text-900">{row.queryOrEndPointURL}</span>
+        {row.description && (
+          <small className="text-color-secondary">{row.description}</small>
+        )}
+      </span>
+    ),
+  },
+  {
+    field: "type",
+    header: "Tipo",
+    sortable: true,
+    body: (row) => TYPE_LABELS[row.type] ?? row.type,
+  },
+  {
+    field: "roles",
+    header: "Quién puede usarla",
+    sortable: false,
+    body: accessBody,
+  },
+];
 
 export function RoleGuardTable() {
-  const [getRoleGuards, { loading, data, error }] = useLazyQuery(
-    GET_ROLE_GUARDS,
-    {
-      fetchPolicy: "network-only",
-    }
-  );
-
-  const [updateRoleGuard] = useMutation(UPDATE_ROLE_GUARD);
-  const [selectedRoleGuardId, setSelectedRoleGuardId] = useState(null);
-  const [editDialogVisible, setEditDialogVisible] = useState(false);
-  const [detailDialogVisible, setDetailDialogVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState("ALL");
-  const [forceRefresh, setForceRefresh] = useState(0); // Para forzar recarga cuando cambia pestaña
   const toast = useRef(null);
-
-  const tableStateRef = useRef({
-    filters: {},
-    sorts: [],
-    pagination: { first: 0, rows: 10 },
-  });
-
-  // Efecto para recargar cuando cambia la pestaña
-  useEffect(() => {
-    setForceRefresh((prev) => prev + 1);
-  }, [activeTab]);
+  const lastParams = useRef(null);
+  const [type, setType] = useState(null);
+  const [editing, setEditing] = useState(null);
+  const [fetchRoleGuards, { loading, data, error }] = useLazyQuery(
+    GET_ROLE_GUARDS,
+    { fetchPolicy: "network-only" }
+  );
+  const [updateRoleGuard] = useMutation(UPDATE_ROLE_GUARD);
 
   const handleFetchData = useCallback(
     async (params) => {
+      lastParams.current = params;
       try {
-        tableStateRef.current = {
-          filters: params.filters || {},
-          sorts: params.sorts || [],
-          pagination: {
-            first: params.skip,
-            rows: params.take,
-          },
-        };
-
-        // Construir filtros combinados
-        let filters = [];
-
-        // Añadir filtro por tipo si no es ALL
-        if (activeTab !== "ALL") {
-          let typeValue;
-
-          switch (activeTab) {
-            case "QUERY":
-              typeValue = "Query";
-              break;
-            case "MUTATION":
-              typeValue = "Mutation";
-              break;
-            case "SUBSCRIPTION":
-              typeValue = "Subscription";
-              break;
-            default:
-              typeValue = activeTab;
-          }
-
-          filters.push({
-            property: "type",
-            operator: ConditionalOperator.EQUAL,
-            value: typeValue,
-          });
-        }
-
-        // Añadir filtros del usuario si existen
-        if (params.filters && Array.isArray(params.filters)) {
-          filters = [...params.filters, ...filters];
-        } else if (params.filters && typeof params.filters === "object") {
-          // Si es objeto, convertirlo a array
-          Object.keys(params.filters).forEach((key) => {
-            const filter = params.filters[key];
-            if (
-              filter &&
-              filter.constraints &&
-              filter.constraints[0] &&
-              filter.constraints[0].value !== null &&
-              filter.constraints[0].value !== ""
-            ) {
-              filters.push({
-                property: key,
-                operator: mapMatchModeToOperator(
-                  filter.constraints[0].matchMode
-                ),
-                value: filter.constraints[0].value,
-              });
-            }
-          });
-        }
-
-        const requestParams = {
-          skip: params.skip || 0,
-          take: params.take || 10,
-          sorts: params.sorts || [],
-        };
-
-        // Solo añadir filtros si hay alguno
-        if (filters.length > 0) {
-          requestParams.filters = filters;
-        }
-
-        console.log("Enviando parámetros al backend:", requestParams);
-
-        const { data: responseData } = await getRoleGuards({
+        const { data: response } = await fetchRoleGuards({
           variables: {
-            options: requestParams,
+            options: {
+              skip: params.skip,
+              take: params.take,
+              sorts: params.sorts,
+              filters: [
+                ...(params.filters ?? []),
+                ...(type
+                  ? [
+                      {
+                        property: "type",
+                        operator: ConditionalOperator.EQUAL,
+                        value: type,
+                      },
+                    ]
+                  : []),
+              ],
+            },
           },
         });
-
         return {
-          data: responseData?.roleGuards?.data,
-          totalCount: responseData?.roleGuards?.totalCount,
+          data: response?.roleGuards?.data,
+          totalCount: response?.roleGuards?.totalCount,
         };
-      } catch (err) {
-        console.error("Error fetching role guards:", err);
-        return {
-          data: [],
-          totalCount: 0,
-        };
+      } catch {
+        return { data: [], totalCount: 0 };
       }
     },
-    [getRoleGuards, activeTab]
+    [fetchRoleGuards, type]
   );
 
   const handleRefresh = useCallback(() => {
-    // Preservar filtros y sorts existentes, solo resetear paginación
-    const refreshParams = {
-      skip: 0, // Resetear a primera página
-      take: tableStateRef.current.pagination.rows,
-      filters: tableStateRef.current.filters,
-      sorts: tableStateRef.current.sorts,
-    };
-
-    handleFetchData(refreshParams);
+    if (lastParams.current) handleFetchData(lastParams.current);
   }, [handleFetchData]);
 
-  const handleTabChange = useCallback((newTab) => {
-    setActiveTab(newTab);
-    // El useEffect se encargará de forzar la recarga
-  }, []);
+  const notify = (severity, summary, detail) =>
+    toast.current?.show({ severity, summary, detail, life: 6000 });
 
-  const handleEditSuccess = useCallback(() => {
+  const handleSaved = (saved) => {
+    setEditing(null);
     handleRefresh();
-  }, [handleRefresh]);
-
-  const handleEdit = (roleGuardId) => {
-    setSelectedRoleGuardId(roleGuardId);
-    setEditDialogVisible(true);
+    notify("success", "Roles guardados", saved?.queryOrEndPointURL);
   };
 
-  const handleViewDetails = (roleGuardId) => {
-    setSelectedRoleGuardId(roleGuardId);
-    setDetailDialogVisible(true);
-  };
-
-  const handleToggleStatus = (roleGuard) => {
-    const newStatus =
-      roleGuard.roles && roleGuard.roles.length > 0 ? [] : ["USER"];
-
+  const handleReset = (row) =>
     confirmDialog({
-      message:
-        roleGuard.roles && roleGuard.roles.length > 0
-          ? "¿Estás seguro de que deseas desactivar este rol guard?"
-          : "¿Estás seguro de que deseas activar este rol guard?",
-      header: "Confirmación",
-      icon: "pi pi-exclamation-triangle",
+      header: "Volver a los roles del código",
+      message: `"${row.queryOrEndPointURL}" dejará de usar los roles personalizados y aplicará los del código.`,
+      icon: "pi pi-undo",
+      acceptLabel: "Volver al código",
+      rejectLabel: "Cancelar",
       accept: async () => {
         try {
           await updateRoleGuard({
-            variables: {
-              updateRoleGuardInput: {
-                id: roleGuard.id,
-                roles: newStatus,
-              },
-            },
+            variables: { updateRoleGuardInput: { id: row.id, roles: null } },
           });
-
-          toast.current.show({
-            severity: "success",
-            summary: "Éxito",
-            detail: `Rol guard ${
-              newStatus.length > 0 ? "activado" : "desactivado"
-            } correctamente`,
-            life: 3000,
-          });
-
+          notify("success", "Roles del código", row.queryOrEndPointURL);
           handleRefresh();
         } catch (err) {
-          toast.current.show({
-            severity: "error",
-            summary: "Error",
-            detail: err.message,
-            life: 3000,
-          });
+          notify("error", "No se pudo cambiar", getErrorMessage(err));
         }
       },
     });
-  };
 
-  // Función para mapear match modes de PrimeReact a operadores
-  const mapMatchModeToOperator = (matchMode) => {
-    const modeMap = {
-      startsWith: "STARTS_WITH",
-      contains: "CONTAINS",
-      endsWith: "ENDS_WITH",
-      equals: "EQUAL",
-      notEquals: "NOT_EQUAL",
-      lt: "LESS_THAN",
-      lte: "LESS_THAN_OR_EQUAL",
-      gt: "GREATER_THAN",
-      gte: "GREATER_THAN_OR_EQUAL",
-    };
-    return modeMap[matchMode] || "EQUAL";
-  };
-
-  const typeBodyTemplate = (rowData) => {
-    const typeConfig = {
-      QUERY: { label: "Consulta", severity: "info" },
-      MUTATION: { label: "Mutación", severity: "warning" },
-      SUBSCRIPTION: { label: "Suscripción", severity: "success" },
-    };
-
-    const config = typeConfig[rowData.type] || {
-      label: rowData.type,
-      severity: "secondary",
-    };
-
-    return <Tag value={config.label} severity={config.severity} />;
-  };
-
-  const rolesBodyTemplate = (rowData) => {
-    if (!rowData.roles || rowData.roles.length === 0) {
-      return <Tag value="Sin roles" severity="danger" />;
-    }
-
-    return (
-      <div className="flex flex-wrap gap-1">
-        {rowData.roles.slice(0, 3).map((role, index) => (
-          <Tag key={index} value={role} severity="success" />
-        ))}
-        {rowData.roles.length > 3 && (
-          <Tag value={`+${rowData.roles.length - 3}`} severity="secondary" />
-        )}
-      </div>
-    );
-  };
-
-  const statusBodyTemplate = (rowData) => {
-    const isActive = rowData.roles && rowData.roles.length > 0;
-    return (
-      <Tag
-        severity={isActive ? "success" : "danger"}
-        value={isActive ? "Activo" : "Inactivo"}
-      />
-    );
-  };
-
-  const dateBodyTemplate = (rowData, field) => {
-    return formatDate(rowData[field]);
-  };
-
-  const actionBodyTemplate = (rowData) => {
-    const isActive = rowData.roles && rowData.roles.length > 0;
-
-    return (
+  // Sin RoleGuard no hay nada que cambiar (y `false` se pintaría como texto)
+  const actionBodyTemplate = (row) =>
+    row.usesRoleGuard ? (
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
           text
           rounded
-          tooltip="Configurar roles"
+          tooltip="Cambiar roles"
           tooltipOptions={{ position: "top" }}
-          onClick={() => handleEdit(rowData.id)}
+          aria-label="Cambiar roles"
+          onClick={() => setEditing(row)}
         />
-        <Button
-          icon={isActive ? "pi pi-ban" : "pi pi-check"}
-          text
-          rounded
-          severity={isActive ? "warning" : "success"}
-          tooltip={isActive ? "Desactivar" : "Activar"}
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleToggleStatus(rowData)}
-        />
-        <Button
-          icon="pi pi-eye"
-          text
-          rounded
-          severity="secondary"
-          tooltip="Ver detalles"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleViewDetails(rowData.id)}
-        />
+        {row.roles && (
+          <Button
+            icon="pi pi-undo"
+            text
+            rounded
+            severity="secondary"
+            tooltip="Volver a los roles del código"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Volver a los roles del código"
+            onClick={() => handleReset(row)}
+          />
+        )}
       </div>
-    );
-  };
-
-  const columns = [
-    {
-      field: "queryOrEndPointURL",
-      header: "Operación",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "description",
-      header: "Descripción",
-      sortable: true,
-      filter: true,
-      visible: false,
-    },
-    {
-      field: "type",
-      header: "Tipo",
-      body: typeBodyTemplate,
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "roles",
-      header: "Roles Permitidos",
-      body: rolesBodyTemplate,
-      sortable: false,
-    },
-    {
-      field: "status",
-      header: "Estado",
-      body: statusBodyTemplate,
-      sortable: false,
-    },
-    {
-      field: "createdAt",
-      header: "Fecha de Creación",
-      body: (rowData) => dateBodyTemplate(rowData, "createdAt"),
-      sortable: true,
-    },
-  ];
-
-  const headerContent = (
-    <div className="flex align-items-center gap-2">
-      <RoleTypeTabs activeTab={activeTab} onTabChange={handleTabChange} />
-    </div>
-  );
+    ) : null;
 
   return (
     <>
@@ -366,39 +193,32 @@ export function RoleGuardTable() {
       <ConfirmDialog />
 
       <GenericDataTable
-        key={forceRefresh} // Forzar recreación cuando cambia pestaña
+        // Cambiar de pestaña vuelve a la primera página
+        key={type ?? "all"}
         columns={columns}
         data={data?.roleGuards?.data}
         totalRecords={data?.roleGuards?.totalCount}
         loading={loading}
         error={error}
-        globalFilterFields={["queryOrEndPointURL", "description", "type"]}
-        emptyMessage="No se encontraron role guards"
+        globalFilterFields={["queryOrEndPointURL", "description"]}
+        emptyMessage="No hay operaciones"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} operaciones"
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
-        initialPageSize={10}
-        header={headerContent}
+        initialPageSize={25}
+        initialSorts={[{ field: "queryOrEndPointURL", order: 1 }]}
+        header={<RoleTypeTabs activeTab={type} onTabChange={setType} />}
       >
-        <Column
-          body={actionBodyTemplate}
-          header="Acciones"
-          headerClassName="w-12rem"
-        />
+        <Column body={actionBodyTemplate} header="Acciones" className="w-8rem" />
       </GenericDataTable>
 
-      <RoleGuardEditForm
-        roleGuardId={selectedRoleGuardId}
-        visible={editDialogVisible}
-        onHide={() => setEditDialogVisible(false)}
-        onSuccess={handleEditSuccess}
-      />
-
-      <RoleGuardDetailForm
-        roleGuardId={selectedRoleGuardId}
-        visible={detailDialogVisible}
-        onHide={() => setDetailDialogVisible(false)}
-      />
+      {editing && (
+        <RoleGuardForm
+          roleGuard={editing}
+          onHide={() => setEditing(null)}
+          onSaved={handleSaved}
+        />
+      )}
     </>
   );
 }

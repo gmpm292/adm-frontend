@@ -3,19 +3,7 @@ import { Dropdown } from "primereact/dropdown";
 import { useLazyQuery } from "@apollo/client";
 import { GET_UNITS_OF_MEASURE } from "../graphql/queries";
 import { Skeleton } from "primereact/skeleton";
-
-// Mapeo de categorías a español para mostrar
-const categoryLabels = {
-  peso: "Peso",
-  volumen: "Volumen",
-  longitud: "Longitud",
-  área: "Área",
-  unidades: "Unidades",
-  tiempo: "Tiempo",
-  energía: "Energía",
-  potencia: "Potencia",
-  temperatura: "Temperatura",
-};
+import { unitCategoryLabel } from "../categories";
 
 const UnitOfMeasureDropdown = ({
   value,
@@ -46,7 +34,7 @@ const UnitOfMeasureDropdown = ({
       }
 
       const formattedUnits = unitsData.map((unit) => ({
-        label: `${unit.symbol} - ${unit.name} ${unit.category ? `(${categoryLabels[unit.category] || unit.category})` : ""}`,
+        label: `${unit.symbol} - ${unit.name} ${unit.category ? `(${unitCategoryLabel(unit.category)})` : ""}`,
         value: unit.id,
         data: unit,
       }));
@@ -104,7 +92,7 @@ const UnitOfMeasureDropdown = ({
         <div className="flex align-items-center gap-2">
           {option.data?.category && (
             <small className="text-color-secondary">
-              {categoryLabels[option.data.category] || option.data.category}
+              {unitCategoryLabel(option.data.category)}
             </small>
           )}
         </div>

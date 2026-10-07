@@ -1,34 +1,23 @@
 import { gql } from "@apollo/client";
 
+const ROLE_GUARD_FIELDS = `
+  id
+  queryOrEndPointURL
+  roles
+  codeRoles
+  usesRoleGuard
+  description
+  type
+  updatedAt
+`;
+
 export const GET_ROLE_GUARDS = gql`
   query RoleGuards($options: ListOptions) {
     roleGuards(options: $options) {
       totalCount
       data {
-        id
-        queryOrEndPointURL
-        roles
-        description
-        type
-        createdAt
-        updatedAt
-        deletedAt
+        ${ROLE_GUARD_FIELDS}
       }
-    }
-  }
-`;
-
-export const GET_ROLE_GUARD_BY_ID = gql`
-  query RoleGuard($id: Int!) {
-    roleGuard(id: $id) {
-      id
-      queryOrEndPointURL
-      roles
-      description
-      type
-      createdAt
-      updatedAt
-      deletedAt
     }
   }
 `;
@@ -36,10 +25,7 @@ export const GET_ROLE_GUARD_BY_ID = gql`
 export const UPDATE_ROLE_GUARD = gql`
   mutation UpdateRoleGuard($updateRoleGuardInput: UpdateRoleGuardInput!) {
     updateRoleGuard(updateRoleGuardInput: $updateRoleGuardInput) {
-      id
-      roles
-      description
-      type
+      ${ROLE_GUARD_FIELDS}
     }
   }
 `;

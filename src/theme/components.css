@@ -676,3 +676,9 @@
   font-weight: var(--font-weight-semibold);
   text-align: right;
 }
+
+/* --- Campo con código (claves, JSON) ---------------------------------------- */
+.ui-code-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--font-size-sm);
+}

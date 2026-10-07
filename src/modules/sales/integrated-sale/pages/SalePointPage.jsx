@@ -418,6 +418,7 @@ export function SalePointPage() {
           sale={receipt.sale}
           change={receipt.change}
           sellerName={receipt.sellerName}
+          storeName={office?.businessName ?? office?.name}
           onNewSale={() => setReceipt(null)}
         />
       )}

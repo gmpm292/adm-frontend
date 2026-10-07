@@ -235,8 +235,8 @@ export const menuConfig = [
           routePermissions["/inventory/categories"]?.requiredRoles || [],
       },
       {
-        label: "Unidades de Medida",
-        icon: "pi pi-ruler",
+        label: "Unidades de medida",
+        icon: "pi pi-arrows-h",
         path: "/inventory/units-of-measure",
         permissions:
           routePermissions["/inventory/units-of-measure"]?.permissions || [],
@@ -252,7 +252,7 @@ export const menuConfig = [
           routePermissions["/payroll/currencies"]?.requiredRoles || [],
       },
       {
-        label: "Costos de Materiales",
+        label: "Costos de materiales",
         icon: "pi pi-calculator",
         path: "/payroll/material-costs",
         permissions:
@@ -275,14 +275,14 @@ export const menuConfig = [
         requiredRoles: routePermissions["/configurations"]?.requiredRoles || [],
       },
       {
-        label: "Correo OAuth2",
+        label: "Correo",
         icon: "pi pi-envelope",
         path: "/system/email",
         permissions: routePermissions["/system/email"]?.permissions || [],
         requiredRoles: routePermissions["/system/email"]?.requiredRoles || [],
       },
       {
-        label: "Impresión Térmica",
+        label: "Impresión",
         icon: "pi pi-print",
         path: "/system/printing",
         permissions: routePermissions["/system/printing"]?.permissions || [],
@@ -295,7 +295,7 @@ export const menuConfig = [
         key: "security",
         items: [
           {
-            label: "Permisos GraphQL",
+            label: "Permisos",
             icon: "pi pi-key",
             path: "/system/security/role-guards",
             permissions:
@@ -306,7 +306,7 @@ export const menuConfig = [
               [],
           },
           {
-            label: "Niveles de Acceso",
+            label: "Niveles de acceso",
             icon: "pi pi-lock",
             path: "/system/security/scoped-access",
             permissions:

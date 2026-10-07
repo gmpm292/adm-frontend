@@ -7,7 +7,7 @@ export function ConfigListPage() {
     <>
       <PageHeader
         title="Configuraciones"
-        subtitle="Consulta y ajusta los parámetros del sistema agrupados por categoría."
+        subtitle="Valores que usa el servidor, por grupos. Los grupos los define el sistema; aquí se ajustan sus valores."
       />
       <ConfigTable />
     </>

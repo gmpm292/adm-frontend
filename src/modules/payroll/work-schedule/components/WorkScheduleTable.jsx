@@ -12,7 +12,7 @@ import {
   RESTORE_WORK_SCHEDULES,
 } from "../graphql/queries";
 import { formatDay, workingDaysText } from "../../format";
-import { useHasRole } from "../../useHasRole";
+import { useHasRole } from "../../../../hooks/useHasRole";
 import { WorkScheduleForm } from "./WorkScheduleForm";
 
 const columns = [
