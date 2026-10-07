@@ -1,400 +1,122 @@
-import React, { useCallback, useState, useRef, useMemo } from "react";
-import { useLazyQuery, useMutation } from "@apollo/client";
-import {
-  GET_INVENTORY_MOVEMENTS,
-  DELETE_INVENTORY_MOVEMENTS,
-} from "../graphql/queries";
-import GenericDataTable from "../../../../components/BaseTable/index";
-import { Column } from "primereact/column";
+import { useCallback, useRef, useState } from "react";
+import { useLazyQuery } from "@apollo/client";
 import { Button } from "primereact/button";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { Toast } from "primereact/toast";
-import { InventoryMovementEditForm } from "./InventoryMovementEditForm";
-import { InventoryMovementCreateForm } from "./InventoryMovementCreateForm";
-import { InventoryMovementDetailForm } from "./InventoryMovementDetailForm";
-
+import { Column } from "primereact/column";
 import { Tag } from "primereact/tag";
-import { Badge } from "primereact/badge";
+import { Toast } from "primereact/toast";
+import GenericDataTable from "../../../../components/BaseTable";
+import { GET_INVENTORY_MOVEMENTS } from "../graphql/queries";
+import {
+  MOVEMENT_TYPE,
+  formatDateTime,
+  formatQuantity,
+  movementReference,
+  personName,
+  reasonLabel,
+} from "../../format";
+import { useInventoryRoles } from "../../useInventoryRoles";
+import { MovementForm } from "./MovementForm";
+import { MovementDetailForm } from "./MovementDetailForm";
 
-// ==================== BODY TEMPLATES ====================
+const EMPTY = <span className="text-color-secondary">—</span>;
 
-/**
- * Template para mostrar la categoría del producto
- */
-const categoryBodyTemplate = (rowData) => {
-  const category = rowData.inventory?.product?.category;
-  if (!category) return <span className="text-color-secondary">—</span>;
-
-  return (
-    <div className="flex flex-column">
-      <span>{category.name}</span>
-      {category.description && (
-        <small className="text-color-secondary">{category.description}</small>
-      )}
-    </div>
-  );
-};
-
-/**
- * Template para mostrar el producto completo
- */
-const productBodyTemplate = (rowData) => {
-  const product = rowData.inventory?.product;
-  if (!product) return <span className="text-color-secondary">—</span>;
-
-  return (
-    <div className="flex flex-column">
-      <span className="font-bold">{product.name}</span>
-      {product.unitOfMeasure && (
-        <small className="text-color-secondary">U/M: {product.unitOfMeasure}</small>
-      )}
-    </div>
-  );
-};
-
-/**
- * Template para mostrar el precio de venta
- */
-const salePriceBodyTemplate = (rowData) => {
-  const product = rowData.inventory?.product;
-  if (!product?.basePrice) return <span className="text-color-secondary">—</span>;
-
-  return (
-    <div className="flex flex-column">
-      <span className="font-bold">
-        {product.basePrice} {product.baseCurrency || "USD"}
+const columns = [
+  {
+    field: "createdAt",
+    header: "Fecha",
+    sortable: true,
+    bodyClassName: "white-space-nowrap",
+    body: (row) => formatDateTime(row.createdAt),
+  },
+  {
+    field: "product.name",
+    header: "Producto",
+    sortable: true,
+    filter: true,
+    body: (row) => (
+      <span className="flex flex-column">
+        <span className="font-medium text-900">
+          {row.inventory?.product?.name}
+        </span>
+        <small className="text-color-secondary">
+          {row.inventory?.product?.category?.name}
+        </small>
       </span>
-      {product.costPrice && (
-        <small className="text-color-secondary">
-          Costo: {product.costPrice} {product.costCurrency || "USD"}
-        </small>
-      )}
-    </div>
-  );
-};
-
-/**
- * Template para mostrar la existencia (stock actual y mínimo)
- */
-const stockBodyTemplate = (rowData) => {
-  const inventory = rowData.inventory;
-  if (!inventory) return <span className="text-color-secondary">—</span>;
-
-  const stockStatus =
-    inventory.currentStock <= (inventory.minStock || 0) ? "danger" : "success";
-
-  return (
-    <div className="flex flex-column">
-      <Tag
-        value={`Stock: ${inventory.currentStock}`}
-        severity={stockStatus}
-        className="mb-1"
-      />
-      {inventory.minStock > 0 && (
-        <small className="text-color-secondary">Mínimo: {inventory.minStock}</small>
-      )}
-    </div>
-  );
-};
-
-/**
- * Template para mostrar la ubicación del inventario
- */
-const locationBodyTemplate = (rowData) => {
-  const inventory = rowData.inventory;
-  if (!inventory?.location) return <span className="text-color-secondary">—</span>;
-
-  return (
-    <div className="flex flex-column">
-      <span>{inventory.location}</span>
-      {inventory.office && (
-        <small className="text-color-secondary">
-          Oficina: {inventory.office.name}
-        </small>
-      )}
-    </div>
-  );
-};
-
-/**
- * Template para el tipo de movimiento
- */
-const typeBodyTemplate = (rowData) => {
-  return (
-    <Tag
-      value={rowData.type === "IN" ? "ENTRADA" : "SALIDA"}
-      severity={rowData.type === "IN" ? "success" : "danger"}
-      icon={rowData.type === "IN" ? "pi pi-arrow-down" : "pi pi-arrow-up"}
-    />
-  );
-};
-
-/**
- * Template para la cantidad
- */
-const quantityBodyTemplate = (rowData) => {
-  return (
-    <div className="flex flex-column">
-      <span className="font-bold">{rowData.quantity}</span>
-      {rowData.inventory?.product?.unitOfMeasure && (
-        <small className="text-color-secondary">
-          {rowData.inventory.product.unitOfMeasure}
-        </small>
-      )}
-    </div>
-  );
-};
-
-/**
- * Template para el motivo
- */
-const reasonBodyTemplate = (rowData) => {
-  return (
-    <div className="flex flex-column">
-      <span>{rowData.reason || "—"}</span>
-      {rowData.isReservation && (
-        <Tag
-          value="Reserva"
-          severity="info"
-          className="mt-1 text-xs"
-        />
-      )}
-    </div>
-  );
-};
-
-/**
- * Template para formatear fechas
- */
-const dateBodyTemplate = (rowData, field) => {
-  if (!rowData[field]) return "—";
-  const date = new Date(rowData[field]);
-  return (
-    <div className="flex flex-column">
-      <span>{date.toLocaleDateString()}</span>
-      <small className="text-color-secondary">{date.toLocaleTimeString()}</small>
-    </div>
-  );
-};
-
-/**
- * Template para el usuario que realizó el movimiento
- */
-const userBodyTemplate = (rowData) => {
-  const user = rowData.user;
-  if (!user) return <span className="text-color-secondary">—</span>;
-
-  return (
-    <div className="flex flex-column">
-      <span>{user.name || user.email || `#${user.id}`}</span>
-    </div>
-  );
-};
-
-/**
- * Template para la estructura organizativa
- */
-const securityEntitiesBodyTemplate = (rowData) => {
-  const entities = [];
-
-  if (rowData.business) entities.push(`🏢 ${rowData.business.name}`);
-  if (rowData.office) entities.push(`🏢 ${rowData.office.name}`);
-  if (rowData.department) entities.push(`📊 ${rowData.department.name}`);
-  if (rowData.team) entities.push(`👥 ${rowData.team.name}`);
-
-  return (
-    <div className="flex flex-column">
-      {entities.length > 0 ? (
-        entities.map((entity, index) => <small key={index}>{entity}</small>)
-      ) : (
-        <span className="text-color-secondary">—</span>
-      )}
-    </div>
-  );
-};
-
-/**
- * Template para el creador/actualizador
- */
-const auditBodyTemplate = (rowData) => {
-  const createdBy = rowData.createdBy;
-  const updatedBy = rowData.updatedBy;
-
-  return (
-    <div className="flex flex-column">
-      {createdBy && (
-        <small>
-          <strong>Creado:</strong>{" "}
-          {createdBy.name || createdBy.email || `#${createdBy.id}`}
-          <br />
-          <span className="text-color-secondary">
-            {new Date(rowData.createdAt).toLocaleDateString()}
-          </span>
-        </small>
-      )}
-      {updatedBy && createdBy?.id !== updatedBy?.id && (
-        <small>
-          <strong>Actualizado:</strong>{" "}
-          {updatedBy.name || updatedBy.email || `#${updatedBy.id}`}
-          <br />
-          <span className="text-color-secondary">
-            {new Date(rowData.updatedAt).toLocaleDateString()}
-          </span>
-        </small>
-      )}
-    </div>
-  );
-};
-
-// ==================== MAIN COMPONENT ====================
+    ),
+  },
+  {
+    field: "inventory.location",
+    header: "Ubicación",
+    sortable: true,
+    filter: true,
+    body: (row) => (
+      <span className="flex flex-column">
+        <span>{row.inventory?.location || "Sin ubicación"}</span>
+        <small className="text-color-secondary">{row.office?.name}</small>
+      </span>
+    ),
+  },
+  {
+    field: "type",
+    header: "Tipo",
+    sortable: true,
+    body: (row) => {
+      const type = MOVEMENT_TYPE[row.type];
+      return <Tag severity={type.severity} icon={type.icon} value={type.label} />;
+    },
+  },
+  {
+    field: "quantity",
+    header: "Cantidad",
+    sortable: true,
+    bodyClassName: "white-space-nowrap font-medium",
+    body: (row) =>
+      `${row.type === "OUT" ? "−" : "+"}${formatQuantity(
+        row.quantity,
+        row.inventory?.product?.unitOfMeasure,
+      )}`,
+  },
+  {
+    field: "reason",
+    header: "Motivo",
+    sortable: true,
+    body: (row) => {
+      const reference = movementReference(row);
+      return (
+        <span className="flex flex-column">
+          <span>{reasonLabel(row.reason)}</span>
+          {reference && (
+            <small className="text-color-secondary">{reference}</small>
+          )}
+        </span>
+      );
+    },
+  },
+  {
+    field: "user.name",
+    header: "Registrado por",
+    sortable: true,
+    filter: true,
+    body: (row) => personName(row.user) ?? EMPTY,
+  },
+];
 
 export function InventoryMovementTable() {
-  const [getMovements, { loading, data, error }] = useLazyQuery(
-    GET_INVENTORY_MOVEMENTS,
-    {
-      fetchPolicy: "network-only",
-    },
-  );
-  const [deleteMovements] = useMutation(DELETE_INVENTORY_MOVEMENTS);
-  const [selectedMovementId, setSelectedMovementId] = useState(null);
-  const [editDialogVisible, setEditDialogVisible] = useState(false);
-  const [createDialogVisible, setCreateDialogVisible] = useState(false);
-  const [detailDialogVisible, setDetailDialogVisible] = useState(false);
   const toast = useRef(null);
-
-  const tableStateRef = useRef({
-    filters: {},
-    sorts: [],
-    pagination: { first: 0, rows: 10 },
-  });
-
-  // Definir todas las columnas disponibles del backend
-  const columns = useMemo(
-    () => [
-      {
-        field: "category",
-        header: "Categoría",
-        body: categoryBodyTemplate,
-        sortable: true,
-        filter: true,
-        className: "w-10rem",
-      },
-      {
-        field: "product",
-        header: "Producto",
-        body: productBodyTemplate,
-        sortable: true,
-        filter: true,
-        className: "w-14rem",
-      },
-      {
-        field: "salePrice",
-        header: "Precio Venta",
-        body: salePriceBodyTemplate,
-        sortable: true,
-        className: "w-10rem",
-      },
-      {
-        field: "stock",
-        header: "Existencia",
-        body: stockBodyTemplate,
-        sortable: true,
-        className: "w-10rem",
-      },
-      {
-        field: "location",
-        header: "Ubicación",
-        body: locationBodyTemplate,
-        sortable: true,
-        filter: true,
-        className: "w-10rem",
-      },
-      {
-        field: "type",
-        header: "Tipo",
-        body: typeBodyTemplate,
-        sortable: true,
-        filter: true,
-        className: "w-8rem",
-      },
-      {
-        field: "quantity",
-        header: "Cantidad",
-        body: quantityBodyTemplate,
-        sortable: true,
-        filter: true,
-        className: "w-8rem",
-      },
-      {
-        field: "reason",
-        header: "Motivo",
-        body: reasonBodyTemplate,
-        sortable: true,
-        filter: true,
-        className: "w-10rem",
-      },
-      {
-        field: "createdAt",
-        header: "Fecha",
-        body: (rowData) => dateBodyTemplate(rowData, "createdAt"),
-        sortable: true,
-        className: "w-10rem",
-      },
-      {
-        field: "user",
-        header: "Usuario",
-        body: userBodyTemplate,
-        sortable: true,
-        filter: true,
-        className: "w-10rem",
-      },
-      {
-        field: "entities",
-        header: "Organización",
-        body: securityEntitiesBodyTemplate,
-        className: "w-10rem",
-        visible: false, // Oculta por defecto
-      },
-      {
-        field: "updatedAt",
-        header: "Actualizado",
-        body: (rowData) => dateBodyTemplate(rowData, "updatedAt"),
-        sortable: true,
-        className: "w-10rem",
-        visible: false, // Oculta por defecto
-      },
-      {
-        field: "audit",
-        header: "Auditoría",
-        body: auditBodyTemplate,
-        className: "w-14rem",
-        visible: false, // Oculta por defecto
-      },
-      {
-        field: "referenceId",
-        header: "Referencia",
-        body: (rowData) => rowData.referenceId || "—",
-        sortable: true,
-        className: "w-10rem",
-        visible: false, // Oculta por defecto
-      },
-    ],
-    [],
+  const lastParams = useRef(null);
+  const { canEdit } = useInventoryRoles();
+  const [fetchMovements, { loading, data, error }] = useLazyQuery(
+    GET_INVENTORY_MOVEMENTS,
+    { fetchPolicy: "network-only" },
   );
+  const [creating, setCreating] = useState(false);
+  const [detailId, setDetailId] = useState(null);
 
   const handleFetchData = useCallback(
     async (params) => {
+      lastParams.current = params;
       try {
-        tableStateRef.current = {
-          filters: params.filters || {},
-          sorts: params.sorts || [],
-          pagination: {
-            first: params.skip,
-            rows: params.take,
-          },
-        };
-
-        const { data: responseData } = await getMovements({
+        const { data: response } = await fetchMovements({
           variables: {
             options: {
               skip: params.skip,
@@ -404,128 +126,38 @@ export function InventoryMovementTable() {
             },
           },
         });
-
         return {
-          data: responseData?.inventoryMovements?.data,
-          totalCount: responseData?.inventoryMovements?.totalCount,
+          data: response?.inventoryMovements?.data,
+          totalCount: response?.inventoryMovements?.totalCount,
         };
-      } catch (err) {
-        console.error("Error fetching inventory movements:", err);
-        return {
-          data: [],
-          totalCount: 0,
-        };
+      } catch {
+        return { data: [], totalCount: 0 };
       }
     },
-    [getMovements],
+    [fetchMovements],
   );
 
   const handleRefresh = useCallback(() => {
-    handleFetchData({
-      skip: tableStateRef.current.pagination.first,
-      take: tableStateRef.current.pagination.rows,
-      filters: tableStateRef.current.filters,
-      sorts: tableStateRef.current.sorts,
-    });
+    if (lastParams.current) handleFetchData(lastParams.current);
   }, [handleFetchData]);
 
-  const handleEditSuccess = useCallback(() => {
+  const notify = (severity, summary, detail) =>
+    toast.current?.show({ severity, summary, detail, life: 6000 });
+
+  const handleSaved = (_movement, { type, quantity, product, printError }) => {
+    setCreating(false);
     handleRefresh();
-  }, [handleRefresh]);
-
-  const handleCreateSuccess = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
-
-  // Las acciones de editar y eliminar están desactivadas en la tabla
-  // eslint-disable-next-line no-unused-vars
-  const handleEdit = (movementId) => {
-    setSelectedMovementId(movementId);
-    setEditDialogVisible(true);
-  };
-
-  const handleViewDetails = (movementId) => {
-    setSelectedMovementId(movementId);
-    setDetailDialogVisible(true);
-  };
-
-  // eslint-disable-next-line no-unused-vars
-  const handleDelete = (movementId) => {
-    confirmDialog({
-      message: "¿Estás seguro de que deseas eliminar este movimiento?",
-      header: "Confirmación",
-      icon: "pi pi-exclamation-triangle",
-      accept: async () => {
-        try {
-          await deleteMovements({ variables: { ids: [movementId] } });
-
-          toast.current.show({
-            severity: "success",
-            summary: "Éxito",
-            detail: "Movimiento eliminado correctamente",
-            life: 3000,
-          });
-
-          handleRefresh();
-        } catch (err) {
-          toast.current.show({
-            severity: "error",
-            summary: "Error",
-            detail: err.message,
-            life: 3000,
-          });
-        }
-      },
-    });
-  };
-
-  const actionBodyTemplate = (rowData) => {
-    return (
-      <div className="actions-column">
-        {/* <Button
-          icon="pi pi-pencil"
-          text
-          rounded
-          severity="secondary"
-          tooltip="Editar movimiento"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleEdit(rowData.id)}
-        />
-        <Button
-          icon="pi pi-trash"
-          text
-          rounded
-          severity="danger"
-          tooltip="Eliminar movimiento"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleDelete(rowData.id)}
-        /> */}
-        <Button
-          icon="pi pi-eye"
-          text
-          rounded
-          severity="secondary"
-          tooltip="Ver detalles"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleViewDetails(rowData.id)}
-        />
-      </div>
+    notify(
+      "success",
+      type === "OUT" ? "Salida registrada" : "Entrada registrada",
+      `${formatQuantity(quantity, product?.unitOfMeasure)} de ${product?.name}`,
     );
+    if (printError) notify("warn", "No se imprimió el comprobante", printError);
   };
-
-  const addMovementButton = (
-    <Button
-      icon="pi pi-plus"
-      label="Nuevo Movimiento"
-      tooltip="Crear Nuevo Movimiento de Inventario"
-      onClick={() => setCreateDialogVisible(true)}
-    />
-  );
 
   return (
     <>
       <Toast ref={toast} />
-      <ConfirmDialog />
 
       <GenericDataTable
         columns={columns}
@@ -534,46 +166,57 @@ export function InventoryMovementTable() {
         loading={loading}
         error={error}
         globalFilterFields={[
-          "inventory.product.name",
-          "reason",
-          "user.name",
-          "inventory.product.category.name",
+          "product.name",
+          "category.name",
           "inventory.location",
+          "user.name",
+          "referenceId",
         ]}
         emptyMessage="No se encontraron movimientos"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} movimientos"
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        header={addMovementButton}
+        initialSorts={[{ field: "createdAt", order: -1 }]}
+        header={
+          canEdit && (
+            <Button
+              label="Registrar movimiento"
+              icon="pi pi-plus"
+              onClick={() => setCreating(true)}
+            />
+          )
+        }
       >
         <Column
-          body={actionBodyTemplate}
           header="Acciones"
-          headerClassName="w-8rem"
+          className="w-6rem"
+          body={(row) => (
+            <div className="actions-column">
+              <Button
+                icon="pi pi-eye"
+                text
+                rounded
+                severity="secondary"
+                tooltip="Ver detalle"
+                tooltipOptions={{ position: "top" }}
+                aria-label="Ver detalle"
+                onClick={() => setDetailId(row.id)}
+              />
+            </div>
+          )}
         />
       </GenericDataTable>
 
-      <InventoryMovementEditForm
-        movementId={selectedMovementId}
-        visible={editDialogVisible}
-        onHide={() => setEditDialogVisible(false)}
-        onSuccess={handleEditSuccess}
-      />
-
-      <InventoryMovementCreateForm
-        visible={createDialogVisible}
-        onHide={() => setCreateDialogVisible(false)}
-        onSuccess={handleCreateSuccess}
-      />
-
-      <InventoryMovementDetailForm
-        movementId={selectedMovementId}
-        visible={detailDialogVisible}
-        onHide={() => setDetailDialogVisible(false)}
-      />
+      {creating && (
+        <MovementForm onHide={() => setCreating(false)} onSaved={handleSaved} />
+      )}
+      {detailId && (
+        <MovementDetailForm
+          movementId={detailId}
+          onHide={() => setDetailId(null)}
+        />
+      )}
     </>
   );
 }
-
-export default InventoryMovementTable;

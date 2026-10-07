@@ -51,17 +51,17 @@ export const routePermissions = {
   },
   "/inventory/products": {
     permissions: [],
-    requiredRoles: [],
+    requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER"],
     title: "Productos",
   },
   "/inventory/inventories": {
     permissions: [],
-    requiredRoles: [],
+    requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER", "SUPERVISOR"],
     title: "Inventarios",
   },
   "/inventory/movements": {
     permissions: [],
-    requiredRoles: [],
+    requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER", "SUPERVISOR"],
     title: "Movimientos",
   },
   "/inventory/units-of-measure": {

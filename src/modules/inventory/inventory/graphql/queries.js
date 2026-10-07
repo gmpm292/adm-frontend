@@ -9,25 +9,25 @@ export const GET_INVENTORIES = gql`
         currentStock
         minStock
         location
-        createdAt
+        deletedAt
         updatedAt
         product {
           id
           name
+          unitOfMeasure {
+            id
+            symbol
+          }
+          category {
+            id
+            name
+          }
         }
         business {
           id
           name
         }
         office {
-          id
-          name
-        }
-        department {
-          id
-          name
-        }
-        team {
           id
           name
         }
@@ -48,13 +48,20 @@ export const GET_INVENTORY_BY_ID = gql`
       product {
         id
         name
-        unitOfMeasure
+        costPrice
+        costCurrency
+        basePrice
+        baseCurrency
+        unitOfMeasure {
+          id
+          name
+          symbol
+        }
         category {
           id
           name
         }
       }
-
       business {
         id
         name
@@ -63,20 +70,7 @@ export const GET_INVENTORY_BY_ID = gql`
         id
         name
       }
-      department {
-        id
-        name
-      }
-      team {
-        id
-        name
-      }
       createdBy {
-        id
-        name
-        lastName
-      }
-      updatedBy {
         id
         name
         lastName
@@ -89,6 +83,10 @@ export const CREATE_INVENTORY = gql`
   mutation CreateInventory($inventory: CreateInventoryInput!) {
     createInventory(createInventoryInput: $inventory) {
       id
+      product {
+        id
+        name
+      }
     }
   }
 `;
@@ -97,7 +95,6 @@ export const UPDATE_INVENTORY = gql`
   mutation UpdateInventory($inventory: UpdateInventoryInput!) {
     updateInventory(updateInventoryInput: $inventory) {
       id
-      currentStock
       minStock
       location
     }
@@ -108,6 +105,55 @@ export const DELETE_INVENTORIES = gql`
   mutation RemoveInventories($ids: [Int!]!) {
     removeInventories(ids: $ids) {
       id
+    }
+  }
+`;
+
+export const RESTORE_INVENTORIES = gql`
+  mutation RestoreInventories($ids: [Int!]!) {
+    restoreInventories(ids: $ids)
+  }
+`;
+
+/** Oficinas donde se puede abrir un inventario (las que el usuario ve) */
+export const GET_OFFICE_OPTIONS = gql`
+  query InventoryOffices {
+    offices(options: { take: 200, sorts: [{ property: "name", direction: ASC }] }) {
+      data {
+        id
+        name
+        business {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+
+/** Productos para elegir al abrir un inventario */
+export const GET_PRODUCT_OPTIONS = gql`
+  query InventoryProductOptions {
+    products(options: { take: 1000, sorts: [{ property: "name", direction: ASC }] }) {
+      data {
+        id
+        name
+        unitOfMeasure {
+          id
+          symbol
+        }
+        category {
+          id
+          name
+        }
+        business {
+          id
+        }
+        office {
+          id
+          name
+        }
+      }
     }
   }
 `;

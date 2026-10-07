@@ -55,6 +55,13 @@
   width: 100%;
 }
 
+/* Un campo numérico ocupa su columna; sin esto su ancho propio la desborda */
+.ui-field .p-inputnumber,
+.ui-field .p-inputnumber-input {
+  width: 100%;
+  min-width: 0;
+}
+
 /* --- Tarjetas -------------------------------------------------------------- */
 .p-card {
   border: 1px solid var(--surface-200);
@@ -311,6 +318,30 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+
+/* --- FormSection: bloque con título dentro de un formulario largo ---------- */
+.ui-form-section + .ui-form-section {
+  margin-top: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--surface-200);
+}
+
+.ui-form-section__title {
+  margin: 0;
+  color: var(--text-color-strong);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ui-form-section__hint {
+  margin: var(--space-1) 0 0;
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.ui-form-section__body {
+  margin-top: var(--space-3);
 }
 
 /* --- FormField ------------------------------------------------------------- */

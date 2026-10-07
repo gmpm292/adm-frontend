@@ -60,8 +60,9 @@ Piezas:
   sustituidos por tokens. **No se edita**; se regenera con `npm run theme:build`
   (`scripts/build-theme.mjs`) tras actualizar `primereact`.
 - `src/theme/components.css` y `layout.css`: forma de los componentes y marco.
-- `src/components/ui/index.jsx`: `PageHeader`, `FormField`, `AuthLayout`,
-  `EmptyState`, `LoadingScreen`, `OtpInput`, `QrPanel`.
+- `src/components/ui/index.jsx`: `PageHeader`, `FormField`, `FormSection`
+  (bloque con título de un formulario largo), `InfoRow` (fichas),
+  `AuthLayout`, `EmptyState`, `LoadingScreen`, `OtpInput`, `QrPanel`.
 - `src/components/BaseTable`: tabla de listados (búsqueda, columnas, filtros,
   paginación en servidor). Las columnas dan su ancho con `className`,
   `headerClassName` o `bodyClassName`.
@@ -142,6 +143,22 @@ estados con `<Tag severity>`; formularios con `FormField` sobre
   de error del backend: `utils/errors.js` (`getErrorMessage`).
 - Los estilos de la venta integrada están en `src/theme/pages/pos.css`.
 
+## Inventario (`src/modules/inventory`)
+
+- **Productos**: un solo formulario, `product/components/ProductForm.jsx`, para
+  crear y editar. Al crear puede abrir a la vez el inventario en varias
+  oficinas. Los precios fijos se ponen junto a cada moneda aceptada; el margen
+  es sobre el precio de venta y, si se escribe, calcula el precio.
+- **Inventarios**: `inventory/components/InventoryForm.jsx` abre uno nuevo o
+  edita su ubicación y su mínimo. Las existencias no se editan: cambian con
+  movimientos. Al llegar al mínimo se marcan «Por reponer».
+- **Movimientos**: `inventory-movement/components/MovementForm.jsx` registra
+  una entrada o una salida, desde la tabla de inventarios (ya elegido) o desde
+  Movimientos. Solo ofrece los motivos manuales; el backend rechaza el resto.
+- Motivos, estados de existencias y cantidades con unidad: `inventory/format.js`.
+  Qué botones ve cada rol: `inventory/useInventoryRoles.js` (lo mismo que exige
+  el backend).
+
 ## Empresa y usuarios
 
 - **Empresa** (`src/modules/company`): Empresas, Oficinas, Departamentos y
@@ -155,6 +172,11 @@ estados con `<Tag severity>`; formularios con `FormField` sobre
   dejan archivos sin uso, copias `.old` ni `.txt`.
 
 ## Trampas conocidas
+
+- `InputNumber` de PrimeReact solo llama a `onValueChange` al salir del campo.
+  Para recalcular mientras se escribe (margen, «Quedarán...») usar `onChange`.
+- Los objetos que devuelve Apollo llevan `__typename`: al reenviarlos como
+  `input` de una mutación hay que copiar los campos uno a uno.
 
 - Los tipos de GraphQL cuyo `id` no identifica la fila (por ejemplo
   `StatisticsRanking`, que mezcla productos, vendedores y clientes) necesitan

@@ -1,4 +1,3 @@
-import React from "react";
 import { PageHeader } from "../../../../components/ui";
 import { ProductTable } from "../components/ProductTable";
 
@@ -7,7 +6,7 @@ export function ProductListPage() {
     <>
       <PageHeader
         title="Productos"
-        subtitle="Administra el catálogo de productos, sus precios y reglas de venta."
+        subtitle="Catálogo de lo que se vende: precios en cada moneda, reglas de venta y existencias."
       />
       <ProductTable />
     </>

@@ -1,267 +1,270 @@
-import React, { useCallback, useState, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
-import { GET_INVENTORIES, DELETE_INVENTORIES } from "../graphql/queries";
-import GenericDataTable from "../../../../components/BaseTable/index";
-import { Column } from "primereact/column";
 import { Button } from "primereact/button";
+import { Column } from "primereact/column";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
-import { InventoryEditForm } from "./InventoryEditForm";
-import { InventoryCreateForm } from "./InventoryCreateForm";
+import GenericDataTable from "../../../../components/BaseTable";
+import { getErrorMessage } from "../../../../utils/errors";
+import {
+  DELETE_INVENTORIES,
+  GET_INVENTORIES,
+  RESTORE_INVENTORIES,
+} from "../graphql/queries";
+import { formatQuantity, stockStatus } from "../../format";
+import { useInventoryRoles } from "../../useInventoryRoles";
+import { MovementForm } from "../../inventory-movement/components/MovementForm";
+import { InventoryForm } from "./InventoryForm";
 import { InventoryDetailForm } from "./InventoryDetailForm";
-import { formatDate } from "../../../../utils/dateUtils";
-import { InventoryMovementCreateForm } from "../../inventory-movement/components/InventoryMovementCreateForm";
+
+const EMPTY = <span className="text-color-secondary">—</span>;
+
+const columns = [
+  {
+    field: "product.name",
+    header: "Producto",
+    sortable: true,
+    filter: true,
+    body: (row) => (
+      <span className="flex flex-column">
+        <span className="font-medium text-900">{row.product?.name}</span>
+        <small className="text-color-secondary">
+          {row.product?.category?.name}
+        </small>
+      </span>
+    ),
+  },
+  {
+    field: "location",
+    header: "Ubicación",
+    sortable: true,
+    filter: true,
+    body: (row) => row.location || EMPTY,
+  },
+  {
+    field: "office.name",
+    header: "Oficina",
+    sortable: true,
+    filter: true,
+    body: (row) => row.office?.name ?? EMPTY,
+  },
+  {
+    field: "currentStock",
+    header: "Existencias",
+    sortable: true,
+    bodyClassName: "white-space-nowrap",
+    body: (row) => {
+      const status = stockStatus(row);
+      return (
+        <span className="flex align-items-center gap-2">
+          <span className="font-medium">
+            {formatQuantity(row.currentStock, row.product?.unitOfMeasure)}
+          </span>
+          {status.severity !== "success" && (
+            <Tag severity={status.severity} value={status.label} />
+          )}
+        </span>
+      );
+    },
+  },
+  {
+    field: "minStock",
+    header: "Mínimo",
+    sortable: true,
+    body: (row) =>
+      row.minStock
+        ? formatQuantity(row.minStock, row.product?.unitOfMeasure)
+        : EMPTY,
+  },
+  {
+    field: "business.name",
+    header: "Empresa",
+    sortable: true,
+    filter: true,
+    visible: false,
+    body: (row) => row.business?.name ?? EMPTY,
+  },
+];
 
 export function InventoryTable() {
-  const [getInventories, { loading, data, error }] = useLazyQuery(
-    GET_INVENTORIES,
-    {
-      fetchPolicy: "network-only",
-    }
-  );
-  const [deleteInventories] = useMutation(DELETE_INVENTORIES);
-  const [selectedInventoryId, setSelectedInventoryId] = useState(null);
-  const [editDialogVisible, setEditDialogVisible] = useState(false);
-  const [createDialogVisible, setCreateDialogVisible] = useState(false);
-  const [detailDialogVisible, setDetailDialogVisible] = useState(false);
-  const [movementDialogVisible, setMovementDialogVisible] = useState(false);
   const toast = useRef(null);
-
-  const tableStateRef = useRef({
-    filters: {},
-    sorts: [],
-    pagination: { first: 0, rows: 10 },
-  });
+  const lastParams = useRef(null);
+  const { canEdit, canDelete, canRestore } = useInventoryRoles();
+  const [fetchInventories, { loading, data, error }] = useLazyQuery(
+    GET_INVENTORIES,
+    { fetchPolicy: "network-only" },
+  );
+  const [removeInventories] = useMutation(DELETE_INVENTORIES);
+  const [restoreInventories] = useMutation(RESTORE_INVENTORIES);
+  // { inventory } al editar, {} al crear
+  const [form, setForm] = useState(null);
+  // { inventory, type } al registrar una entrada o salida
+  const [movement, setMovement] = useState(null);
+  const [detailId, setDetailId] = useState(null);
 
   const handleFetchData = useCallback(
     async (params) => {
+      lastParams.current = params;
       try {
-        tableStateRef.current = {
-          filters: params.filters || {},
-          sorts: params.sorts || [],
-          pagination: {
-            first: params.skip,
-            rows: params.take,
-          },
-        };
-
-        const { data: responseData } = await getInventories({
+        const { data: response } = await fetchInventories({
           variables: {
             options: {
               skip: params.skip,
               take: params.take,
+              withDeleted: params.showDeleted,
               filters: params.filters,
               sorts: params.sorts,
             },
           },
         });
-
         return {
-          data: responseData?.inventories?.data,
-          totalCount: responseData?.inventories?.totalCount,
+          data: response?.inventories?.data,
+          totalCount: response?.inventories?.totalCount,
         };
-      } catch (err) {
-        console.error("Error fetching inventories:", err);
-        return {
-          data: [],
-          totalCount: 0,
-        };
+      } catch {
+        return { data: [], totalCount: 0 };
       }
     },
-    [getInventories]
+    [fetchInventories],
   );
 
   const handleRefresh = useCallback(() => {
-    handleFetchData({
-      skip: tableStateRef.current.pagination.first,
-      take: tableStateRef.current.pagination.rows,
-      filters: tableStateRef.current.filters,
-      sorts: tableStateRef.current.sorts,
-    });
+    if (lastParams.current) handleFetchData(lastParams.current);
   }, [handleFetchData]);
 
-  const handleEditSuccess = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
+  const notify = (severity, summary, detail) =>
+    toast.current?.show({ severity, summary, detail, life: 6000 });
 
-  const handleCreateSuccess = useCallback(() => {
+  const handleSaved = (saved, { created }) => {
+    const name = form?.inventory?.product?.name ?? saved?.product?.name;
+    setForm(null);
     handleRefresh();
-  }, [handleRefresh]);
-
-  const handleMovementSuccess = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
-
-  const handleEdit = (inventoryId) => {
-    setSelectedInventoryId(inventoryId);
-    setEditDialogVisible(true);
+    notify(
+      "success",
+      created ? "Inventario abierto" : "Inventario actualizado",
+      name,
+    );
   };
 
-  const handleViewDetails = (inventoryId) => {
-    setSelectedInventoryId(inventoryId);
-    setDetailDialogVisible(true);
+  const handleMovementSaved = (_saved, { type, quantity, product, printError }) => {
+    setMovement(null);
+    handleRefresh();
+    notify(
+      "success",
+      type === "OUT" ? "Salida registrada" : "Entrada registrada",
+      `${formatQuantity(quantity, product?.unitOfMeasure)} de ${product?.name}`,
+    );
+    if (printError) notify("warn", "No se imprimió el comprobante", printError);
   };
 
-  const handleCreateMovement = (inventoryId) => {
-    setSelectedInventoryId(inventoryId);
-    setMovementDialogVisible(true);
-  };
-
-  const handleDelete = (inventoryId) => {
+  const handleDelete = (row) =>
     confirmDialog({
-      message: "¿Estás seguro de que deseas eliminar este inventario?",
-      header: "Confirmación",
+      header: "Eliminar inventario",
+      message: `Se eliminará el inventario de "${row.product?.name}"${row.location ? ` en «${row.location}»` : ""}. Solo es posible si no le quedan existencias; su historial de movimientos se conserva.`,
       icon: "pi pi-exclamation-triangle",
+      acceptLabel: "Eliminar",
+      rejectLabel: "Cancelar",
+      acceptClassName: "p-button-danger",
       accept: async () => {
         try {
-          await deleteInventories({ variables: { ids: [inventoryId] } });
-
-          toast.current.show({
-            severity: "success",
-            summary: "Éxito",
-            detail: "Inventario eliminado correctamente",
-            life: 3000,
-          });
-
+          await removeInventories({ variables: { ids: [row.id] } });
+          notify("success", "Inventario eliminado", row.product?.name);
           handleRefresh();
         } catch (err) {
-          toast.current.show({
-            severity: "error",
-            summary: "Error",
-            detail: err.message,
-            life: 3000,
-          });
+          notify("error", "No se pudo eliminar", getErrorMessage(err));
         }
       },
     });
+
+  const handleRestore = async (row) => {
+    try {
+      await restoreInventories({ variables: { ids: [row.id] } });
+      notify("success", "Inventario restaurado", row.product?.name);
+      handleRefresh();
+    } catch (err) {
+      notify("error", "No se pudo restaurar", getErrorMessage(err));
+    }
   };
 
-  const dateBodyTemplate = (rowData, field) => {
-    return formatDate(rowData[field]);
-  };
-
-  const productBodyTemplate = (rowData) => {
-    return rowData.product?.name || "N/A";
-  };
-
-  const entityBodyTemplate = (rowData, field) => {
-    return rowData[field]?.name || "N/A";
-  };
-
-  const actionBodyTemplate = (rowData) => {
-    return (
+  const actionBodyTemplate = (row) =>
+    row.deletedAt ? (
       <div className="actions-column">
-        <Button
-          icon="pi pi-truck"
-          text
-          rounded
-          severity="help"
-          tooltip="Registrar movimiento"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleCreateMovement(rowData.id)}
-        />
-        <Button
-          icon="pi pi-pencil"
-          text
-          rounded
-          severity="secondary"
-          tooltip="Editar inventario"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleEdit(rowData.id)}
-        />
-        <Button
-          icon="pi pi-trash"
-          text
-          rounded
-          severity="danger"
-          tooltip="Eliminar inventario"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleDelete(rowData.id)}
-        />
+        {canRestore && (
+          <Button
+            icon="pi pi-history"
+            text
+            rounded
+            severity="success"
+            tooltip="Restaurar inventario"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Restaurar inventario"
+            onClick={() => handleRestore(row)}
+          />
+        )}
+      </div>
+    ) : (
+      <div className="actions-column">
+        {canEdit && (
+          <>
+            <Button
+              icon="pi pi-plus-circle"
+              text
+              rounded
+              severity="success"
+              tooltip="Registrar entrada"
+              tooltipOptions={{ position: "top" }}
+              aria-label="Registrar entrada"
+              onClick={() => setMovement({ inventory: row, type: "IN" })}
+            />
+            <Button
+              icon="pi pi-minus-circle"
+              text
+              rounded
+              severity="danger"
+              tooltip="Registrar salida"
+              tooltipOptions={{ position: "top" }}
+              aria-label="Registrar salida"
+              disabled={row.currentStock <= 0}
+              onClick={() => setMovement({ inventory: row, type: "OUT" })}
+            />
+          </>
+        )}
         <Button
           icon="pi pi-eye"
           text
           rounded
           severity="secondary"
-          tooltip="Ver detalles"
+          tooltip="Ver ficha y movimientos"
           tooltipOptions={{ position: "top" }}
-          onClick={() => handleViewDetails(rowData.id)}
+          aria-label="Ver ficha y movimientos"
+          onClick={() => setDetailId(row.id)}
         />
+        {canEdit && (
+          <Button
+            icon="pi pi-pencil"
+            text
+            rounded
+            tooltip="Editar ubicación y mínimo"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Editar inventario"
+            onClick={() => setForm({ inventory: row })}
+          />
+        )}
+        {canDelete && (
+          <Button
+            icon="pi pi-trash"
+            text
+            rounded
+            severity="danger"
+            tooltip="Eliminar inventario"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Eliminar inventario"
+            onClick={() => handleDelete(row)}
+          />
+        )}
       </div>
     );
-  };
-
-  const columns = [
-    {
-      field: "product.name",
-      header: "Producto",
-      body: productBodyTemplate,
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "currentStock",
-      header: "Stock Actual",
-      sortable: true,
-      filter: true,
-    },
-    {
-      visible: false,
-      field: "minStock",
-      header: "Stock Mínimo",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "business",
-      header: "Negocio",
-      body: (rowData) => entityBodyTemplate(rowData, "business"),
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "office",
-      header: "Oficina",
-      body: (rowData) => entityBodyTemplate(rowData, "office"),
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "department",
-      header: "Departamento",
-      body: (rowData) => entityBodyTemplate(rowData, "department"),
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "team",
-      header: "Equipo",
-      body: (rowData) => entityBodyTemplate(rowData, "team"),
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "location",
-      header: "Ubicación",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "createdAt",
-      header: "Fecha de Creación",
-      body: (rowData) => dateBodyTemplate(rowData, "createdAt"),
-      sortable: true,
-      visible: false,
-    },
-  ];
-
-  const addInventoryButton = (
-    <Button
-      icon="pi pi-plus"
-      tooltip="Crear Nuevo Inventario"
-      onClick={() => setCreateDialogVisible(true)}
-    />
-  );
 
   return (
     <>
@@ -274,46 +277,57 @@ export function InventoryTable() {
         totalRecords={data?.inventories?.totalCount}
         loading={loading}
         error={error}
-        globalFilterFields={["product.name", "location"]}
+        globalFilterFields={[
+          "product.name",
+          "category.name",
+          "location",
+          "office.name",
+        ]}
         emptyMessage="No se encontraron inventarios"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} inventarios"
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        header={addInventoryButton}
+        initialSorts={[{ field: "product.name", order: 1 }]}
+        header={
+          canEdit && (
+            <Button
+              label="Nuevo inventario"
+              icon="pi pi-plus"
+              onClick={() => setForm({})}
+            />
+          )
+        }
+        showDeleted={canRestore}
       >
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerClassName="w-12rem"
+          className="w-14rem"
         />
       </GenericDataTable>
 
-      <InventoryEditForm
-        inventoryId={selectedInventoryId}
-        visible={editDialogVisible}
-        onHide={() => setEditDialogVisible(false)}
-        onSuccess={handleEditSuccess}
-      />
-
-      <InventoryCreateForm
-        visible={createDialogVisible}
-        onHide={() => setCreateDialogVisible(false)}
-        onSuccess={handleCreateSuccess}
-      />
-
-      <InventoryDetailForm
-        inventoryId={selectedInventoryId}
-        visible={detailDialogVisible}
-        onHide={() => setDetailDialogVisible(false)}
-      />
-
-      <InventoryMovementCreateForm
-        visible={movementDialogVisible}
-        onHide={() => setMovementDialogVisible(false)}
-        onSuccess={handleMovementSuccess}
-        inventoryId={selectedInventoryId}
-      />
+      {form && (
+        <InventoryForm
+          inventory={form.inventory}
+          onHide={() => setForm(null)}
+          onSaved={handleSaved}
+        />
+      )}
+      {movement && (
+        <MovementForm
+          inventory={movement.inventory}
+          type={movement.type}
+          onHide={() => setMovement(null)}
+          onSaved={handleMovementSaved}
+        />
+      )}
+      {detailId && (
+        <InventoryDetailForm
+          inventoryId={detailId}
+          onHide={() => setDetailId(null)}
+        />
+      )}
     </>
   );
 }
