@@ -1,304 +1,199 @@
-import React, { useCallback, useState, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
-import { GET_PAYMENT_RULES, REMOVE_PAYMENT_RULES } from "../graphql/queries";
-import GenericDataTable from "../../../../components/BaseTable/index";
-import { Column } from "primereact/column";
 import { Button } from "primereact/button";
+import { Column } from "primereact/column";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { Toast } from "primereact/toast";
 import { Tag } from "primereact/tag";
-import { PaymentRuleEditForm } from "./PaymentRuleEditForm";
-import { PaymentRuleCreateForm } from "./PaymentRuleCreateForm";
-import { PaymentRuleDetailForm } from "./PaymentRuleDetailForm";
+import { Toast } from "primereact/toast";
+import GenericDataTable from "../../../../components/BaseTable";
+import { getErrorMessage } from "../../../../utils/errors";
+import {
+  GET_PAYMENT_RULES,
+  REMOVE_PAYMENT_RULES,
+  RESTORE_PAYMENT_RULES,
+} from "../graphql/queries";
+import { PAYMENT_TYPE, ruleSummary, workerTypeLabel } from "../../format";
+import { useHasRole } from "../../useHasRole";
+import { PaymentRuleForm } from "./PaymentRuleForm";
 
-const statusBodyTemplate = (rowData) => {
-  return (
-    <Tag
-      severity={rowData.isActive ? "success" : "danger"}
-      value={rowData.isActive ? "Activo" : "Inactivo"}
-    />
-  );
-};
-
-const paymentTypeBodyTemplate = (rowData) => {
-  const types = {
-    PRICE_RANGE: "Rango de Precios",
-    SALE_QUANTITY: "Cantidad Ventas",
-    FIXED_AMOUNT: "Monto Fijo",
-    PERCENTAGE: "Porcentaje",
-  };
-  return types[rowData.paymentType] || rowData.paymentType;
-};
-
-const workerTypeBodyTemplate = (rowData) => {
-  const types = {
-    PUBLICIST: "Publicista",
-    ECONOMIC: "Económico",
-    SERVICE: "Servicios",
-    COURIER: "Mensajero",
-    TECHNICIAN: "Técnico",
-    OPERATIVE: "Operativo",
-    PRINCIPAL: "Director",
-    ADMINISTRATIVE: "Administrativo",
-    MANAGER: "Gerente",
-    SUPERVISOR: "Supervisor",
-    AGENT: "Agente",
-    OTHER: rowData.otherType || "Otro",
-  };
-  return types[rowData.workerType] || rowData.workerType;
-};
-
-const scopeBodyTemplate = (rowData) => {
-  const scopes = {
-    BUSINESS: "Business",
-    OFFICE: "Oficina",
-    DEPARTMENT: "Departamento",
-    TEAM: "Equipo",
-    PERSONAL: "Personal",
-    RELATED: "Relacionado",
-  };
-  return scopes[rowData.scope] || rowData.scope;
-};
-
-const currencyBodyTemplate = (rowData) => {
-  const currencies = {
-    USD: "USD",
-    CUP: "CUP",
-    MLC: "MLC",
-  };
-  return currencies[rowData.paymentCurrency] || rowData.paymentCurrency;
-};
-
-const distributeProfitsBodyTemplate = (rowData) => {
-  return (
-    <Tag
-      severity={rowData.distributeProfits ? "success" : "danger"}
-      value={rowData.distributeProfits ? "Sí" : "No"}
-    />
-  );
-};
-
-const dateBodyTemplate = (rowData, field) => {
-  if (!rowData[field]) return "N/A";
-  const date = new Date(rowData[field]);
-  return date.toLocaleDateString("es-ES", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-};
+const columns = [
+  {
+    field: "name",
+    header: "Regla",
+    sortable: true,
+    filter: true,
+    body: (row) => (
+      <span className="flex flex-column">
+        <span className="font-medium text-900">{row.name}</span>
+        <small className="text-color-secondary">
+          {PAYMENT_TYPE[row.paymentType]?.label}
+        </small>
+      </span>
+    ),
+  },
+  {
+    field: "workerType",
+    header: "Quién cobra",
+    sortable: true,
+    body: (row) =>
+      row.workerType === "OTHER" && row.otherType
+        ? row.otherType
+        : workerTypeLabel(row.workerType),
+  },
+  {
+    field: "paymentCurrency",
+    header: "Cuánto",
+    sortable: false,
+    body: (row) => (
+      <span className="flex flex-column">
+        <span>{ruleSummary(row)}</span>
+        <small className="text-color-secondary">
+          {[row.product?.name, row.category?.name].filter(Boolean).join(" · ") ||
+            (row.paymentType === "FIXED_AMOUNT" ? "" : "Todos los productos")}
+        </small>
+      </span>
+    ),
+  },
+  {
+    field: "isActive",
+    header: "Estado",
+    sortable: true,
+    body: (row) => (
+      <Tag
+        severity={row.isActive ? "success" : "secondary"}
+        value={row.isActive ? "Activa" : "Inactiva"}
+      />
+    ),
+  },
+];
 
 export function PaymentRuleTable() {
-  const [getPaymentRules, { loading, data, error }] = useLazyQuery(
-    GET_PAYMENT_RULES,
-    {
-      fetchPolicy: "network-only",
-    },
-  );
-  const [removePaymentRules] = useMutation(REMOVE_PAYMENT_RULES);
-  const [selectedPaymentRuleId, setSelectedPaymentRuleId] = useState(null);
-  const [editDialogVisible, setEditDialogVisible] = useState(false);
-  const [createDialogVisible, setCreateDialogVisible] = useState(false);
-  const [detailDialogVisible, setDetailDialogVisible] = useState(false);
   const toast = useRef(null);
-  const tableStateRef = useRef({
-    filters: {},
-    sorts: [],
-    pagination: { first: 0, rows: 10 },
-  });
+  const lastParams = useRef(null);
+  const hasRole = useHasRole();
+  const canEdit = hasRole("SUPER", "PRINCIPAL", "ADMIN");
+  const canDelete = hasRole("SUPER", "PRINCIPAL");
+  const canRestore = hasRole("SUPER");
+  const [fetchRules, { loading, data, error }] = useLazyQuery(
+    GET_PAYMENT_RULES,
+    { fetchPolicy: "network-only" },
+  );
+  const [removeRules] = useMutation(REMOVE_PAYMENT_RULES);
+  const [restoreRules] = useMutation(RESTORE_PAYMENT_RULES);
+  // { rule } al editar, {} al crear
+  const [form, setForm] = useState(null);
 
   const handleFetchData = useCallback(
     async (params) => {
+      lastParams.current = params;
       try {
-        tableStateRef.current = {
-          filters: params.filters || {},
-          sorts: params.sorts || [],
-          pagination: {
-            first: params.skip,
-            rows: params.take,
-          },
-        };
-
-        const { data: responseData } = await getPaymentRules({
+        const { data: response } = await fetchRules({
           variables: {
             options: {
               skip: params.skip,
               take: params.take,
+              withDeleted: params.showDeleted,
               filters: params.filters,
               sorts: params.sorts,
             },
           },
         });
-
         return {
-          data: responseData?.paymentRules?.data,
-          totalCount: responseData?.paymentRules?.totalCount,
+          data: response?.paymentRules?.data,
+          totalCount: response?.paymentRules?.totalCount,
         };
-      } catch (err) {
-        console.error("Error fetching payment rules:", err);
-        return {
-          data: [],
-          totalCount: 0,
-        };
+      } catch {
+        return { data: [], totalCount: 0 };
       }
     },
-    [getPaymentRules],
+    [fetchRules],
   );
 
   const handleRefresh = useCallback(() => {
-    handleFetchData({
-      skip: tableStateRef.current.pagination.first,
-      take: tableStateRef.current.pagination.rows,
-      filters: tableStateRef.current.filters,
-      sorts: tableStateRef.current.sorts,
-    });
+    if (lastParams.current) handleFetchData(lastParams.current);
   }, [handleFetchData]);
 
-  const handleEditSuccess = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
+  const notify = (severity, summary, detail) =>
+    toast.current?.show({ severity, summary, detail, life: 6000 });
 
-  const handleCreateSuccess = useCallback(() => {
+  const handleSaved = (saved, { created }) => {
+    setForm(null);
     handleRefresh();
-  }, [handleRefresh]);
-
-  const handleEdit = (id) => {
-    setSelectedPaymentRuleId(id);
-    setEditDialogVisible(true);
+    notify("success", created ? "Regla creada" : "Regla actualizada", saved?.name);
   };
 
-  const handleViewDetails = (id) => {
-    setSelectedPaymentRuleId(id);
-    setDetailDialogVisible(true);
-  };
-
-  const handleDelete = (id) => {
+  const handleDelete = (row) =>
     confirmDialog({
-      message: "¿Estás seguro de que deseas eliminar esta regla de pago?",
-      header: "Confirmación",
+      header: "Eliminar regla",
+      message: `Se eliminará la regla «${row.name}». Los pagos ya calculados con ella se conservan.`,
       icon: "pi pi-exclamation-triangle",
+      acceptLabel: "Eliminar",
+      rejectLabel: "Cancelar",
+      acceptClassName: "p-button-danger",
       accept: async () => {
         try {
-          await removePaymentRules({ variables: { ids: [id] } });
-
-          toast.current.show({
-            severity: "success",
-            summary: "Éxito",
-            detail: "Regla de pago eliminada correctamente",
-            life: 3000,
-          });
-
+          await removeRules({ variables: { ids: [row.id] } });
+          notify("success", "Regla eliminada", row.name);
           handleRefresh();
         } catch (err) {
-          toast.current.show({
-            severity: "error",
-            summary: "Error",
-            detail: err.message,
-            life: 3000,
-          });
+          notify("error", "No se pudo eliminar", getErrorMessage(err));
         }
       },
     });
+
+  const handleRestore = async (row) => {
+    try {
+      await restoreRules({ variables: { ids: [row.id] } });
+      notify("success", "Regla restaurada", row.name);
+      handleRefresh();
+    } catch (err) {
+      notify("error", "No se pudo restaurar", getErrorMessage(err));
+    }
   };
 
-  const actionBodyTemplate = (rowData) => {
-    return (
+  const actionBodyTemplate = (row) =>
+    row.deletedAt ? (
       <div className="actions-column">
-        <Button
-          icon="pi pi-pencil"
-          text
-          rounded
-          tooltip="Editar"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleEdit(rowData.id)}
-        />
-        <Button
-          icon="pi pi-trash"
-          text
-          rounded
-          severity="danger"
-          tooltip="Eliminar"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleDelete(rowData.id)}
-        />
-        <Button
-          icon="pi pi-eye"
-          text
-          rounded
-          severity="info"
-          tooltip="Ver detalles"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleViewDetails(rowData.id)}
-        />
+        {canRestore && (
+          <Button
+            icon="pi pi-history"
+            text
+            rounded
+            severity="success"
+            tooltip="Restaurar regla"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Restaurar regla"
+            onClick={() => handleRestore(row)}
+          />
+        )}
+      </div>
+    ) : (
+      <div className="actions-column">
+        {canEdit && (
+          <Button
+            icon="pi pi-pencil"
+            text
+            rounded
+            tooltip="Editar regla"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Editar regla"
+            onClick={() => setForm({ rule: row })}
+          />
+        )}
+        {canDelete && (
+          <Button
+            icon="pi pi-trash"
+            text
+            rounded
+            severity="danger"
+            tooltip="Eliminar regla"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Eliminar regla"
+            onClick={() => handleDelete(row)}
+          />
+        )}
       </div>
     );
-  };
-
-  const columns = [
-    {
-      field: "name",
-      header: "Nombre",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "paymentType",
-      header: "Tipo de Pago",
-      body: paymentTypeBodyTemplate,
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "workerType",
-      header: "Tipo Trabajador",
-      body: workerTypeBodyTemplate,
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "paymentCurrency",
-      header: "Moneda",
-      body: currencyBodyTemplate,
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "scope",
-      header: "Ámbito",
-      body: scopeBodyTemplate,
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "distributeProfits",
-      header: "Dist. Beneficios",
-      body: distributeProfitsBodyTemplate,
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "isActive",
-      header: "Estado",
-      body: statusBodyTemplate,
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "createdAt",
-      header: "Creado",
-      body: (rowData) => dateBodyTemplate(rowData, "createdAt"),
-      sortable: true,
-      filter: true,
-    },
-  ];
-
-  const addButton = (
-    <Button
-      icon="pi pi-plus"
-      tooltip="Crear Nueva Regla"
-      onClick={() => setCreateDialogVisible(true)}
-    />
-  );
 
   return (
     <>
@@ -311,39 +206,38 @@ export function PaymentRuleTable() {
         totalRecords={data?.paymentRules?.totalCount}
         loading={loading}
         error={error}
-        globalFilterFields={["name", "paymentType", "workerType", "scope"]}
-        emptyMessage="No se encontraron reglas de pago"
+        globalFilterFields={["name", "description"]}
+        emptyMessage="No hay reglas de pago"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} reglas"
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        header={addButton}
+        initialSorts={[{ field: "name", order: 1 }]}
+        header={
+          canEdit && (
+            <Button
+              label="Nueva regla"
+              icon="pi pi-plus"
+              onClick={() => setForm({})}
+            />
+          )
+        }
+        showDeleted={canRestore}
       >
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerClassName="w-10rem"
+          className="w-8rem"
         />
       </GenericDataTable>
 
-      <PaymentRuleEditForm
-        paymentRuleId={selectedPaymentRuleId}
-        visible={editDialogVisible}
-        onHide={() => setEditDialogVisible(false)}
-        onSuccess={handleEditSuccess}
-      />
-
-      <PaymentRuleCreateForm
-        visible={createDialogVisible}
-        onHide={() => setCreateDialogVisible(false)}
-        onSuccess={handleCreateSuccess}
-      />
-
-      <PaymentRuleDetailForm
-        paymentRuleId={selectedPaymentRuleId}
-        visible={detailDialogVisible}
-        onHide={() => setDetailDialogVisible(false)}
-      />
+      {form && (
+        <PaymentRuleForm
+          rule={form.rule}
+          onHide={() => setForm(null)}
+          onSaved={handleSaved}
+        />
+      )}
     </>
   );
 }

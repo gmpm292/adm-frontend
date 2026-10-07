@@ -1,182 +1,77 @@
 import { gql } from "@apollo/client";
 
+const PAYMENT_FIELDS = `
+  id
+  amount
+  currency
+  paymentConcept
+  paymentMethod
+  paidDate
+  notes
+  createdAt
+  deletedAt
+  breakdown
+  worker {
+    id
+    workerType
+    tempFirstName
+    tempLastName
+    user {
+      id
+      name
+      lastName
+    }
+  }
+  payrollPeriod {
+    id
+    name
+    isClosed
+  }
+  sale {
+    id
+  }
+`;
+
 export const GET_WORKER_PAYMENTS = gql`
   query WorkerPayments($options: ListOptions) {
     workerPayments(options: $options) {
       totalCount
       data {
-        createdAt
-        updatedAt
-        deletedAt
-
-        createdBy {
-          id
-          name
-        }
-        updatedBy {
-          id
-          name
-        }
-        deletedBy {
-          id
-          name
-        }
-
-        business {
-          id
-          name
-        }
-        office {
-          id
-          name
-        }
-        department {
-          id
-          name
-        }
-        team {
-          id
-          name
-        }
-
-        id
-        amount
-        currency
-        paymentMethod
-        paymentConcept
-        breakdown
-        notes
-        worker {
-          id
-          user {
-            name
-            lastName
-          }
-          tempFirstName
-          tempLastName
-          tempEmail
-          tempPhone
-          tempRole
-        }
-
-        sale {
-          id
-          effectiveDate
-        }
-
-        payrollPeriod {
-          id
-          name
-        }
-      }
-    }
-  }
-`;
-
-export const GET_WORKER_PAYMENT_BY_ID = gql`
-  query WorkerPayment($id: Int!) {
-    workerPayment(id: $id) {
-      id
-      amount
-      currency
-      exchangeRate
-      paymentMethod
-      paymentConcept
-      paidDate
-      notes
-      breakdown
-      createdAt
-      updatedAt
-      deletedAt
-
-      createdBy {
-        id
-        name
-      }
-      updatedBy {
-        id
-        name
-      }
-      deletedBy {
-        id
-        name
-      }
-
-      business {
-        id
-        name
-      }
-      office {
-        id
-        name
-      }
-      department {
-        id
-        name
-      }
-      team {
-        id
-        name
-      }
-
-      worker {
-        id
-        workerType
-        otherType
-        tempFirstName
-        tempLastName
-        tempEmail
-        tempPhone
-        tempRole
-
-        user {
-          id
-          name
-          lastName
-          email
-          mobile
-          role
-        }
-      }
-
-      sale {
-        id
-        effectiveDate
-        totalAmount
-        isConfirmed
-        paymentMethod
-        invoiceNumber
-      }
-
-      payrollPeriod {
-        id
-        name
-        startDate
-        endDate
+        ${PAYMENT_FIELDS}
       }
     }
   }
 `;
 
 export const CREATE_WORKER_PAYMENT = gql`
-  mutation CreateWorkerPayment(
-    $createWorkerPaymentInput: CreateWorkerPaymentInput!
-  ) {
-    createWorkerPayment(createWorkerPaymentInput: $createWorkerPaymentInput) {
+  mutation CreateWorkerPayment($payment: CreateWorkerPaymentInput!) {
+    createWorkerPayment(createWorkerPaymentInput: $payment) {
       id
     }
   }
 `;
 
 export const UPDATE_WORKER_PAYMENT = gql`
-  mutation UpdateWorkerPayment(
-    $updateWorkerPaymentInput: UpdateWorkerPaymentInput!
-  ) {
-    updateWorkerPayment(updateWorkerPaymentInput: $updateWorkerPaymentInput) {
+  mutation UpdateWorkerPayment($payment: UpdateWorkerPaymentInput!) {
+    updateWorkerPayment(updateWorkerPaymentInput: $payment) {
       id
-      amount
-      paymentMethod
-      paymentType
+    }
+  }
+`;
+
+export const MARK_WORKER_PAYMENTS_AS_PAID = gql`
+  mutation MarkWorkerPaymentsAsPaid(
+    $ids: [Int!]!
+    $paidDate: Date
+    $paymentMethod: PaymentMethod
+  ) {
+    markWorkerPaymentsAsPaid(
+      ids: $ids
+      paidDate: $paidDate
+      paymentMethod: $paymentMethod
+    ) {
+      id
+      paidDate
     }
   }
 `;
@@ -185,6 +80,31 @@ export const REMOVE_WORKER_PAYMENTS = gql`
   mutation RemoveWorkerPayments($ids: [Int!]!) {
     removeWorkerPayments(ids: $ids) {
       id
+    }
+  }
+`;
+
+/** Períodos abiertos y monedas para registrar un pago a mano */
+export const GET_PAYMENT_FORM_OPTIONS = gql`
+  query WorkerPaymentFormOptions {
+    payrollPeriods(
+      options: { take: 50, sorts: [{ property: "startDate", direction: DESC }] }
+    ) {
+      data {
+        id
+        name
+        isClosed
+        startDate
+        endDate
+      }
+    }
+    currencies(options: { take: 100 }) {
+      data {
+        id
+        code
+        name
+        isActive
+      }
     }
   }
 `;

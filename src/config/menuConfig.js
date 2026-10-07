@@ -174,7 +174,7 @@ export const menuConfig = [
           routePermissions["/payroll/attendance"]?.requiredRoles || [],
       },
       {
-        label: "Reglas de Pago",
+        label: "Reglas de pago",
         icon: "pi pi-book",
         path: "/payroll/payment-rules",
         permissions:

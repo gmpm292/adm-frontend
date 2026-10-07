@@ -1,206 +1,191 @@
-import React, { useCallback, useState, useRef } from 'react';
-import { useLazyQuery, useMutation } from '@apollo/client';
-import { GET_WORK_SCHEDULES, REMOVE_WORK_SCHEDULES } from '../graphql/queries';
-import GenericDataTable from '../../../../components/BaseTable/index';
-import { Column } from 'primereact/column';
-import { Button } from 'primereact/button';
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
-import { Toast } from 'primereact/toast';
-import { WorkScheduleEditForm } from './WorkScheduleEditForm';
-import { WorkScheduleCreateForm } from './WorkScheduleCreateForm';
-import { WorkScheduleDetailForm } from './WorkScheduleDetailForm';
+import { useCallback, useRef, useState } from "react";
+import { useLazyQuery, useMutation } from "@apollo/client";
+import { Button } from "primereact/button";
+import { Column } from "primereact/column";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { Toast } from "primereact/toast";
+import GenericDataTable from "../../../../components/BaseTable";
+import { getErrorMessage } from "../../../../utils/errors";
+import {
+  GET_WORK_SCHEDULES,
+  REMOVE_WORK_SCHEDULES,
+  RESTORE_WORK_SCHEDULES,
+} from "../graphql/queries";
+import { formatDay, workingDaysText } from "../../format";
+import { useHasRole } from "../../useHasRole";
+import { WorkScheduleForm } from "./WorkScheduleForm";
 
-const dateBodyTemplate = (rowData, field) => {
-  return new Date(rowData[field]).toLocaleDateString();
-};
-
-const recurringBodyTemplate = (rowData) => {
-  return rowData.isRecurring ? 'Sí' : 'No';
-};
-
-const officeBodyTemplate = (rowData) => {
-  return rowData.office?.name || 'N/A';
-};
+const columns = [
+  {
+    field: "name",
+    header: "Nombre",
+    sortable: true,
+    filter: true,
+    body: (row) => (
+      <span className="flex flex-column">
+        <span className="font-medium text-900">{row.name}</span>
+        {row.notes && (
+          <small className="text-color-secondary">{row.notes}</small>
+        )}
+      </span>
+    ),
+  },
+  {
+    field: "startDate",
+    header: "Fechas",
+    sortable: true,
+    bodyClassName: "white-space-nowrap",
+    body: (row) => `${formatDay(row.startDate)} – ${formatDay(row.endDate)}`,
+  },
+  {
+    field: "workingDays",
+    header: "Días laborables",
+    sortable: false,
+    body: (row) => workingDaysText(row.workingDays),
+  },
+  {
+    field: "office.name",
+    header: "Oficina",
+    sortable: true,
+    filter: true,
+    body: (row) =>
+      row.office?.name ?? (
+        <span className="text-color-secondary">Toda la empresa</span>
+      ),
+  },
+];
 
 export function WorkScheduleTable() {
-  const [getWorkSchedules, { loading, data, error }] = useLazyQuery(GET_WORK_SCHEDULES, {
-    fetchPolicy: 'network-only',
-  });
-  const [removeWorkSchedules] = useMutation(REMOVE_WORK_SCHEDULES);
-  const [selectedScheduleId, setSelectedScheduleId] = useState(null);
-  const [editDialogVisible, setEditDialogVisible] = useState(false);
-  const [createDialogVisible, setCreateDialogVisible] = useState(false);
-  const [detailDialogVisible, setDetailDialogVisible] = useState(false);
   const toast = useRef(null);
-  const tableStateRef = useRef({
-    filters: {},
-    sorts: [],
-    pagination: { first: 0, rows: 10 },
-  });
+  const lastParams = useRef(null);
+  const hasRole = useHasRole();
+  const canEdit = hasRole("SUPER", "PRINCIPAL", "ADMIN");
+  const canDelete = hasRole("SUPER", "PRINCIPAL");
+  const canRestore = hasRole("SUPER");
+  const [fetchSchedules, { loading, data, error }] = useLazyQuery(
+    GET_WORK_SCHEDULES,
+    { fetchPolicy: "network-only" },
+  );
+  const [removeSchedules] = useMutation(REMOVE_WORK_SCHEDULES);
+  const [restoreSchedules] = useMutation(RESTORE_WORK_SCHEDULES);
+  // { schedule } al editar, {} al crear
+  const [form, setForm] = useState(null);
 
   const handleFetchData = useCallback(
     async (params) => {
+      lastParams.current = params;
       try {
-        tableStateRef.current = {
-          filters: params.filters || {},
-          sorts: params.sorts || [],
-          pagination: {
-            first: params.skip,
-            rows: params.take,
-          },
-        };
-
-        const { data: responseData } = await getWorkSchedules({
+        const { data: response } = await fetchSchedules({
           variables: {
             options: {
               skip: params.skip,
               take: params.take,
+              withDeleted: params.showDeleted,
               filters: params.filters,
               sorts: params.sorts,
             },
           },
         });
-
         return {
-          data: responseData?.workSchedules?.data,
-          totalCount: responseData?.workSchedules?.totalCount,
+          data: response?.workSchedules?.data,
+          totalCount: response?.workSchedules?.totalCount,
         };
-      } catch (err) {
-        console.error('Error fetching work schedules:', err);
-        return {
-          data: [],
-          totalCount: 0,
-        };
+      } catch {
+        return { data: [], totalCount: 0 };
       }
     },
-    [getWorkSchedules]
+    [fetchSchedules],
   );
 
   const handleRefresh = useCallback(() => {
-    handleFetchData({
-      skip: tableStateRef.current.pagination.first,
-      take: tableStateRef.current.pagination.rows,
-      filters: tableStateRef.current.filters,
-      sorts: tableStateRef.current.sorts,
-    });
+    if (lastParams.current) handleFetchData(lastParams.current);
   }, [handleFetchData]);
 
-  const handleEditSuccess = useCallback(() => {
+  const notify = (severity, summary, detail) =>
+    toast.current?.show({ severity, summary, detail, life: 6000 });
+
+  const handleSaved = (saved, { created }) => {
+    setForm(null);
     handleRefresh();
-  }, [handleRefresh]);
-
-  const handleCreateSuccess = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
-
-  const handleEdit = (id) => {
-    setSelectedScheduleId(id);
-    setEditDialogVisible(true);
-  };
-
-  const handleViewDetails = (id) => {
-    setSelectedScheduleId(id);
-    setDetailDialogVisible(true);
-  };
-
-  const handleDelete = (id) => {
-    confirmDialog({
-      message: '¿Estás seguro de que deseas eliminar este horario laboral?',
-      header: 'Confirmación',
-      icon: 'pi pi-exclamation-triangle',
-      accept: async () => {
-        try {
-          await removeWorkSchedules({ variables: { ids: [id] } });
-
-          toast.current.show({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Horario laboral eliminado correctamente',
-            life: 3000,
-          });
-
-          handleRefresh();
-        } catch (err) {
-          toast.current.show({
-            severity: 'error',
-            summary: 'Error',
-            detail: err.message,
-            life: 3000,
-          });
-        }
-      },
-    });
-  };
-
-  const actionBodyTemplate = (rowData) => {
-    return (
-      <div className="actions-column">
-        <Button
-          icon="pi pi-pencil"
-          text
-          rounded
-          tooltip="Editar"
-          tooltipOptions={{ position: 'top' }}
-          onClick={() => handleEdit(rowData.id)}
-        />
-        <Button
-          icon="pi pi-trash"
-          text
-          rounded
-          severity="danger"
-          tooltip="Eliminar"
-          tooltipOptions={{ position: 'top' }}
-          onClick={() => handleDelete(rowData.id)}
-        />
-        <Button
-          icon="pi pi-eye"
-          text
-          rounded
-          severity="info"
-          tooltip="Ver detalles"
-          tooltipOptions={{ position: 'top' }}
-          onClick={() => handleViewDetails(rowData.id)}
-        />
-      </div>
+    notify(
+      "success",
+      created ? "Horario creado" : "Horario actualizado",
+      saved?.name,
     );
   };
 
-  const columns = [
-    {
-      field: 'office.name',
-      header: 'Oficina',
-      body: officeBodyTemplate,
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: 'startDate',
-      header: 'Fecha Inicio',
-      body: (rowData) => dateBodyTemplate(rowData, 'startDate'),
-      sortable: true,
-    },
-    {
-      field: 'endDate',
-      header: 'Fecha Fin',
-      body: (rowData) => dateBodyTemplate(rowData, 'endDate'),
-      sortable: true,
-    },
-    {
-      field: 'isRecurring',
-      header: 'Recurrente',
-      body: recurringBodyTemplate,
-      sortable: true,
-      filter: true,
-    },
-  ];
+  const handleDelete = (row) =>
+    confirmDialog({
+      header: "Eliminar horario",
+      message: `Se eliminará el horario "${row.name}". Puedes restaurarlo después.`,
+      icon: "pi pi-exclamation-triangle",
+      acceptLabel: "Eliminar",
+      rejectLabel: "Cancelar",
+      acceptClassName: "p-button-danger",
+      accept: async () => {
+        try {
+          await removeSchedules({ variables: { ids: [row.id] } });
+          notify("success", "Horario eliminado", row.name);
+          handleRefresh();
+        } catch (err) {
+          notify("error", "No se pudo eliminar", getErrorMessage(err));
+        }
+      },
+    });
 
-  const addButton = (
-    <Button
-      icon="pi pi-plus"
-      tooltip="Crear Nuevo Horario"
-      onClick={() => setCreateDialogVisible(true)}
-    />
-  );
+  const handleRestore = async (row) => {
+    try {
+      await restoreSchedules({ variables: { ids: [row.id] } });
+      notify("success", "Horario restaurado", row.name);
+      handleRefresh();
+    } catch (err) {
+      notify("error", "No se pudo restaurar", getErrorMessage(err));
+    }
+  };
+
+  const actionBodyTemplate = (row) =>
+    row.deletedAt ? (
+      <div className="actions-column">
+        {canRestore && (
+          <Button
+            icon="pi pi-history"
+            text
+            rounded
+            severity="success"
+            tooltip="Restaurar horario"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Restaurar horario"
+            onClick={() => handleRestore(row)}
+          />
+        )}
+      </div>
+    ) : (
+      <div className="actions-column">
+        {canEdit && (
+          <Button
+            icon="pi pi-pencil"
+            text
+            rounded
+            tooltip="Editar horario"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Editar horario"
+            onClick={() => setForm({ schedule: row })}
+          />
+        )}
+        {canDelete && (
+          <Button
+            icon="pi pi-trash"
+            text
+            rounded
+            severity="danger"
+            tooltip="Eliminar horario"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Eliminar horario"
+            onClick={() => handleDelete(row)}
+          />
+        )}
+      </div>
+    );
 
   return (
     <>
@@ -213,39 +198,38 @@ export function WorkScheduleTable() {
         totalRecords={data?.workSchedules?.totalCount}
         loading={loading}
         error={error}
-        globalFilterFields={['office.name']}
-        emptyMessage="No se encontraron horarios laborales"
+        globalFilterFields={["name", "notes", "office.name"]}
+        emptyMessage="No hay horarios"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} horarios"
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        header={addButton}
+        initialSorts={[{ field: "startDate", order: -1 }]}
+        header={
+          canEdit && (
+            <Button
+              label="Nuevo horario"
+              icon="pi pi-plus"
+              onClick={() => setForm({})}
+            />
+          )
+        }
+        showDeleted={canRestore}
       >
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerClassName="w-10rem"
+          className="w-8rem"
         />
       </GenericDataTable>
 
-      <WorkScheduleEditForm
-        scheduleId={selectedScheduleId}
-        visible={editDialogVisible}
-        onHide={() => setEditDialogVisible(false)}
-        onSuccess={handleEditSuccess}
-      />
-
-      <WorkScheduleCreateForm
-        visible={createDialogVisible}
-        onHide={() => setCreateDialogVisible(false)}
-        onSuccess={handleCreateSuccess}
-      />
-
-      <WorkScheduleDetailForm
-        scheduleId={selectedScheduleId}
-        visible={detailDialogVisible}
-        onHide={() => setDetailDialogVisible(false)}
-      />
+      {form && (
+        <WorkScheduleForm
+          schedule={form.schedule}
+          onHide={() => setForm(null)}
+          onSaved={handleSaved}
+        />
+      )}
     </>
   );
 }

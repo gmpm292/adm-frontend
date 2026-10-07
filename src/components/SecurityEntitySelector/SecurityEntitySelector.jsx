@@ -284,7 +284,7 @@ const SecurityEntitySelector = ({
   return (
     <div>
       {showBusinessField && (
-        <FormField label="Business">
+        <FormField label="Empresa">
           <div className="flex align-items-center gap-2">
             <Dropdown
               value={selectedBusiness}
@@ -294,7 +294,7 @@ const SecurityEntitySelector = ({
               placeholder={
                 userProfile?.business
                   ? userProfile.business.name
-                  : "Select a business"
+                  : "Elige la empresa"
               }
               disabled={!!userProfile?.business}
               className="flex-1"
@@ -305,7 +305,7 @@ const SecurityEntitySelector = ({
               userProfile?.business
             ) && (
               <Button
-                label="Clear"
+                label="Quitar"
                 text
                 size="small"
                 severity="secondary"
@@ -317,7 +317,7 @@ const SecurityEntitySelector = ({
       )}
 
       {showOfficeField && (
-        <FormField label="Office">
+        <FormField label="Oficina">
           <div className="flex align-items-center gap-2">
             <Dropdown
               value={selectedOffice}
@@ -327,7 +327,7 @@ const SecurityEntitySelector = ({
               placeholder={
                 userProfile?.office
                   ? userProfile.office.name
-                  : "Select an office"
+                  : "Elige la oficina"
               }
               disabled={!!userProfile?.office}
               className="flex-1"
@@ -338,7 +338,7 @@ const SecurityEntitySelector = ({
               userProfile?.office
             ) && (
               <Button
-                label="Clear"
+                label="Quitar"
                 text
                 size="small"
                 severity="secondary"
@@ -350,7 +350,7 @@ const SecurityEntitySelector = ({
       )}
 
       {showDepartmentField && (
-        <FormField label="Department">
+        <FormField label="Departamento">
           <div className="flex align-items-center gap-2">
             <Dropdown
               value={selectedDepartment}
@@ -360,7 +360,7 @@ const SecurityEntitySelector = ({
               placeholder={
                 userProfile?.department
                   ? userProfile.department.name
-                  : "Select a department"
+                  : "Elige el departamento"
               }
               disabled={!!userProfile?.department}
               className="flex-1"
@@ -371,7 +371,7 @@ const SecurityEntitySelector = ({
               userProfile?.department
             ) && (
               <Button
-                label="Clear"
+                label="Quitar"
                 text
                 size="small"
                 severity="secondary"
@@ -383,7 +383,7 @@ const SecurityEntitySelector = ({
       )}
 
       {showTeamField && (
-        <FormField label="Team">
+        <FormField label="Equipo">
           <div className="flex align-items-center gap-2">
             <Dropdown
               value={selectedTeam}
@@ -391,7 +391,7 @@ const SecurityEntitySelector = ({
               onChange={handleTeamChange}
               optionLabel="name"
               placeholder={
-                userProfile?.team ? userProfile.team.name : "Select a team"
+                userProfile?.team ? userProfile.team.name : "Elige el equipo"
               }
               disabled={!!userProfile?.team}
               className="flex-1"
@@ -402,7 +402,7 @@ const SecurityEntitySelector = ({
               userProfile?.team
             ) && (
               <Button
-                label="Clear"
+                label="Quitar"
                 text
                 size="small"
                 severity="secondary"

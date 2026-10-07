@@ -1,245 +1,233 @@
-import React, { useCallback, useState, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
-import {
-  GET_WORKERS,
-  REMOVE_WORKERS,
-  RESTORE_WORKERS,
-} from "../graphql/queries";
-import GenericDataTable from "../../../../components/BaseTable/index";
-import { Column } from "primereact/column";
 import { Button } from "primereact/button";
+import { Column } from "primereact/column";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { Toast } from "primereact/toast";
 import { Tag } from "primereact/tag";
-import { WorkerEditForm } from "./WorkerEditForm";
-import { WorkerCreateForm } from "./WorkerCreateForm";
+import { Toast } from "primereact/toast";
+import GenericDataTable from "../../../../components/BaseTable";
+import { getErrorMessage } from "../../../../utils/errors";
+import { GET_WORKERS, REMOVE_WORKERS, RESTORE_WORKERS } from "../graphql/queries";
+import {
+  formatMoney,
+  workerContact,
+  workerName,
+  workerTypeLabel,
+} from "../../format";
+import { useHasRole } from "../../useHasRole";
+import { WorkerForm } from "./WorkerForm";
 import { WorkerDetailForm } from "./WorkerDetailForm";
 
-const statusBodyTemplate = (rowData) => {
-  return (
-    <Tag
-      severity={rowData?.user?.enabled ? "success" : "danger"}
-      value={rowData.user?.enabled ? "Activo" : "Inactivo"}
-    />
-  );
-};
+const EMPTY = <span className="text-color-secondary">—</span>;
+
+const columns = [
+  {
+    field: "tempFirstName",
+    header: "Trabajador",
+    sortable: true,
+    body: (row) => (
+      <span className="flex flex-column">
+        <span className="font-medium text-900">{workerName(row)}</span>
+        <small className="text-color-secondary">
+          {workerContact(row).join(" · ") || "Sin contacto"}
+        </small>
+      </span>
+    ),
+  },
+  {
+    field: "workerType",
+    header: "Tipo",
+    sortable: true,
+    body: (row) =>
+      row.workerType === "OTHER" && row.otherType
+        ? row.otherType
+        : workerTypeLabel(row.workerType),
+  },
+  {
+    field: "office.name",
+    header: "Oficina",
+    sortable: true,
+    filter: true,
+    body: (row) => (
+      <span className="flex flex-column">
+        <span>{row.office?.name ?? "Sin oficina"}</span>
+        {row.department?.name && (
+          <small className="text-color-secondary">{row.department.name}</small>
+        )}
+      </span>
+    ),
+  },
+  {
+    field: "baseSalary",
+    header: "Salario base",
+    sortable: true,
+    bodyClassName: "white-space-nowrap",
+    body: (row) => (row.baseSalary ? formatMoney(row.baseSalary) : EMPTY),
+  },
+  {
+    field: "user.email",
+    header: "Cuenta",
+    sortable: false,
+    body: (row) =>
+      row.user ? (
+        <Tag
+          severity={row.user.enabled ? "success" : "warning"}
+          value={row.user.enabled ? "Con acceso" : "Cuenta inactiva"}
+        />
+      ) : (
+        <span className="text-color-secondary">Sin cuenta</span>
+      ),
+  },
+  {
+    field: "business.name",
+    header: "Empresa",
+    sortable: true,
+    visible: false,
+    body: (row) => row.business?.name ?? EMPTY,
+  },
+];
 
 export function WorkerTable() {
-  const [getWorkers, { loading, data, error }] = useLazyQuery(GET_WORKERS, {
+  const toast = useRef(null);
+  const lastParams = useRef(null);
+  const hasRole = useHasRole();
+  const canEdit = hasRole("SUPER", "PRINCIPAL", "ADMIN");
+  const canDelete = hasRole("SUPER", "PRINCIPAL");
+  const canRestore = hasRole("SUPER");
+  const [fetchWorkers, { loading, data, error }] = useLazyQuery(GET_WORKERS, {
     fetchPolicy: "network-only",
   });
   const [removeWorkers] = useMutation(REMOVE_WORKERS);
   const [restoreWorkers] = useMutation(RESTORE_WORKERS);
-  const [selectedWorkerId, setSelectedWorkerId] = useState(null);
-  const [editDialogVisible, setEditDialogVisible] = useState(false);
-  const [createDialogVisible, setCreateDialogVisible] = useState(false);
-  const [detailDialogVisible, setDetailDialogVisible] = useState(false);
-  const toast = useRef(null);
-  const tableStateRef = useRef({
-    filters: {},
-    sorts: [],
-    pagination: { first: 0, rows: 10 },
-  });
+  // { worker } al editar, {} al crear
+  const [form, setForm] = useState(null);
+  const [detail, setDetail] = useState(null);
 
   const handleFetchData = useCallback(
     async (params) => {
+      lastParams.current = params;
       try {
-        tableStateRef.current = {
-          filters: params.filters || {},
-          sorts: params.sorts || [],
-          pagination: {
-            first: params.skip,
-            rows: params.take,
-          },
-        };
-
-        const { data: responseData } = await getWorkers({
+        const { data: response } = await fetchWorkers({
           variables: {
             options: {
               skip: params.skip,
               take: params.take,
+              withDeleted: params.showDeleted,
               filters: params.filters,
               sorts: params.sorts,
             },
           },
         });
         return {
-          data: responseData?.workers?.data,
-          totalCount: responseData?.workers?.totalCount,
+          data: response?.workers?.data,
+          totalCount: response?.workers?.totalCount,
         };
-      } catch (err) {
-        console.error("Error fetching workers:", err);
-        return {
-          data: [],
-          totalCount: 0,
-        };
+      } catch {
+        return { data: [], totalCount: 0 };
       }
     },
-    [getWorkers]
+    [fetchWorkers],
   );
 
   const handleRefresh = useCallback(() => {
-    handleFetchData({
-      skip: tableStateRef.current.pagination.first,
-      take: tableStateRef.current.pagination.rows,
-      filters: tableStateRef.current.filters,
-      sorts: tableStateRef.current.sorts,
-    });
+    if (lastParams.current) handleFetchData(lastParams.current);
   }, [handleFetchData]);
 
-  const handleEditSuccess = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
+  const notify = (severity, summary, detail) =>
+    toast.current?.show({ severity, summary, detail, life: 6000 });
 
-  const handleCreateSuccess = useCallback(() => {
+  const handleSaved = (saved, { created }) => {
+    setForm(null);
     handleRefresh();
-  }, [handleRefresh]);
-
-  const handleEdit = (workerId) => {
-    setSelectedWorkerId(workerId);
-    setEditDialogVisible(true);
+    notify(
+      "success",
+      created ? "Trabajador creado" : "Trabajador actualizado",
+      saved?.name,
+    );
   };
 
-  const handleViewDetails = (workerId) => {
-    setSelectedWorkerId(workerId);
-    setDetailDialogVisible(true);
-  };
-
-  // eslint-disable-next-line no-unused-vars -- la acción de fila que lo usa está comentada
-  const handleToggleStatus = (workerId, isActive) => {
+  const handleDelete = (row) =>
     confirmDialog({
-      message: `¿Estás seguro de que deseas ${
-        isActive ? "desactivar" : "activar"
-      } este trabajador?`,
-      header: "Confirmación",
+      header: "Eliminar trabajador",
+      message: `Se eliminará a ${workerName(row)}. Sus ventas, asistencia y pagos se conservan, y puedes restaurarlo después.`,
       icon: "pi pi-exclamation-triangle",
+      acceptLabel: "Eliminar",
+      rejectLabel: "Cancelar",
+      acceptClassName: "p-button-danger",
       accept: async () => {
         try {
-          const mutation = isActive ? removeWorkers : restoreWorkers;
-          await mutation({ variables: { ids: [workerId] } });
-
-          toast.current.show({
-            severity: "success",
-            summary: "Éxito",
-            detail: `Trabajador ${
-              isActive ? "desactivado" : "activado"
-            } correctamente`,
-            life: 3000,
-          });
-
+          await removeWorkers({ variables: { ids: [row.id] } });
+          notify("success", "Trabajador eliminado", workerName(row));
           handleRefresh();
         } catch (err) {
-          toast.current.show({
-            severity: "error",
-            summary: "Error",
-            detail: err.message,
-            life: 3000,
-          });
+          notify("error", "No se pudo eliminar", getErrorMessage(err));
         }
       },
     });
+
+  const handleRestore = async (row) => {
+    try {
+      await restoreWorkers({ variables: { ids: [row.id] } });
+      notify("success", "Trabajador restaurado", workerName(row));
+      handleRefresh();
+    } catch (err) {
+      notify("error", "No se pudo restaurar", getErrorMessage(err));
+    }
   };
 
-  const actionBodyTemplate = (rowData) => {
-    return (
+  const actionBodyTemplate = (row) =>
+    row.deletedAt ? (
       <div className="actions-column">
-        <Button
-          icon="pi pi-pencil"
-          text
-          rounded
-          tooltip="Editar trabajador"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleEdit(rowData.id)}
-        />
-        {/* <Button
-          icon={rowData.isActive ? "pi pi-ban" : "pi pi-check"}
-          text
-          rounded
-          severity={rowData.isActive ? "warning" : "success"}
-          tooltip={rowData.isActive ? "Desactivar" : "Activar"}
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleToggleStatus(rowData.id, rowData.isActive)}
-        /> */}
+        {canRestore && (
+          <Button
+            icon="pi pi-history"
+            text
+            rounded
+            severity="success"
+            tooltip="Restaurar trabajador"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Restaurar trabajador"
+            onClick={() => handleRestore(row)}
+          />
+        )}
+      </div>
+    ) : (
+      <div className="actions-column">
         <Button
           icon="pi pi-eye"
           text
           rounded
-          severity="info"
-          tooltip="Ver detalles"
+          severity="secondary"
+          tooltip="Ver ficha"
           tooltipOptions={{ position: "top" }}
-          onClick={() => handleViewDetails(rowData.id)}
+          aria-label="Ver ficha"
+          onClick={() => setDetail(row)}
         />
+        {canEdit && (
+          <Button
+            icon="pi pi-pencil"
+            text
+            rounded
+            tooltip="Editar trabajador"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Editar trabajador"
+            onClick={() => setForm({ worker: row })}
+          />
+        )}
+        {canDelete && (
+          <Button
+            icon="pi pi-trash"
+            text
+            rounded
+            severity="danger"
+            tooltip="Eliminar trabajador"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Eliminar trabajador"
+            onClick={() => handleDelete(row)}
+          />
+        )}
       </div>
     );
-  };
-
-  const columns = [
-    {
-      field: "user.name",
-      header: "Nombre",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "user.lastName",
-      header: "Apellidos",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "workerType",
-      header: "Tipo",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "baseSalary",
-      header: "Salario Base",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "team.name",
-      header: "Equipo",
-      sortable: true,
-      filter: true,
-      visible: false,
-    },
-    {
-      field: "department.name",
-      header: "Departamento",
-      sortable: true,
-      filter: true,
-      visible: false,
-    },
-    {
-      field: "office.name",
-      header: "Oficina",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "business.name",
-      header: "Business",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "isActive",
-      header: "Estado",
-      body: statusBodyTemplate,
-      sortable: true,
-      filter: true,
-    },
-  ];
-
-  const addButton = (
-    <Button
-      icon="pi pi-plus"
-      tooltip="Crear Nuevo Trabajador"
-      onClick={() => setCreateDialogVisible(true)}
-    />
-  );
 
   return (
     <>
@@ -252,39 +240,58 @@ export function WorkerTable() {
         totalRecords={data?.workers?.totalCount}
         loading={loading}
         error={error}
-        globalFilterFields={["user.name", "workerType"]}
+        globalFilterFields={[
+          "tempFirstName",
+          "tempLastName",
+          "user.name",
+          "user.lastName",
+          "tempPhone",
+          "office.name",
+        ]}
         emptyMessage="No se encontraron trabajadores"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} trabajadores"
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        header={addButton}
+        header={
+          canEdit && (
+            <Button
+              label="Nuevo trabajador"
+              icon="pi pi-plus"
+              onClick={() => setForm({})}
+            />
+          )
+        }
+        showDeleted={canRestore}
       >
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerClassName="w-10rem"
+          className="w-10rem"
         />
       </GenericDataTable>
 
-      <WorkerEditForm
-        workerId={selectedWorkerId}
-        visible={editDialogVisible}
-        onHide={() => setEditDialogVisible(false)}
-        onSuccess={handleEditSuccess}
-      />
-
-      <WorkerCreateForm
-        visible={createDialogVisible}
-        onHide={() => setCreateDialogVisible(false)}
-        onSuccess={handleCreateSuccess}
-      />
-
-      <WorkerDetailForm
-        workerId={selectedWorkerId}
-        visible={detailDialogVisible}
-        onHide={() => setDetailDialogVisible(false)}
-      />
+      {form && (
+        <WorkerForm
+          worker={form.worker}
+          onHide={() => setForm(null)}
+          onSaved={handleSaved}
+        />
+      )}
+      {detail && (
+        <WorkerDetailForm
+          workerId={detail.id}
+          onHide={() => setDetail(null)}
+          onEdit={
+            canEdit
+              ? () => {
+                  setForm({ worker: detail });
+                  setDetail(null);
+                }
+              : undefined
+          }
+        />
+      )}
     </>
   );
 }

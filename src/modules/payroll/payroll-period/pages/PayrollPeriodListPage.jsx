@@ -1,15 +1,14 @@
-import React from 'react';
-import { PageHeader } from '../../../../components/ui';
-import { PayrollPeriodTable } from '../components/PayrollPeriodTable';
+import { PageHeader } from "../../../../components/ui";
+import { PayrollPeriodTable } from "../components/PayrollPeriodTable";
 
 export function PayrollPeriodListPage() {
-    return (
-        <>
-            <PageHeader
-                title="Períodos de nómina"
-                subtitle="Crea, calcula y cierra los períodos en los que se liquidan los pagos."
-            />
-            <PayrollPeriodTable />
-        </>
-    );
+  return (
+    <>
+      <PageHeader
+        title="Períodos de nómina"
+        subtitle="Semanas o meses que se liquidan: al terminar, se calculan sus pagos y, una vez hechos, se cierran."
+      />
+      <PayrollPeriodTable />
+    </>
+  );
 }

@@ -1,196 +1,94 @@
-import React, { useState, useEffect } from "react";
-import { useLazyQuery } from "@apollo/client";
+import { useEffect, useState } from "react";
+import { useQuery } from "@apollo/client";
 import { AutoComplete } from "primereact/autocomplete";
-import { Tag } from "primereact/tag";
 import { GET_WORKERS } from "../graphql/queries";
+import { workerName, workerTypeLabel } from "../../format";
 
-/**
- * Función para obtener el nombre completo del trabajador
- * @param {Object} worker - Objeto trabajador
- * @returns {string} - Nombre completo del trabajador
- */
-const getWorkerFullName = (worker) => {
-  if (!worker) return "";
+const workerText = (worker) =>
+  [
+    workerName(worker),
+    worker.user?.email ?? worker.tempEmail,
+    workerTypeLabel(worker.workerType),
+    worker.office?.name,
+    worker.department?.name,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
 
-  if (worker.user && worker.user.name) {
-    const fullName =
-      `${worker.user.name || ""} ${worker.user.lastName || ""}`.trim();
-    if (fullName) return fullName;
-  }
-
-  if (worker.tempFirstName || worker.tempLastName) {
-    const tempFullName =
-      `${worker.tempFirstName || ""} ${worker.tempLastName || ""}`.trim();
-    if (tempFullName) return tempFullName;
-  }
-
-  if (worker.user && worker.user.email) {
-    return worker.user.email;
-  }
-
-  if (worker.tempEmail) {
-    return worker.tempEmail;
-  }
-
-  if (worker.id) {
-    return `Trabajador #${worker.id}`;
-  }
-
-  return "Sin nombre";
-};
-
-/**
- * Componente para seleccionar trabajadores con búsqueda
- */
+/** Buscador de trabajadores (Asistencia y otros formularios de nómina) */
 export const WorkerSelector = ({
   onWorkerSelected,
   selectedWorkerId = null,
   disabled = false,
   placeholder = "Buscar trabajador...",
-  filters = {},
+  filters = [],
 }) => {
-  const [workers, setWorkers] = useState([]);
-  const [filteredWorkers, setFilteredWorkers] = useState([]);
-  const [selectedWorker, setSelectedWorker] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [initialLoadDone, setInitialLoadDone] = useState(false);
-
-  const [getWorkers] = useLazyQuery(GET_WORKERS, {
+  const { data, loading } = useQuery(GET_WORKERS, {
+    variables: {
+      options: {
+        skip: 0,
+        take: 500,
+        filters,
+        sorts: [{ property: "tempFirstName", direction: "ASC" }],
+      },
+    },
+    skip: disabled,
     fetchPolicy: "network-only",
-    onCompleted: (data) => {
-      const workersData = data?.workers?.data || [];
-      setWorkers(workersData);
-      setFilteredWorkers(workersData.slice(0, 10));
-      setLoading(false);
-      setInitialLoadDone(true);
-    },
-    onError: (error) => {
-      console.error("Error al cargar trabajadores:", error);
-      setLoading(false);
-    },
   });
+  const workers = data?.workers?.data ?? [];
+  const [selected, setSelected] = useState(null);
+  const [suggestions, setSuggestions] = useState([]);
 
-  // Cargar trabajadores iniciales solo una vez
   useEffect(() => {
-    if (!disabled && !initialLoadDone) {
-      setLoading(true);
-      getWorkers({
-        variables: {
-          options: {
-            take: 50,
-            filters,
-            sorts: [{ property: "user.lastName", direction: "ASC" }],
-          },
-        },
-      });
-    }
-  }, [disabled, filters, getWorkers, initialLoadDone]);
+    setSelected(workers.find((w) => w.id === selectedWorkerId) ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedWorkerId, data]);
 
-  // Sincronizar trabajador seleccionado cuando cambia selectedWorkerId
-  useEffect(() => {
-    if (selectedWorkerId && workers.length > 0) {
-      const worker = workers.find((w) => w.id === selectedWorkerId);
-      if (worker) {
-        setSelectedWorker(worker);
-      }
-    } else if (!selectedWorkerId) {
-      setSelectedWorker(null);
-    }
-  }, [selectedWorkerId, workers]);
-
-  const searchWorkers = (event) => {
-    const query = event.query.toLowerCase();
-
-    if (query.trim() === "") {
-      setFilteredWorkers(workers.slice(0, 10));
-      return;
-    }
-
-    const filtered = workers.filter((worker) => {
-      const fullName = getWorkerFullName(worker).toLowerCase();
-      const email = (
-        worker.user?.email ||
-        worker.tempEmail ||
-        ""
-      ).toLowerCase();
-      const workerType = (worker.workerType || "").toLowerCase();
-      const department = (worker.department?.name || "").toLowerCase();
-
-      return (
-        fullName.includes(query) ||
-        email.includes(query) ||
-        workerType.includes(query) ||
-        department.includes(query)
-      );
-    });
-
-    setFilteredWorkers(filtered.slice(0, 20));
-  };
-
-  const handleWorkerSelect = (event) => {
-    const worker = event.value;
-    setSelectedWorker(worker);
-
-    if (onWorkerSelected) {
-      onWorkerSelected(worker);
-    }
-  };
-
-  const itemTemplate = (worker) => {
-    if (!worker) return null;
-
-    const fullName = getWorkerFullName(worker);
-    const workerType = worker.workerType;
-    const departmentName = worker.department?.name || "Sin departamento";
-
-    return (
-      <div className="flex align-items-center justify-content-between w-full">
-        <div className="flex flex-column">
-          <span className="font-medium">{fullName}</span>
-          <div className="flex align-items-center gap-2 mt-1">
-            {workerType && (
-              <Tag severity="info" value={workerType} />
-            )}
-            {departmentName !== "Sin departamento" && (
-              <span className="text-xs text-color-secondary">
-                <i className="pi pi-building mr-1"></i>
-                {departmentName}
-              </span>
-            )}
-          </div>
-          {worker.user?.email && (
-            <div className="text-xs text-color-secondary mt-1">
-              <i className="pi pi-envelope mr-1"></i>
-              {worker.user.email}
-            </div>
-          )}
-        </div>
-        {worker.user?.enabled === false && (
-          <Tag severity="danger" value="Inactivo" className="ml-2" />
-        )}
-      </div>
+  const search = (event) => {
+    const query = event.query.trim().toLowerCase();
+    setSuggestions(
+      (query
+        ? workers.filter((worker) => workerText(worker).includes(query))
+        : workers
+      ).slice(0, 20),
     );
   };
 
   return (
-    <div className="worker-selector">
-      <AutoComplete
-        value={selectedWorker}
-        suggestions={filteredWorkers}
-        completeMethod={searchWorkers}
-        field={getWorkerFullName}
-        dropdown
-        dropdownMode="blank"
-        placeholder={placeholder}
-        itemTemplate={itemTemplate}
-        onChange={handleWorkerSelect}
-        disabled={disabled}
-        className="w-full"
-        inputClassName="w-full"
-        emptyMessage="No se encontraron trabajadores"
-        loading={loading}
-        forceSelection
-      />
-    </div>
+    <AutoComplete
+      value={selected}
+      suggestions={suggestions}
+      completeMethod={search}
+      field={workerName}
+      itemTemplate={(worker) => (
+        <span className="flex flex-column">
+          <span className="font-medium">{workerName(worker)}</span>
+          <small className="text-color-secondary">
+            {[workerTypeLabel(worker.workerType), worker.office?.name]
+              .filter(Boolean)
+              .join(" · ")}
+          </small>
+        </span>
+      )}
+      onChange={(e) => {
+        // Mientras se escribe llega texto; solo un trabajador es selección
+        if (typeof e.value === "string") {
+          setSelected(e.value);
+          return;
+        }
+        setSelected(e.value);
+        onWorkerSelected?.(e.value);
+      }}
+      dropdown
+      dropdownMode="blank"
+      placeholder={loading ? "Cargando trabajadores..." : placeholder}
+      disabled={disabled}
+      emptyMessage="Ningún trabajador coincide"
+      showEmptyMessage
+      forceSelection
+      className="w-full"
+      inputClassName="w-full"
+    />
   );
 };

@@ -60,8 +60,9 @@ Piezas:
   sustituidos por tokens. **No se edita**; se regenera con `npm run theme:build`
   (`scripts/build-theme.mjs`) tras actualizar `primereact`.
 - `src/theme/components.css` y `layout.css`: forma de los componentes y marco.
-- `src/components/ui/index.jsx`: `PageHeader`, `FormField`, `AuthLayout`,
-  `EmptyState`, `LoadingScreen`, `OtpInput`, `QrPanel`.
+- `src/components/ui/index.jsx`: `PageHeader`, `FormField`, `FormSection`
+  (bloque con título de un formulario largo), `InfoRow` (fichas),
+  `AuthLayout`, `EmptyState`, `LoadingScreen`, `OtpInput`, `QrPanel`.
 - `src/components/BaseTable`: tabla de listados (búsqueda, columnas, filtros,
   paginación en servidor). Las columnas dan su ancho con `className`,
   `headerClassName` o `bodyClassName`.
@@ -142,6 +143,42 @@ estados con `<Tag severity>`; formularios con `FormField` sobre
   de error del backend: `utils/errors.js` (`getErrorMessage`).
 - Los estilos de la venta integrada están en `src/theme/pages/pos.css`.
 
+## Inventario (`src/modules/inventory`)
+
+- **Productos**: un solo formulario, `product/components/ProductForm.jsx`, para
+  crear y editar. Al crear puede abrir a la vez el inventario en varias
+  oficinas. Los precios fijos se ponen junto a cada moneda aceptada; el margen
+  es sobre el precio de venta y, si se escribe, calcula el precio.
+- **Inventarios**: `inventory/components/InventoryForm.jsx` abre uno nuevo o
+  edita su ubicación y su mínimo. Las existencias no se editan: cambian con
+  movimientos. Al llegar al mínimo se marcan «Por reponer».
+- **Movimientos**: `inventory-movement/components/MovementForm.jsx` registra
+  una entrada o una salida, desde la tabla de inventarios (ya elegido) o desde
+  Movimientos. Solo ofrece los motivos manuales; el backend rechaza el resto.
+- Motivos, estados de existencias y cantidades con unidad: `inventory/format.js`.
+  Qué botones ve cada rol: `inventory/useInventoryRoles.js` (lo mismo que exige
+  el backend).
+
+## Nómina (`src/modules/payroll`)
+
+- Textos, formatos y sumas por moneda: `payroll/format.js` (tipos de
+  trabajador, estados de asistencia, conceptos, `totalsByCurrency`,
+  `ruleSummary`...). Qué ve cada rol: `useHasRole`.
+- **Trabajadores**: `WorkerForm` crea y edita. Nombre y contacto son del
+  trabajador (columnas `temp*`); la cuenta de usuario es opcional y solo se
+  vincula, no se crea. La empresa sale de la oficina.
+- **Asistencia**: la tabla muestra un día (hoy por defecto) con flechas para
+  cambiar; «Registrar la entrada/salida ahora» guarda la hora local.
+  `AttendanceForm` crea y edita; las horas salen de entrada y salida.
+- **Períodos**: `PayrollPeriodForm` (propone la semana pasada) y
+  `PayrollPeriodDetailForm`, desde donde se calculan los pagos, se marcan todos
+  como pagados y se cierra.
+- **Reglas de pago**: `PaymentRuleForm` explica cada tipo; el reparto y el
+  ámbito dependen del tipo y de quién cobra.
+- **Pagos**: filtro Pendientes/Pagados/Todos, «Marcar como pagado»,
+  `WorkerPaymentForm` para salarios, bonificaciones y descuentos a mano (las
+  comisiones las calcula el sistema).
+
 ## Empresa y usuarios
 
 - **Empresa** (`src/modules/company`): Empresas, Oficinas, Departamentos y
@@ -155,6 +192,21 @@ estados con `<Tag severity>`; formularios con `FormField` sobre
   dejan archivos sin uso, copias `.old` ni `.txt`.
 
 ## Trampas conocidas
+
+- `InputNumber` de PrimeReact solo llama a `onValueChange` al salir del campo.
+  Usar siempre `onChange`: con `onValueChange`, escribir un importe y pulsar
+  «Guardar» envía el valor anterior.
+- Días de calendario (horarios, asistencia): `dayToApi`/`dayFromApi` de
+  `payroll/format.js` los guardan a mediodía UTC para que ningún huso los
+  mueva de día. Los límites de un período, en cambio, son instantes reales
+  (inicio y final del día local en ISO).
+- Los filtros de listado con fechas deben ir en ISO UTC (`toISOString()`): el
+  backend rechaza «2026-10-07 00:00:00».
+- `primelocale` anida los textos bajo el código del idioma: se registra
+  `addLocale("es", es.es)` (`locales/i18n.js`); si no, los calendarios salen en
+  inglés.
+- Los objetos que devuelve Apollo llevan `__typename`: al reenviarlos como
+  `input` de una mutación hay que copiar los campos uno a uno.
 
 - Los tipos de GraphQL cuyo `id` no identifica la fila (por ejemplo
   `StatisticsRanking`, que mezcla productos, vendedores y clientes) necesitan
@@ -171,11 +223,7 @@ estados con `<Tag severity>`; formularios con `FormField` sobre
 
 ## Pendiente
 
-- Fallos anteriores sin corregir: el detalle de horarios consulta sin id
-  (`WorkScheduleTable` pasa `scheduleId` y el formulario espera
-  `workScheduleId`); la pestaña «Información adicional» del detalle de pagos
-  nunca se muestra; `AttendanceTable` pasa `showDeleteFilter` y la tabla base
-  espera `showDeleted`.
-- Textos en inglés en `SecurityEntitySelector` («Business», «Select a
-  business», «Clear»).
 - El botón «Imprimir ticket» de la barra superior imprime un ticket de ejemplo.
+- `SecurityEntitySelector` no acepta valores iniciales: al editar sale vacío.
+  Los formularios nuevos eligen la oficina con `GET_OFFICE_OPTIONS`
+  (`company/shared/queries.js`) en su lugar.

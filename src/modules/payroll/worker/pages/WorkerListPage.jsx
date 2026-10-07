@@ -1,13 +1,12 @@
-import React from 'react';
-import { PageHeader } from '../../../../components/ui';
-import { WorkerTable } from '../components/WorkerTable';
+import { PageHeader } from "../../../../components/ui";
+import { WorkerTable } from "../components/WorkerTable";
 
 export function WorkerListPage() {
   return (
     <>
       <PageHeader
         title="Trabajadores"
-        subtitle="Gestiona los trabajadores, su tipo, salario base y ubicación en la empresa."
+        subtitle="Quién vende, reparte o cobra nómina: su tipo, salario y oficina. Las reglas de pago se aplican según el tipo."
       />
       <WorkerTable />
     </>

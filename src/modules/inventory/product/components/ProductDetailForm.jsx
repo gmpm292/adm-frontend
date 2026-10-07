@@ -1,250 +1,203 @@
-import React, { useEffect } from "react";
+import { useQuery } from "@apollo/client";
+import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
-import { useLazyQuery } from "@apollo/client";
-import { GET_PRODUCT_BY_ID } from "../graphql/queries";
 import { ProgressSpinner } from "primereact/progressspinner";
-import { formatDate } from "../../../../utils/dateUtils";
-import { formatCurrency } from "../../../../utils/numberUtils";
 import { Tag } from "primereact/tag";
-import { Panel } from "primereact/panel";
-import { DataView } from "primereact/dataview";
-import { Divider } from "primereact/divider";
-import { DetailField } from "../../components/DetailField";
+import { InfoRow, NoData } from "../../../../components/ui";
+import { getErrorMessage } from "../../../../utils/errors";
+import { GET_PRODUCT_BY_ID } from "../graphql/queries";
+import {
+  formatDateTime,
+  formatMoney,
+  formatQuantity,
+  inventoryPlace,
+  personName,
+  stockStatus,
+} from "../../format";
 
-export function ProductDetailForm({ productId, visible, onHide }) {
-  const [getProduct, { data, loading }] = useLazyQuery(GET_PRODUCT_BY_ID, {
+/** Ficha de un producto: precios, reglas de venta y dónde hay existencias */
+export function ProductDetailForm({ productId, onHide, onEdit }) {
+  const { data, loading, error } = useQuery(GET_PRODUCT_BY_ID, {
     variables: { id: productId },
     fetchPolicy: "network-only",
-    skip: !productId,
   });
-
-  useEffect(() => {
-    if (visible && productId) {
-      getProduct();
-    }
-  }, [visible, productId, getProduct]);
-
   const product = data?.product;
 
-  const renderSecurityEntities = (product) => {
-    return (
-      <div className="grid">
-        <DetailField label="Empresa" className="col-6 md:col-3">
-          {product.business?.name || 'N/A'}
-        </DetailField>
-        <DetailField label="Oficina" className="col-6 md:col-3">
-          {product.office?.name || 'N/A'}
-        </DetailField>
-        <DetailField label="Departamento" className="col-6 md:col-3">
-          {product.department?.name || 'N/A'}
-        </DetailField>
-        <DetailField label="Equipo" className="col-6 md:col-3">
-          {product.team?.name || 'N/A'}
-        </DetailField>
-      </div>
-    );
-  };
-
-  const renderBasicInfo = (product) => {
-    return (
-      <div className="grid">
-        <DetailField label="Nombre">{product.name}</DetailField>
-        <DetailField label="Categoría">
-          {product.category?.name || 'N/A'}
-        </DetailField>
-        <DetailField label="Unidad de Medida">
-          {product.unitOfMeasure}
-        </DetailField>
-        <DetailField label="Garantía">{product.warranty || 'N/A'}</DetailField>
-      </div>
-    );
-  };
-
-  const renderPricingInfo = (product) => {
-    const margin = ((product.basePrice - product.costPrice) / product.costPrice * 100).toFixed(2);
-
-    return (
-      <div className="grid">
-        <DetailField label="Precio Costo">
-          {formatCurrency(product.costPrice, product.costCurrency)}
-        </DetailField>
-        <DetailField label="Precio Venta">
-          {formatCurrency(product.basePrice, product.baseCurrency)}
-        </DetailField>
-        <DetailField label="Margen">
-          <Tag
-            value={`${margin}%`}
-            severity={margin > 0 ? "success" : "danger"}
-          />
-        </DetailField>
-        <DetailField label="Monedas aceptadas">
-          <div className="flex flex-wrap gap-1">
-            {product.pricingConfig?.acceptedCurrencies?.map(currency => (
-              <Tag key={currency} value={currency} />
-            ))}
-          </div>
-        </DetailField>
-        <DetailField label="Margen sobre tipo de cambio">
-          {product.pricingConfig?.exchangeRateMargin || 0}%
-        </DetailField>
-        <DetailField label="Decimales para redondeo">
-          {product.pricingConfig?.decimalPlaces || 2}
-        </DetailField>
-      </div>
-    );
-  };
-
-  const renderFixedPrices = (fixedPrices) => {
-    if (!fixedPrices || fixedPrices.length === 0) {
-      return <p>No hay precios fijos definidos</p>;
-    }
-
-    return (
-      <div className="grid">
-        {fixedPrices.map((price, index) => (
-          <DetailField label={price.currency} key={index}>
-            {formatCurrency(price.amount, price.currency)}
-          </DetailField>
-        ))}
-      </div>
-    );
-  };
-
-  const renderAttributes = (attributes) => {
-    if (!attributes || Object.keys(attributes).length === 0) {
-      return <p>No hay atributos definidos</p>;
-    }
-
-    return (
-      <div className="grid">
-        {Object.entries(attributes).map(([key, value]) => (
-          <DetailField label={key} key={key}>
-            {value}
-          </DetailField>
-        ))}
-      </div>
-    );
-  };
-
-  const renderSaleRules = (saleRules) => {
-    if (!saleRules) return <p>No hay reglas de venta definidas</p>;
-
-    return (
-      <div className="grid">
-        <DetailField label="Cantidad mínima">
-          {saleRules.minQuantity || 'N/A'}
-        </DetailField>
-        <DetailField label="Cantidad máxima">
-          {saleRules.maxQuantity || 'N/A'}
-        </DetailField>
-        <div className="col-12">
-          <Divider align="left">
-            <b>Descuentos por volumen</b>
-          </Divider>
-          {saleRules.bulkDiscounts?.length > 0 ? (
-            <DataView
-              value={saleRules.bulkDiscounts}
-              itemTemplate={(discount) => (
-                <div className="grid w-full">
-                  <DetailField label="Cantidad mínima" className="col-12 md:col-3">
-                    {discount.minQty}
-                  </DetailField>
-                  <DetailField label="Descuento" className="col-12 md:col-3">
-                    {discount.discount}%
-                  </DetailField>
-                  <DetailField label="Monedas aplicables">
-                    <div className="flex flex-wrap gap-1">
-                      {discount.applicableCurrencies.map(currency => (
-                        <Tag key={currency} value={currency} />
-                      ))}
-                    </div>
-                  </DetailField>
-                </div>
-              )}
-            />
-          ) : (
-            <p>No hay descuentos por volumen definidos</p>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderAuditInfo = (product) => {
-    return (
-      <div className="grid">
-        <DetailField label="Creado por">
-          {product.createdBy?.name || 'N/A'}
-        </DetailField>
-        <DetailField label="Actualizado por">
-          {product.updatedBy?.name || 'N/A'}
-        </DetailField>
-        <DetailField label="Fecha creación">
-          {formatDate(product.createdAt)}
-        </DetailField>
-        <DetailField label="Última actualización">
-          {formatDate(product.updatedAt)}
-        </DetailField>
-        {product.deletedAt && (
-          <>
-            <DetailField label="Eliminado por">
-              {product.deletedBy?.name || 'N/A'}
-            </DetailField>
-            <DetailField label="Fecha eliminación">
-              {formatDate(product.deletedAt)}
-            </DetailField>
-          </>
-        )}
-      </div>
-    );
-  };
+  const inventories = product?.inventories ?? [];
+  const stock = inventories.reduce((sum, i) => sum + i.currentStock, 0);
+  const margin =
+    product &&
+    product.costCurrency === product.baseCurrency &&
+    product.basePrice > 0
+      ? ((product.basePrice - product.costPrice) / product.basePrice) * 100
+      : null;
+  const pricing = product?.pricingConfig;
+  const otherCurrencies = (pricing?.acceptedCurrencies ?? []).filter(
+    (code) => code !== product?.baseCurrency,
+  );
+  const rules = product?.saleRules;
+  const attributes = Object.entries(product?.attributes ?? {});
 
   return (
     <Dialog
-      header={`Detalles del Producto: ${product?.name || ''}`}
-      visible={visible}
-      className="w-full lg:w-8"
+      header={product?.name ?? "Producto"}
+      visible
       onHide={onHide}
+      className="ui-dialog--wide"
       modal
-      resizable
-      draggable
+      footer={
+        product && onEdit ? (
+          <>
+            <Button label="Cerrar" severity="secondary" onClick={onHide} />
+            <Button label="Editar" icon="pi pi-pencil" onClick={onEdit} />
+          </>
+        ) : undefined
+      }
     >
-      {loading ? (
-        <div className="flex justify-content-center">
-          <ProgressSpinner />
+      {loading && !product ? (
+        <div className="flex justify-content-center p-5">
+          <ProgressSpinner strokeWidth="4" />
         </div>
-      ) : product ? (
-        <div>
-          <Panel header="Entidades de Seguridad" toggleable>
-            {renderSecurityEntities(product)}
-          </Panel>
-
-          <Panel header="Información Básica" toggleable className="mt-3">
-            {renderBasicInfo(product)}
-          </Panel>
-
-          <Panel header="Atributos" toggleable className="mt-3">
-            {renderAttributes(product.attributes)}
-          </Panel>
-
-          <Panel header="Información de Precios" toggleable className="mt-3">
-            {renderPricingInfo(product)}
-          </Panel>
-
-          <Panel header="Precios Fijos" toggleable className="mt-3">
-            {renderFixedPrices(product.pricingConfig?.fixedPrices)}
-          </Panel>
-
-          <Panel header="Reglas de Venta" toggleable className="mt-3">
-            {renderSaleRules(product.saleRules)}
-          </Panel>
-
-          <Panel header="Información de Auditoría" toggleable className="mt-3">
-            {renderAuditInfo(product)}
-          </Panel>
-        </div>
+      ) : !product ? (
+        <NoData
+          message={error ? getErrorMessage(error) : "No se encontró el producto"}
+        />
       ) : (
-        <p>No se encontró información del producto.</p>
+        <>
+          <ul className="ui-info-list">
+            <InfoRow
+              icon="pi pi-tag"
+              label="Categoría"
+              detail={
+                product.unitOfMeasure
+                  ? `Se cuenta en ${product.unitOfMeasure.name.toLowerCase()} (${product.unitOfMeasure.symbol})`
+                  : undefined
+              }
+            >
+              {product.category?.name ?? "—"}
+            </InfoRow>
+            <InfoRow
+              icon="pi pi-dollar"
+              label="Precio de venta"
+              detail={[
+                `Costo ${formatMoney(product.costPrice, product.costCurrency)}`,
+                margin !== null &&
+                  `margen ${new Intl.NumberFormat("es-ES", { maximumFractionDigits: 1 }).format(margin)} %`,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            >
+              {formatMoney(product.basePrice, product.baseCurrency)}
+            </InfoRow>
+            {otherCurrencies.map((code) => {
+              const fixed = pricing.fixedPrices?.find(
+                (p) => p.currency === code,
+              );
+              return (
+                <InfoRow
+                  key={code}
+                  icon="pi pi-money-bill"
+                  label={`Cobro en ${code}`}
+                  detail={
+                    fixed
+                      ? "Precio fijo"
+                      : pricing.exchangeRateMargin
+                        ? `Por tasa de cambio, con ${pricing.exchangeRateMargin} % de recargo`
+                        : "Por tasa de cambio"
+                  }
+                >
+                  {fixed ? formatMoney(fixed.amount, code) : "Variable"}
+                </InfoRow>
+              );
+            })}
+            {(rules?.minQuantity || rules?.maxQuantity) && (
+              <InfoRow icon="pi pi-sort-numeric-up" label="Cantidad por venta">
+                {[
+                  rules.minQuantity && `mínimo ${rules.minQuantity}`,
+                  rules.maxQuantity && `máximo ${rules.maxQuantity}`,
+                ]
+                  .filter(Boolean)
+                  .join(", ")}
+              </InfoRow>
+            )}
+            {(rules?.bulkDiscounts ?? []).map((discount, index) => (
+              <InfoRow
+                key={index}
+                icon="pi pi-percentage"
+                label={`Desde ${discount.minQty} unidades`}
+                detail={`En ${discount.applicableCurrencies.join(", ")}`}
+              >
+                −{discount.discount} %
+              </InfoRow>
+            ))}
+            <InfoRow icon="pi pi-shield" label="Garantía">
+              {product.warranty || "Sin garantía"}
+            </InfoRow>
+            {product.materialCost && (
+              <InfoRow
+                icon="pi pi-box"
+                label="Material"
+                detail={`${formatMoney(product.materialCost.costPrice, product.materialCost.currency?.code)} por ${product.materialCost.unitOfMeasure?.symbol ?? "unidad"}`}
+              >
+                {product.materialCost.name}
+              </InfoRow>
+            )}
+            {attributes.map(([key, value]) => (
+              <InfoRow key={key} icon="pi pi-list" label={key}>
+                {String(value)}
+              </InfoRow>
+            ))}
+          </ul>
+
+          <h3 className="flex align-items-center gap-2 text-base font-semibold text-900 mt-4 mb-2">
+            Existencias
+            <span className="font-normal text-color-secondary">
+              {formatQuantity(stock, product.unitOfMeasure)} en total
+            </span>
+          </h3>
+          {inventories.length ? (
+            <ul className="ui-info-list">
+              {inventories.map((inventory) => {
+                const status = stockStatus(inventory);
+                return (
+                  <InfoRow
+                    key={inventory.id}
+                    icon="pi pi-database"
+                    label={inventoryPlace(inventory)}
+                    detail={
+                      inventory.minStock
+                        ? `Mínimo ${formatQuantity(inventory.minStock, product.unitOfMeasure)}`
+                        : undefined
+                    }
+                  >
+                    <span className="flex align-items-center gap-2">
+                      {formatQuantity(
+                        inventory.currentStock,
+                        product.unitOfMeasure,
+                      )}
+                      {status.severity !== "success" && (
+                        <Tag severity={status.severity} value={status.label} />
+                      )}
+                    </span>
+                  </InfoRow>
+                );
+              })}
+            </ul>
+          ) : (
+            <NoData message="Aún no tiene inventario: ábrelo desde la pantalla Inventarios" />
+          )}
+
+          <p className="text-sm text-color-secondary mt-4 mb-0">
+            Creado el {formatDateTime(product.createdAt)}
+            {personName(product.createdBy) &&
+              ` por ${personName(product.createdBy)}`}
+            {product.updatedAt !== product.createdAt &&
+              ` · Modificado el ${formatDateTime(product.updatedAt)}`}
+            {personName(product.updatedBy) &&
+              product.updatedAt !== product.createdAt &&
+              ` por ${personName(product.updatedBy)}`}
+          </p>
+        </>
       )}
     </Dialog>
   );

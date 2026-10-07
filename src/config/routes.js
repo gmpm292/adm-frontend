@@ -51,17 +51,17 @@ export const routePermissions = {
   },
   "/inventory/products": {
     permissions: [],
-    requiredRoles: [],
+    requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER"],
     title: "Productos",
   },
   "/inventory/inventories": {
     permissions: [],
-    requiredRoles: [],
+    requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER", "SUPERVISOR"],
     title: "Inventarios",
   },
   "/inventory/movements": {
     permissions: [],
-    requiredRoles: [],
+    requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER", "SUPERVISOR"],
     title: "Movimientos",
   },
   "/inventory/units-of-measure": {
@@ -71,8 +71,8 @@ export const routePermissions = {
   },
   "/payroll/attendance": {
     permissions: [],
-    requiredRoles: [],
-    title: "Monedas",
+    requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER"],
+    title: "Asistencia",
   },
   "/payroll/currencies": {
     permissions: [],
@@ -81,27 +81,27 @@ export const routePermissions = {
   },
   "/payroll/payment-rules": {
     permissions: [],
-    requiredRoles: [],
-    title: "Reglas de Pago",
+    requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER"],
+    title: "Reglas de pago",
   },
   "/payroll/payroll-periods": {
     permissions: [],
-    requiredRoles: [],
+    requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER"],
     title: "Períodos",
   },
   "/payroll/work-schedules": {
     permissions: [],
-    requiredRoles: [],
+    requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER"],
     title: "Horarios",
   },
   "/payroll/workers": {
     permissions: [],
-    requiredRoles: [],
+    requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER"],
     title: "Trabajadores",
   },
   "/payroll/worker-payments": {
     permissions: [],
-    requiredRoles: [],
+    requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER", "SUPERVISOR"],
     title: "Pagos",
   },
   "/payroll/material-costs": {

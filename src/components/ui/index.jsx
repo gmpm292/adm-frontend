@@ -87,6 +87,17 @@ export function FormField({ label, htmlFor, required, hint, error, children }) {
   );
 }
 
+/** Bloque con título dentro de un formulario largo */
+export function FormSection({ title, hint, children }) {
+  return (
+    <section className="ui-form-section">
+      <h3 className="ui-form-section__title">{title}</h3>
+      {hint && <p className="ui-form-section__hint">{hint}</p>}
+      <div className="ui-form-section__body">{children}</div>
+    </section>
+  );
+}
+
 /** Pantalla completa de espera */
 export function LoadingScreen({ message = "Cargando..." }) {
   return (

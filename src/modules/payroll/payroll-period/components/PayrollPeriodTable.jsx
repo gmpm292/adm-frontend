@@ -1,452 +1,226 @@
-import React, { useCallback, useState, useRef, useMemo } from 'react';
-import { useLazyQuery, useMutation } from '@apollo/client';
+import { useCallback, useRef, useState } from "react";
+import { useLazyQuery, useMutation } from "@apollo/client";
+import { Button } from "primereact/button";
+import { Column } from "primereact/column";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { Tag } from "primereact/tag";
+import { Toast } from "primereact/toast";
+import GenericDataTable from "../../../../components/BaseTable";
+import { getErrorMessage } from "../../../../utils/errors";
 import {
   GET_PAYROLL_PERIODS,
   REMOVE_PAYROLL_PERIODS,
-} from '../graphql/queries';
-import GenericDataTable from '../../../../components/BaseTable/index';
-import { Column } from 'primereact/column';
-import { Button } from 'primereact/button';
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
-import { Toast } from 'primereact/toast';
-import { Tag } from 'primereact/tag';
-import { Badge } from 'primereact/badge';
-import { PayrollPeriodEditForm } from './PayrollPeriodEditForm';
-import { PayrollPeriodCreateForm } from './PayrollPeriodCreateForm';
-import { PayrollPeriodDetailForm } from './PayrollPeriodDetailForm';
-import { PayrollPeriodCloseDialog } from './PayrollPeriodCloseDialog';
-import { PayrollPeriodCalculateDialog } from './PayrollPeriodCalculateDialog';
+  RESTORE_PAYROLL_PERIODS,
+} from "../graphql/queries";
+import { formatTotals, periodRange, totalsByCurrency } from "../../format";
+import { useHasRole } from "../../useHasRole";
+import { PayrollPeriodForm } from "./PayrollPeriodForm";
+import { PayrollPeriodDetailForm } from "./PayrollPeriodDetailForm";
 
-// ==================== BODY TEMPLATES ====================
-
-/**
- * Template para el estado del período
- */
-const statusBodyTemplate = (rowData) => {
-  return (
-    <Tag
-      value={rowData.isClosed ? 'Cerrado' : 'Abierto'}
-      severity={rowData.isClosed ? 'danger' : 'success'}
-      icon={rowData.isClosed ? 'pi pi-lock' : 'pi pi-lock-open'}
-    />
-  );
+/** Abierto, pendiente de calcular o cerrado */
+const periodStatus = (period) => {
+  if (period.isClosed) return { label: "Cerrado", severity: "secondary" };
+  if (new Date(period.endDate) > new Date()) {
+    return { label: "En curso", severity: "info" };
+  }
+  if (!period.payments?.length) {
+    return { label: "Por calcular", severity: "warning" };
+  }
+  if (period.payments.some((p) => !p.paidDate)) {
+    return { label: "Por pagar", severity: "warning" };
+  }
+  return { label: "Listo para cerrar", severity: "success" };
 };
 
-/**
- * Template para formatear fechas
- */
-const dateBodyTemplate = (rowData, field) => {
-  if (!rowData[field]) return '—';
-  const date = new Date(rowData[field]);
-  return (
-    <div className="flex flex-column">
-      <span>{date.toLocaleDateString()}</span>
-      <small className="text-color-secondary">{date.toLocaleTimeString()}</small>
-    </div>
-  );
-};
-
-/**
- * Template para el rango de fechas del período
- */
-const dateRangeBodyTemplate = (rowData) => {
-  const startDate = rowData.startDate ? new Date(rowData.startDate) : null;
-  const endDate = rowData.endDate ? new Date(rowData.endDate) : null;
-
-  return (
-    <div className="flex flex-column">
-      <span>
-        <strong>Inicio:</strong> {startDate?.toLocaleDateString() || '—'}
+const columns = [
+  {
+    field: "name",
+    header: "Período",
+    sortable: true,
+    filter: true,
+    body: (row) => (
+      <span className="flex flex-column">
+        <span className="font-medium text-900">{row.name}</span>
+        <small className="text-color-secondary">{periodRange(row)}</small>
       </span>
-      <span>
-        <strong>Fin:</strong> {endDate?.toLocaleDateString() || '—'}
-      </span>
-    </div>
-  );
-};
-
-/**
- * Template para la estructura organizativa
- */
-const securityEntitiesBodyTemplate = (rowData) => {
-  const entities = [];
-
-  if (rowData.business) entities.push(`🏢 ${rowData.business.name}`);
-  if (rowData.office) entities.push(`🏢 ${rowData.office.name}`);
-  if (rowData.department) entities.push(`📊 ${rowData.department.name}`);
-  if (rowData.team) entities.push(`👥 ${rowData.team.name}`);
-
-  return (
-    <div className="flex flex-column">
-      {entities.length > 0 ? (
-        entities.map((entity, index) => <small key={index}>{entity}</small>)
-      ) : (
-        <span className="text-color-secondary">—</span>
-      )}
-    </div>
-  );
-};
-
-/**
- * Template para el resumen de pagos
- */
-const paymentsSummaryBodyTemplate = (rowData) => {
-  const payments = rowData.payments || [];
-  const totalAmount = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
-  const paidCount = payments.filter(p => p.paidDate).length;
-  const pendingCount = payments.length - paidCount;
-
-  return (
-    <div className="flex flex-column">
-      <span>
-        <strong>Total:</strong> {payments.length} pagos
-      </span>
-      {totalAmount > 0 && (
-        <span>
-          <strong>Monto:</strong> {new Intl.NumberFormat('es-ES', {
-            style: 'currency',
-            currency: 'USD'
-          }).format(totalAmount)}
+    ),
+  },
+  {
+    field: "isClosed",
+    header: "Estado",
+    sortable: true,
+    body: (row) => {
+      const status = periodStatus(row);
+      return <Tag severity={status.severity} value={status.label} />;
+    },
+  },
+  {
+    field: "payments",
+    header: "Pagos",
+    sortable: false,
+    body: (row) =>
+      row.payments?.length ? (
+        <span className="flex flex-column">
+          <span>{formatTotals(totalsByCurrency(row.payments))}</span>
+          <small className="text-color-secondary">
+            {row.payments.length} pagos
+          </small>
         </span>
-      )}
-      <div className="flex gap-2 mt-1">
-        <Tag value={`${paidCount} pagados`} severity="success" />
-        {pendingCount > 0 && (
-          <Tag value={`${pendingCount} pendientes`} severity="warning" />
-        )}
-      </div>
-    </div>
-  );
-};
-
-/**
- * Template para la descripción
- */
-const descriptionBodyTemplate = (rowData) => {
-  const description = rowData.description;
-  if (!description) return '—';
-  return description.length > 50 ? `${description.substring(0, 50)}...` : description;
-};
-
-/**
- * Template para el creador/actualizador
- */
-const auditBodyTemplate = (rowData) => {
-  const createdBy = rowData.createdBy;
-  const updatedBy = rowData.updatedBy;
-
-  return (
-    <div className="flex flex-column">
-      {createdBy && (
-        <small>
-          <strong>Creado:</strong> {createdBy.name || createdBy.email || `#${createdBy.id}`}
-          <br />
-          <span className="text-color-secondary">{new Date(rowData.createdAt).toLocaleDateString()}</span>
-        </small>
-      )}
-      {updatedBy && createdBy?.id !== updatedBy?.id && (
-        <small>
-          <strong>Actualizado:</strong> {updatedBy.name || updatedBy.email || `#${updatedBy.id}`}
-          <br />
-          <span className="text-color-secondary">{new Date(rowData.updatedAt).toLocaleDateString()}</span>
-        </small>
-      )}
-    </div>
-  );
-};
-
-// ==================== MAIN COMPONENT ====================
+      ) : (
+        <span className="text-color-secondary">Sin pagos</span>
+      ),
+  },
+  {
+    field: "business.name",
+    header: "Empresa",
+    sortable: true,
+    visible: false,
+    body: (row) => row.business?.name ?? "—",
+  },
+];
 
 export function PayrollPeriodTable() {
-  const [getPayrollPeriods, { loading, data, error }] = useLazyQuery(GET_PAYROLL_PERIODS, {
-    fetchPolicy: 'network-only',
-  });
-  const [removePayrollPeriods] = useMutation(REMOVE_PAYROLL_PERIODS);
-  const [selectedPeriodId, setSelectedPeriodId] = useState(null);
-  const [selectedPeriodForCalc, setSelectedPeriodForCalc] = useState(null);
-  const [editDialogVisible, setEditDialogVisible] = useState(false);
-  const [createDialogVisible, setCreateDialogVisible] = useState(false);
-  const [detailDialogVisible, setDetailDialogVisible] = useState(false);
-  const [closeDialogVisible, setCloseDialogVisible] = useState(false);
-  const [calculateDialogVisible, setCalculateDialogVisible] = useState(false);
   const toast = useRef(null);
-  const tableStateRef = useRef({
-    filters: {},
-    sorts: [],
-    pagination: { first: 0, rows: 10 },
-  });
-
-  // Definir todas las columnas disponibles del backend
-  const columns = useMemo(
-    () => [
-      {
-        field: 'name',
-        header: 'Nombre',
-        sortable: true,
-        filter: true,
-        className: 'w-11rem',
-      },
-      {
-        field: 'description',
-        header: 'Descripción',
-        body: descriptionBodyTemplate,
-        sortable: true,
-        filter: true,
-        className: 'w-14rem',
-        visible: false, // Oculta por defecto para no saturar
-      },
-      {
-        field: 'dateRange',
-        header: 'Período',
-        body: dateRangeBodyTemplate,
-        sortable: false,
-        className: 'w-14rem',
-      },
-      {
-        field: 'startDate',
-        header: 'Fecha Inicio',
-        body: (rowData) => dateBodyTemplate(rowData, 'startDate'),
-        sortable: true,
-        className: 'w-11rem',
-        visible: false,
-      },
-      {
-        field: 'endDate',
-        header: 'Fecha Fin',
-        body: (rowData) => dateBodyTemplate(rowData, 'endDate'),
-        sortable: true,
-        className: 'w-11rem',
-        visible: false,
-      },
-      {
-        field: 'isClosed',
-        header: 'Estado',
-        body: statusBodyTemplate,
-        sortable: true,
-        filter: true,
-        className: 'w-9rem',
-      },
-      {
-        field: 'entities',
-        header: 'Organización',
-        body: securityEntitiesBodyTemplate,
-        className: 'w-11rem',
-      },
-      {
-        field: 'payments',
-        header: 'Resumen de Pagos',
-        body: paymentsSummaryBodyTemplate,
-        className: 'w-14rem',
-      },
-      {
-        field: 'createdAt',
-        header: 'Creado',
-        body: (rowData) => dateBodyTemplate(rowData, 'createdAt'),
-        sortable: true,
-        className: 'w-11rem',
-        visible: false,
-      },
-      {
-        field: 'updatedAt',
-        header: 'Actualizado',
-        body: (rowData) => dateBodyTemplate(rowData, 'updatedAt'),
-        sortable: true,
-        className: 'w-11rem',
-        visible: false,
-      },
-      {
-        field: 'audit',
-        header: 'Auditoría',
-        body: auditBodyTemplate,
-        className: 'w-14rem',
-        visible: false,
-      },
-    ],
-    [],
+  const lastParams = useRef(null);
+  const hasRole = useHasRole();
+  const canEdit = hasRole("SUPER", "PRINCIPAL", "ADMIN");
+  const canDelete = hasRole("SUPER", "PRINCIPAL");
+  const canRestore = hasRole("SUPER");
+  const [fetchPeriods, { loading, data, error }] = useLazyQuery(
+    GET_PAYROLL_PERIODS,
+    { fetchPolicy: "network-only" },
   );
+  const [removePeriods] = useMutation(REMOVE_PAYROLL_PERIODS);
+  const [restorePeriods] = useMutation(RESTORE_PAYROLL_PERIODS);
+  // { period } al editar, {} al crear
+  const [form, setForm] = useState(null);
+  const [detailId, setDetailId] = useState(null);
 
   const handleFetchData = useCallback(
     async (params) => {
+      lastParams.current = params;
       try {
-        tableStateRef.current = {
-          filters: params.filters || {},
-          sorts: params.sorts || [],
-          pagination: {
-            first: params.skip,
-            rows: params.take,
-          },
-        };
-
-        const { data: responseData } = await getPayrollPeriods({
+        const { data: response } = await fetchPeriods({
           variables: {
             options: {
               skip: params.skip,
               take: params.take,
+              withDeleted: params.showDeleted,
               filters: params.filters,
               sorts: params.sorts,
             },
           },
         });
-
         return {
-          data: responseData?.payrollPeriods?.data,
-          totalCount: responseData?.payrollPeriods?.totalCount,
+          data: response?.payrollPeriods?.data,
+          totalCount: response?.payrollPeriods?.totalCount,
         };
-      } catch (err) {
-        console.error('Error fetching payroll periods:', err);
-        toast.current?.show({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Error al cargar los períodos de nómina',
-          life: 3000,
-        });
-        return {
-          data: [],
-          totalCount: 0,
-        };
+      } catch {
+        return { data: [], totalCount: 0 };
       }
     },
-    [getPayrollPeriods]
+    [fetchPeriods],
   );
 
   const handleRefresh = useCallback(() => {
-    handleFetchData({
-      skip: tableStateRef.current.pagination.first,
-      take: tableStateRef.current.pagination.rows,
-      filters: tableStateRef.current.filters,
-      sorts: tableStateRef.current.sorts,
-    });
+    if (lastParams.current) handleFetchData(lastParams.current);
   }, [handleFetchData]);
 
-  const handleEditSuccess = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
+  const notify = (severity, summary, detail) =>
+    toast.current?.show({ severity, summary, detail, life: 6000 });
 
-  const handleCreateSuccess = useCallback(() => {
+  const handleSaved = (saved, { created }) => {
+    setForm(null);
     handleRefresh();
-  }, [handleRefresh]);
-
-  const handleCloseSuccess = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
-
-  const handleCalculateSuccess = useCallback(() => {
-    // Opcional: refrescar después de calcular para ver nuevos pagos
-    handleRefresh();
-  }, [handleRefresh]);
-
-  const handleEdit = (id) => {
-    setSelectedPeriodId(id);
-    setEditDialogVisible(true);
+    notify(
+      "success",
+      created ? "Período creado" : "Período actualizado",
+      saved?.name,
+    );
   };
 
-  const handleViewDetails = (id) => {
-    setSelectedPeriodId(id);
-    setDetailDialogVisible(true);
-  };
-
-  const handleClosePeriod = (id) => {
-    setSelectedPeriodId(id);
-    setCloseDialogVisible(true);
-  };
-
-  const handleCalculate = (rowData) => {
-    setSelectedPeriodForCalc(rowData);
-    setCalculateDialogVisible(true);
-  };
-
-  const handleDelete = (id) => {
+  const handleDelete = (row) =>
     confirmDialog({
-      message: '¿Estás seguro de que deseas eliminar este período de nómina?',
-      header: 'Confirmación',
-      icon: 'pi pi-exclamation-triangle',
+      header: "Eliminar período",
+      message: `Se eliminará el período «${row.name}». Solo es posible si aún no tiene pagos.`,
+      icon: "pi pi-exclamation-triangle",
+      acceptLabel: "Eliminar",
+      rejectLabel: "Cancelar",
+      acceptClassName: "p-button-danger",
       accept: async () => {
         try {
-          await removePayrollPeriods({ variables: { ids: [id] } });
-
-          toast.current.show({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Período de nómina eliminado correctamente',
-            life: 3000,
-          });
-
+          await removePeriods({ variables: { ids: [row.id] } });
+          notify("success", "Período eliminado", row.name);
           handleRefresh();
         } catch (err) {
-          toast.current.show({
-            severity: 'error',
-            summary: 'Error',
-            detail: err.message,
-            life: 3000,
-          });
+          notify("error", "No se pudo eliminar", getErrorMessage(err));
         }
       },
     });
+
+  const handleRestore = async (row) => {
+    try {
+      await restorePeriods({ variables: { ids: [row.id] } });
+      notify("success", "Período restaurado", row.name);
+      handleRefresh();
+    } catch (err) {
+      notify("error", "No se pudo restaurar", getErrorMessage(err));
+    }
   };
 
-  const actionBodyTemplate = (rowData) => {
-    return (
+  const actionBodyTemplate = (row) =>
+    row.deletedAt ? (
       <div className="actions-column">
-        <Button
-          icon="pi pi-chart-line"
-          text
-          rounded
-          severity="success"
-          tooltip="Calcular Pagos"
-          tooltipOptions={{ position: 'top' }}
-          onClick={() => handleCalculate(rowData)}
-        />
-        {!rowData.isClosed && (
-          <>
-            <Button
-              icon="pi pi-pencil"
-              text
-              rounded
-              tooltip="Editar"
-              tooltipOptions={{ position: 'top' }}
-              onClick={() => handleEdit(rowData.id)}
-            />
-            <Button
-              icon="pi pi-lock"
-              text
-              rounded
-              severity="warning"
-              tooltip="Cerrar período"
-              tooltipOptions={{ position: 'top' }}
-              onClick={() => handleClosePeriod(rowData.id)}
-            />
-          </>
+        {canRestore && (
+          <Button
+            icon="pi pi-history"
+            text
+            rounded
+            severity="success"
+            tooltip="Restaurar período"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Restaurar período"
+            onClick={() => handleRestore(row)}
+          />
         )}
-        <Button
-          icon="pi pi-trash"
-          text
-          rounded
-          severity="danger"
-          tooltip="Eliminar"
-          tooltipOptions={{ position: 'top' }}
-          onClick={() => handleDelete(rowData.id)}
-        />
+      </div>
+    ) : (
+      <div className="actions-column">
         <Button
           icon="pi pi-eye"
           text
           rounded
-          severity="info"
-          tooltip="Ver detalles"
-          tooltipOptions={{ position: 'top' }}
-          onClick={() => handleViewDetails(rowData.id)}
+          severity="secondary"
+          tooltip={row.isClosed ? "Ver pagos" : "Ver, calcular y cerrar"}
+          tooltipOptions={{ position: "top" }}
+          aria-label="Ver período"
+          onClick={() => setDetailId(row.id)}
         />
+        {canEdit && !row.isClosed && (
+          <Button
+            icon="pi pi-pencil"
+            text
+            rounded
+            tooltip="Editar período"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Editar período"
+            onClick={() => setForm({ period: row })}
+          />
+        )}
+        {canDelete && !row.payments?.length && (
+          <Button
+            icon="pi pi-trash"
+            text
+            rounded
+            severity="danger"
+            tooltip="Eliminar período"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Eliminar período"
+            onClick={() => handleDelete(row)}
+          />
+        )}
       </div>
     );
-  };
-
-  const addButton = (
-    <Button
-      icon="pi pi-plus"
-      label="Nuevo Período"
-      tooltip="Crear Nuevo Período de Nómina"
-      onClick={() => setCreateDialogVisible(true)}
-    />
-  );
 
   return (
     <>
@@ -459,59 +233,46 @@ export function PayrollPeriodTable() {
         totalRecords={data?.payrollPeriods?.totalCount}
         loading={loading}
         error={error}
-        globalFilterFields={[
-          'name',
-          'description',
-        ]}
-        emptyMessage="No se encontraron períodos de nómina"
+        globalFilterFields={["name", "description"]}
+        emptyMessage="No hay períodos de nómina"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} períodos"
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        header={addButton}
+        initialSorts={[{ field: "startDate", order: -1 }]}
+        header={
+          canEdit && (
+            <Button
+              label="Nuevo período"
+              icon="pi pi-plus"
+              onClick={() => setForm({})}
+            />
+          )
+        }
+        showDeleted={canRestore}
       >
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerClassName="w-12rem"
+          className="w-10rem"
         />
       </GenericDataTable>
 
-      <PayrollPeriodEditForm
-        payrollPeriodId={selectedPeriodId}
-        visible={editDialogVisible}
-        onHide={() => setEditDialogVisible(false)}
-        onSuccess={handleEditSuccess}
-      />
-
-      <PayrollPeriodCreateForm
-        visible={createDialogVisible}
-        onHide={() => setCreateDialogVisible(false)}
-        onSuccess={handleCreateSuccess}
-      />
-
-      <PayrollPeriodDetailForm
-        payrollPeriodId={selectedPeriodId}
-        visible={detailDialogVisible}
-        onHide={() => setDetailDialogVisible(false)}
-      />
-
-      <PayrollPeriodCloseDialog
-        periodId={selectedPeriodId}
-        visible={closeDialogVisible}
-        onHide={() => setCloseDialogVisible(false)}
-        onSuccess={handleCloseSuccess}
-      />
-
-      <PayrollPeriodCalculateDialog
-        period={selectedPeriodForCalc}
-        visible={calculateDialogVisible}
-        onHide={() => {
-          setCalculateDialogVisible(false);
-          setSelectedPeriodForCalc(null);
-        }}
-        onSuccess={handleCalculateSuccess}
-      />
+      {form && (
+        <PayrollPeriodForm
+          period={form.period}
+          onHide={() => setForm(null)}
+          onSaved={handleSaved}
+        />
+      )}
+      {detailId && (
+        <PayrollPeriodDetailForm
+          periodId={detailId}
+          canManage={canEdit}
+          onHide={() => setDetailId(null)}
+          onChanged={handleRefresh}
+        />
+      )}
     </>
   );
 }

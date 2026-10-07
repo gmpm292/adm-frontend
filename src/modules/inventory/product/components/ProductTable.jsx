@@ -1,230 +1,235 @@
-import React, { useCallback, useState, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
-import { GET_PRODUCTS, DELETE_PRODUCTS } from "../graphql/queries";
-import GenericDataTable from "../../../../components/BaseTable/index";
-import { Column } from "primereact/column";
 import { Button } from "primereact/button";
+import { Column } from "primereact/column";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
-//import { ProductEditForm } from "./ProductEditForm";
-import { ProductEditForm } from "./ProductEditForm/ProductEditForm";
-// import { ProductCreateForm } from "./ProductCreateForm";
-import { ProductCreateForm } from "./ProductCreateForm/ProductCreateForm";
+import GenericDataTable from "../../../../components/BaseTable";
+import { getErrorMessage } from "../../../../utils/errors";
+import {
+  DELETE_PRODUCTS,
+  GET_PRODUCTS,
+  RESTORE_PRODUCTS,
+} from "../graphql/queries";
+import { formatMoney, formatQuantity, stockStatus } from "../../format";
+import { useInventoryRoles } from "../../useInventoryRoles";
+import { ProductForm } from "./ProductForm";
 import { ProductDetailForm } from "./ProductDetailForm";
-import { formatDate } from "../../../../utils/dateUtils";
-import { formatCurrency } from "../../../../utils/numberUtils";
+
+const EMPTY = <span className="text-color-secondary">—</span>;
+
+/** Existencias del producto sumando todos sus inventarios */
+const totalStock = (product) =>
+  (product.inventories ?? []).reduce((sum, i) => sum + i.currentStock, 0);
+
+const columns = [
+  {
+    field: "name",
+    header: "Producto",
+    sortable: true,
+    filter: true,
+    body: (row) => <span className="font-medium text-900">{row.name}</span>,
+  },
+  {
+    field: "category.name",
+    header: "Categoría",
+    sortable: true,
+    filter: true,
+    body: (row) => row.category?.name ?? EMPTY,
+  },
+  {
+    field: "stock",
+    header: "Existencias",
+    sortable: false,
+    body: (row) => {
+      if (!row.inventories?.length) {
+        return <span className="text-color-secondary">Sin inventario</span>;
+      }
+      const stock = totalStock(row);
+      const status = stockStatus({
+        currentStock: stock,
+        minStock: row.inventories.reduce((sum, i) => sum + (i.minStock ?? 0), 0),
+      });
+      return (
+        <span className="flex align-items-center gap-2">
+          {formatQuantity(stock, row.unitOfMeasure)}
+          {status.severity !== "success" && (
+            <Tag severity={status.severity} value={status.label} />
+          )}
+        </span>
+      );
+    },
+  },
+  {
+    field: "costPrice",
+    header: "Costo",
+    sortable: true,
+    bodyClassName: "white-space-nowrap",
+    body: (row) => formatMoney(row.costPrice, row.costCurrency),
+  },
+  {
+    field: "basePrice",
+    header: "Precio de venta",
+    sortable: true,
+    bodyClassName: "white-space-nowrap",
+    body: (row) => formatMoney(row.basePrice, row.baseCurrency),
+  },
+  {
+    field: "unitOfMeasure.name",
+    header: "Unidad",
+    sortable: true,
+    filter: true,
+    visible: false,
+    body: (row) =>
+      row.unitOfMeasure
+        ? `${row.unitOfMeasure.name} (${row.unitOfMeasure.symbol})`
+        : EMPTY,
+  },
+];
 
 export function ProductTable() {
-  const [getProducts, { loading, data, error }] = useLazyQuery(GET_PRODUCTS, {
-    fetchPolicy: "network-only",
-  });
-  const [deleteProducts] = useMutation(DELETE_PRODUCTS);
-  const [selectedProductId, setSelectedProductId] = useState(null);
-  const [editDialogVisible, setEditDialogVisible] = useState(false);
-  const [createDialogVisible, setCreateDialogVisible] = useState(false);
-  const [detailDialogVisible, setDetailDialogVisible] = useState(false);
   const toast = useRef(null);
-
-  const tableStateRef = useRef({
-    filters: {},
-    sorts: [],
-    pagination: { first: 0, rows: 10 },
-  });
+  const lastParams = useRef(null);
+  const { canEdit, canDelete, canRestore } = useInventoryRoles();
+  const [fetchProducts, { loading, data, error }] = useLazyQuery(
+    GET_PRODUCTS,
+    { fetchPolicy: "network-only" },
+  );
+  const [removeProducts] = useMutation(DELETE_PRODUCTS);
+  const [restoreProducts] = useMutation(RESTORE_PRODUCTS);
+  // { productId } al editar, {} al crear
+  const [form, setForm] = useState(null);
+  const [detailId, setDetailId] = useState(null);
 
   const handleFetchData = useCallback(
     async (params) => {
+      lastParams.current = params;
       try {
-        tableStateRef.current = {
-          filters: params.filters || {},
-          sorts: params.sorts || [],
-          pagination: {
-            first: params.skip,
-            rows: params.take,
-          },
-        };
-
-        const { data: responseData } = await getProducts({
+        const { data: response } = await fetchProducts({
           variables: {
             options: {
               skip: params.skip,
               take: params.take,
+              withDeleted: params.showDeleted,
               filters: params.filters,
               sorts: params.sorts,
             },
           },
         });
-
         return {
-          data: responseData?.products?.data,
-          totalCount: responseData?.products?.totalCount,
+          data: response?.products?.data,
+          totalCount: response?.products?.totalCount,
         };
-      } catch (err) {
-        console.error("Error fetching products:", err);
-        return {
-          data: [],
-          totalCount: 0,
-        };
+      } catch {
+        return { data: [], totalCount: 0 };
       }
     },
-    [getProducts],
+    [fetchProducts],
   );
 
   const handleRefresh = useCallback(() => {
-    handleFetchData({
-      skip: tableStateRef.current.pagination.first,
-      take: tableStateRef.current.pagination.rows,
-      filters: tableStateRef.current.filters,
-      sorts: tableStateRef.current.sorts,
-    });
+    if (lastParams.current) handleFetchData(lastParams.current);
   }, [handleFetchData]);
 
-  const handleEditSuccess = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
+  const notify = (severity, summary, detail) =>
+    toast.current?.show({ severity, summary, detail, life: 6000 });
 
-  const handleCreateSuccess = useCallback(() => {
+  const handleSaved = (product, { created, inventoryError }) => {
+    setForm(null);
     handleRefresh();
-  }, [handleRefresh]);
-
-  const handleEdit = (productId) => {
-    setSelectedProductId(productId);
-    setEditDialogVisible(true);
+    notify(
+      "success",
+      created ? "Producto creado" : "Producto actualizado",
+      product?.name,
+    );
+    if (inventoryError) {
+      notify("warn", "No se pudo abrir algún inventario", inventoryError);
+    }
   };
 
-  const handleViewDetails = (productId) => {
-    setSelectedProductId(productId);
-    setDetailDialogVisible(true);
-  };
-
-  const handleDelete = (productId) => {
+  const handleDelete = (row) =>
     confirmDialog({
-      message: "¿Estás seguro de que deseas eliminar este producto?",
-      header: "Confirmación",
+      header: "Eliminar producto",
+      message: `Se eliminará "${row.name}" junto con sus inventarios vacíos. Solo es posible si no le quedan existencias; sus ventas y movimientos se conservan.`,
       icon: "pi pi-exclamation-triangle",
+      acceptLabel: "Eliminar",
+      rejectLabel: "Cancelar",
+      acceptClassName: "p-button-danger",
       accept: async () => {
         try {
-          await deleteProducts({ variables: { ids: [productId] } });
-
-          toast.current.show({
-            severity: "success",
-            summary: "Éxito",
-            detail: "Producto eliminado correctamente",
-            life: 3000,
-          });
-
+          await removeProducts({ variables: { ids: [row.id] } });
+          notify("success", "Producto eliminado", row.name);
           handleRefresh();
         } catch (err) {
-          toast.current.show({
-            severity: "error",
-            summary: "Error",
-            detail: err.message,
-            life: 3000,
-          });
+          notify("error", "No se pudo eliminar", getErrorMessage(err));
         }
       },
     });
+
+  const handleRestore = async (row) => {
+    try {
+      await restoreProducts({ variables: { ids: [row.id] } });
+      notify("success", "Producto restaurado", row.name);
+      handleRefresh();
+    } catch (err) {
+      notify("error", "No se pudo restaurar", getErrorMessage(err));
+    }
   };
 
-  const dateBodyTemplate = (rowData, field) => {
-    return formatDate(rowData[field]);
-  };
-
-  const priceBodyTemplate = (rowData, field) => {
-    return formatCurrency(rowData[field]);
-  };
-
-  const categoryBodyTemplate = (rowData) => {
-    return rowData.category?.name || "N/A";
-  };
-
-  const unitOfMeasureBodyTemplate = (rowData) => {
-    return rowData.unitOfMeasure
-      ? `${rowData.unitOfMeasure.name} (${rowData.unitOfMeasure.symbol})`
-      : "N/A";
-  };
-
-  const actionBodyTemplate = (rowData) => {
-    return (
+  const actionBodyTemplate = (row) =>
+    row.deletedAt ? (
       <div className="actions-column">
-        <Button
-          icon="pi pi-pencil"
-          text
-          rounded
-          severity="secondary"
-          tooltip="Editar producto"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleEdit(rowData.id)}
-        />
-        <Button
-          icon="pi pi-trash"
-          text
-          rounded
-          severity="danger"
-          tooltip="Eliminar producto"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleDelete(rowData.id)}
-        />
+        {canRestore && (
+          <Button
+            icon="pi pi-history"
+            text
+            rounded
+            severity="success"
+            tooltip="Restaurar producto"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Restaurar producto"
+            onClick={() => handleRestore(row)}
+          />
+        )}
+      </div>
+    ) : (
+      <div className="actions-column">
         <Button
           icon="pi pi-eye"
           text
           rounded
           severity="secondary"
-          tooltip="Ver detalles"
+          tooltip="Ver ficha"
           tooltipOptions={{ position: "top" }}
-          onClick={() => handleViewDetails(rowData.id)}
+          aria-label="Ver ficha"
+          onClick={() => setDetailId(row.id)}
         />
+        {canEdit && (
+          <Button
+            icon="pi pi-pencil"
+            text
+            rounded
+            tooltip="Editar producto"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Editar producto"
+            onClick={() => setForm({ productId: row.id })}
+          />
+        )}
+        {canDelete && (
+          <Button
+            icon="pi pi-trash"
+            text
+            rounded
+            severity="danger"
+            tooltip="Eliminar producto"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Eliminar producto"
+            onClick={() => handleDelete(row)}
+          />
+        )}
       </div>
     );
-  };
-
-  const columns = [
-    {
-      field: "name",
-      header: "Nombre",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "category.name",
-      header: "Categoría",
-      body: categoryBodyTemplate,
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "unitOfMeasure",
-      header: "Unidad de Medida",
-      body: unitOfMeasureBodyTemplate,
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "costPrice",
-      header: "Precio Costo",
-      body: (rowData) => priceBodyTemplate(rowData, "costPrice"),
-      sortable: true,
-    },
-    {
-      field: "basePrice",
-      header: "Precio Venta",
-      body: (rowData) => priceBodyTemplate(rowData, "basePrice"),
-      sortable: true,
-    },
-    {
-      field: "createdAt",
-      header: "Fecha de Creación",
-      body: (rowData) => dateBodyTemplate(rowData, "createdAt"),
-      sortable: true,
-    },
-  ];
-
-  const addProductButton = (
-    <Button
-      icon="pi pi-plus"
-      tooltip="Crear Nuevo Producto"
-      onClick={() => setCreateDialogVisible(true)}
-    />
-  );
 
   return (
     <>
@@ -237,39 +242,53 @@ export function ProductTable() {
         totalRecords={data?.products?.totalCount}
         loading={loading}
         error={error}
-        globalFilterFields={["name", "category.name", "unitOfMeasure"]}
+        globalFilterFields={["name", "category.name", "unitOfMeasure.name"]}
         emptyMessage="No se encontraron productos"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} productos"
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        header={addProductButton}
+        initialSorts={[{ field: "name", order: 1 }]}
+        header={
+          canEdit && (
+            <Button
+              label="Nuevo producto"
+              icon="pi pi-plus"
+              onClick={() => setForm({})}
+            />
+          )
+        }
+        showDeleted={canRestore}
       >
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          headerClassName="w-10rem"
+          className="w-10rem"
         />
       </GenericDataTable>
 
-      <ProductEditForm
-        productId={selectedProductId}
-        visible={editDialogVisible}
-        onHide={() => setEditDialogVisible(false)}
-        onSuccess={handleEditSuccess}
-      />
+      {form && (
+        <ProductForm
+          productId={form.productId}
+          onHide={() => setForm(null)}
+          onSaved={handleSaved}
+        />
+      )}
 
-      <ProductCreateForm
-        visible={createDialogVisible}
-        onHide={() => setCreateDialogVisible(false)}
-        onSuccess={handleCreateSuccess}
-      />
-
-      <ProductDetailForm
-        productId={selectedProductId}
-        visible={detailDialogVisible}
-        onHide={() => setDetailDialogVisible(false)}
-      />
+      {detailId && (
+        <ProductDetailForm
+          productId={detailId}
+          onHide={() => setDetailId(null)}
+          onEdit={
+            canEdit
+              ? () => {
+                  setForm({ productId: detailId });
+                  setDetailId(null);
+                }
+              : undefined
+          }
+        />
+      )}
     </>
   );
 }

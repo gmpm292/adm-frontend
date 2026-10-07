@@ -7,34 +7,25 @@ export const GET_PRODUCTS = gql`
       data {
         id
         name
+        deletedAt
         unitOfMeasure {
           id
           name
           symbol
-          category
-        }
-        materialCost {
-          id
-          name
-          costPrice
-          currency {
-            code
-            symbol
-          }
-          unitOfMeasure {
-            symbol
-          }
         }
         costPrice
         costCurrency
         basePrice
         baseCurrency
-        warranty
         createdAt
-        updatedAt
         category {
           id
           name
+        }
+        inventories {
+          id
+          currentStock
+          minStock
         }
       }
     }
@@ -46,30 +37,6 @@ export const GET_PRODUCT_BY_ID = gql`
     product(id: $id) {
       id
       name
-      unitOfMeasure {
-        id
-        name
-        symbol
-        category
-        isActive
-      }
-      materialCost {
-        id
-        name
-        costPrice
-        currency {
-          id
-          code
-          symbol
-          name
-        }
-        unitOfMeasure {
-          id
-          symbol
-          name
-        }
-        isActive
-      }
       costPrice
       costCurrency
       basePrice
@@ -78,26 +45,25 @@ export const GET_PRODUCT_BY_ID = gql`
       attributes
       createdAt
       updatedAt
+      unitOfMeasure {
+        id
+        name
+        symbol
+      }
+      materialCost {
+        id
+        name
+        costPrice
+        currency {
+          code
+        }
+        unitOfMeasure {
+          symbol
+        }
+      }
       category {
         id
         name
-        business {
-          id
-          name
-        }
-        office {
-          id
-          name
-        }
-        department {
-          id
-          name
-        }
-        team {
-          id
-          name
-          teamType
-        }
       }
       pricingConfig {
         acceptedCurrencies
@@ -125,26 +91,25 @@ export const GET_PRODUCT_BY_ID = gql`
         id
         name
       }
-      department {
+      inventories {
         id
-        name
-      }
-      team {
-        id
-        name
-        teamType
+        currentStock
+        minStock
+        location
+        office {
+          id
+          name
+        }
       }
       createdBy {
         id
         name
+        lastName
       }
       updatedBy {
         id
         name
-      }
-      deletedBy {
-        id
-        name
+        lastName
       }
     }
   }
@@ -155,14 +120,11 @@ export const CREATE_PRODUCT = gql`
     createProduct(createProductInput: $product) {
       id
       name
-      unitOfMeasure {
+      business {
         id
-        name
-        symbol
       }
-      materialCost {
+      office {
         id
-        name
       }
     }
   }
@@ -173,46 +135,6 @@ export const UPDATE_PRODUCT = gql`
     updateProduct(updateProductInput: $product) {
       id
       name
-      unitOfMeasure {
-        id
-        name
-        symbol
-      }
-      materialCost {
-        id
-        name
-        costPrice
-        currency {
-          code
-        }
-        unitOfMeasure {
-          symbol
-        }
-      }
-      costPrice
-      costCurrency
-      basePrice
-      baseCurrency
-      warranty
-      attributes
-      pricingConfig {
-        acceptedCurrencies
-        fixedPrices {
-          currency
-          amount
-        }
-        exchangeRateMargin
-        decimalPlaces
-      }
-      saleRules {
-        minQuantity
-        maxQuantity
-        bulkDiscounts {
-          minQty
-          discount
-          applicableCurrencies
-        }
-      }
     }
   }
 `;
@@ -225,6 +147,12 @@ export const DELETE_PRODUCTS = gql`
   }
 `;
 
+export const RESTORE_PRODUCTS = gql`
+  mutation RestoreProducts($ids: [Int!]!) {
+    restoreProducts(ids: $ids)
+  }
+`;
+
 export const GET_MATERIAL_COST_BY_ID = gql`
   query MaterialCost($id: Int!) {
     materialCost(id: $id) {
@@ -232,18 +160,25 @@ export const GET_MATERIAL_COST_BY_ID = gql`
       name
       costPrice
       currency {
-        id
         code
-        symbol
-        name
       }
       unitOfMeasure {
         id
-        name
-        symbol
-        category
       }
-      isActive
+    }
+  }
+`;
+
+/** Monedas con las que se puede poner precio */
+export const GET_ACTIVE_CURRENCIES = gql`
+  query ProductCurrencies {
+    currencies(options: { take: 100 }) {
+      data {
+        id
+        code
+        name
+        isActive
+      }
     }
   }
 `;
