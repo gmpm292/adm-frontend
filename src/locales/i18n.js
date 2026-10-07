@@ -4,8 +4,9 @@ import en from 'primelocale/en.json';
 
 // Configuración inicial
 export const setupLocales = () => {
-  addLocale('es', es);
-  addLocale('en', en);
+  // primelocale anida los textos bajo el código del idioma
+  addLocale('es', es.es);
+  addLocale('en', en.en);
   
   // Establecer idioma por defecto
   locale('es');

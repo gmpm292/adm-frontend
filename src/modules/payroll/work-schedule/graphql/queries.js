@@ -1,77 +1,56 @@
 import { gql } from "@apollo/client";
 
+const SCHEDULE_FIELDS = `
+  id
+  name
+  startDate
+  endDate
+  notes
+  deletedAt
+  workingDays {
+    monday
+    tuesday
+    wednesday
+    thursday
+    friday
+    saturday
+    sunday
+  }
+  office {
+    id
+    name
+  }
+  business {
+    id
+    name
+  }
+`;
+
 export const GET_WORK_SCHEDULES = gql`
   query WorkSchedules($options: ListOptions) {
     workSchedules(options: $options) {
       totalCount
       data {
-        id
-        office {
-          id
-          name
-        }
-        startDate
-        endDate
-        isRecurring
-        createdAt
-        updatedAt
-      }
-    }
-  }
-`;
-
-export const GET_WORK_SCHEDULE_BY_ID = gql`
-  query WorkSchedule($id: Int!) {
-    workSchedule(id: $id) {
-      id
-      startDate
-      endDate
-      isRecurring
-      notes
-      workingDays {
-        monday
-        tuesday
-        wednesday
-        thursday
-        friday
-        saturday
-        sunday
-      }
-      business {
-        id
-        name
-      }
-      office {
-        id
-        name
-      }
-      department {
-        id
-        name
-      }
-      team {
-        id
-        name
+        ${SCHEDULE_FIELDS}
       }
     }
   }
 `;
 
 export const CREATE_WORK_SCHEDULE = gql`
-  mutation CreateWorkSchedule($createWorkScheduleInput: CreateWorkScheduleInput!) {
-    createWorkSchedule(createWorkScheduleInput: $createWorkScheduleInput) {
+  mutation CreateWorkSchedule($schedule: CreateWorkScheduleInput!) {
+    createWorkSchedule(createWorkScheduleInput: $schedule) {
       id
+      name
     }
   }
 `;
 
 export const UPDATE_WORK_SCHEDULE = gql`
-  mutation UpdateWorkSchedule($updateWorkScheduleInput: UpdateWorkScheduleInput!) {
-    updateWorkSchedule(updateWorkScheduleInput: $updateWorkScheduleInput) {
+  mutation UpdateWorkSchedule($schedule: UpdateWorkScheduleInput!) {
+    updateWorkSchedule(updateWorkScheduleInput: $schedule) {
       id
-      startDate
-      endDate
-      isRecurring
+      name
     }
   }
 `;
@@ -81,5 +60,11 @@ export const REMOVE_WORK_SCHEDULES = gql`
     removeWorkSchedules(ids: $ids) {
       id
     }
+  }
+`;
+
+export const RESTORE_WORK_SCHEDULES = gql`
+  mutation RestoreWorkSchedules($ids: [Int!]!) {
+    restoreWorkSchedules(ids: $ids)
   }
 `;

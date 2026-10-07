@@ -1,98 +1,104 @@
-import React, { useEffect } from 'react';
-import { Dialog } from 'primereact/dialog';
-import { useLazyQuery } from '@apollo/client';
-import { GET_WORKER_BY_ID } from '../graphql/queries';
-import { ProgressSpinner } from 'primereact/progressspinner';
-import { FormField } from '../../../../components/ui';
+import { useQuery } from "@apollo/client";
+import { Button } from "primereact/button";
+import { Dialog } from "primereact/dialog";
+import { ProgressSpinner } from "primereact/progressspinner";
+import { Tag } from "primereact/tag";
+import { InfoRow, NoData } from "../../../../components/ui";
+import { getErrorMessage } from "../../../../utils/errors";
+import { GET_WORKER_BY_ID } from "../graphql/queries";
+import {
+  formatDateTime,
+  formatMoney,
+  workerName,
+  workerTypeLabel,
+} from "../../format";
 
-export const WorkerDetailForm = ({ workerId, visible, onHide }) => {
-  const [getWorker, { data, loading }] = useLazyQuery(GET_WORKER_BY_ID, {
+/** Ficha de un trabajador: contacto, cuenta, trabajo y dónde trabaja */
+export function WorkerDetailForm({ workerId, onHide, onEdit }) {
+  const { data, loading, error } = useQuery(GET_WORKER_BY_ID, {
     variables: { id: workerId },
-    fetchPolicy: 'network-only',
-    skip: !workerId,
+    fetchPolicy: "network-only",
   });
-
-  useEffect(() => {
-    if (visible && workerId) {
-      getWorker();
-    }
-  }, [visible, workerId, getWorker]);
-
   const worker = data?.worker;
+  const phone = worker?.user?.mobile ?? worker?.tempPhone;
+  const email = worker?.user?.email ?? worker?.tempEmail;
 
   return (
     <Dialog
-      header="Detalles del Trabajador"
-      visible={visible}
-      className="w-full md:w-30rem"
+      header={worker ? workerName(worker) : "Trabajador"}
+      visible
       onHide={onHide}
+      className="w-full md:w-30rem"
       modal
+      footer={
+        worker && onEdit ? (
+          <>
+            <Button label="Cerrar" severity="secondary" onClick={onHide} />
+            <Button label="Editar" icon="pi pi-pencil" onClick={onEdit} />
+          </>
+        ) : undefined
+      }
     >
-      {loading ? (
-        <div className="flex justify-content-center">
-          <ProgressSpinner />
+      {loading && !worker ? (
+        <div className="flex justify-content-center p-5">
+          <ProgressSpinner strokeWidth="4" />
         </div>
-      ) : worker ? (
-        <div className="grid">
-          <div className="col-12 md:col-6">
-            <FormField label="Usuario">
-              <span>{worker.user?.name} {worker.user?.lastName}</span>
-            </FormField>
-          </div>
-          <div className="col-12 md:col-6">
-            <FormField label="Email">
-              <span>{worker.user?.email}</span>
-            </FormField>
-          </div>
-          <div className="col-12 md:col-6">
-            <FormField label="Tipo">
-              <span>{worker.workerType}</span>
-            </FormField>
-          </div>
-          <div className="col-12 md:col-6">
-            <FormField label="Salario Base">
-              <span>{worker.baseSalary}</span>
-            </FormField>
-          </div>
-          <div className="col-12 md:col-6">
-            <FormField label="Business">
-              <span>{worker.business?.name || 'N/A'}</span>
-            </FormField>
-          </div>
-          <div className="col-12 md:col-6">
-            <FormField label="Oficina">
-              <span>{worker.office?.name || 'N/A'}</span>
-            </FormField>
-          </div>
-          <div className="col-12 md:col-6">
-            <FormField label="Departamento">
-              <span>{worker.department?.name || 'N/A'}</span>
-            </FormField>
-          </div>
-          <div className="col-12 md:col-6">
-            <FormField label="Equipo">
-              <span>{worker.team?.name || 'N/A'}</span>
-            </FormField>
-          </div>
-          <div className="col-12 md:col-6">
-            <FormField label="Regla de Pago">
-              <span>{worker.paymentRule?.name || 'N/A'}</span>
-            </FormField>
-          </div>
-          <div className="col-12 md:col-6">
-            <FormField label="Creado en">
-              <span>{new Date(worker.createdAt).toLocaleString()}</span>
-            </FormField>
-          </div>
-          <div className="col-12 md:col-6">
-            <FormField label="Última actualización">
-              <span>{new Date(worker.updatedAt).toLocaleString()}</span>
-            </FormField>
-          </div>
-        </div>
+      ) : !worker ? (
+        <NoData
+          message={
+            error ? getErrorMessage(error) : "No se encontró el trabajador"
+          }
+        />
       ) : (
-        <p className="text-color-secondary">No se encontró información del trabajador.</p>
+        <ul className="ui-info-list">
+          <InfoRow icon="pi pi-briefcase" label="Tipo">
+            {worker.workerType === "OTHER" && worker.otherType
+              ? worker.otherType
+              : workerTypeLabel(worker.workerType)}
+          </InfoRow>
+          <InfoRow icon="pi pi-wallet" label="Salario base">
+            {worker.baseSalary ? formatMoney(worker.baseSalary) : "Sin salario"}
+          </InfoRow>
+          <InfoRow
+            icon="pi pi-map-marker"
+            label="Oficina"
+            detail={[worker.department?.name, worker.business?.name]
+              .filter(Boolean)
+              .join(" · ")}
+          >
+            {worker.office?.name ?? "Sin oficina"}
+          </InfoRow>
+          <InfoRow icon="pi pi-phone" label="Teléfono">
+            {phone ?? "—"}
+          </InfoRow>
+          <InfoRow icon="pi pi-envelope" label="Correo">
+            {email ?? "—"}
+          </InfoRow>
+          <InfoRow
+            icon="pi pi-user"
+            label="Cuenta en la aplicación"
+            detail={worker.user?.email}
+          >
+            {worker.user ? (
+              <Tag
+                severity={worker.user.enabled ? "success" : "warning"}
+                value={worker.user.enabled ? "Con acceso" : "Cuenta inactiva"}
+              />
+            ) : (
+              "Sin cuenta"
+            )}
+          </InfoRow>
+          <InfoRow
+            icon="pi pi-calendar"
+            label="Alta"
+            detail={[worker.createdBy?.name, worker.createdBy?.lastName]
+              .filter(Boolean)
+              .join(" ")}
+          >
+            {formatDateTime(worker.createdAt)}
+          </InfoRow>
+        </ul>
       )}
     </Dialog>
   );
-};
+}

@@ -115,22 +115,6 @@ export const RESTORE_INVENTORIES = gql`
   }
 `;
 
-/** Oficinas donde se puede abrir un inventario (las que el usuario ve) */
-export const GET_OFFICE_OPTIONS = gql`
-  query InventoryOffices {
-    offices(options: { take: 200, sorts: [{ property: "name", direction: ASC }] }) {
-      data {
-        id
-        name
-        business {
-          id
-          name
-        }
-      }
-    }
-  }
-`;
-
 /** Productos para elegir al abrir un inventario */
 export const GET_PRODUCT_OPTIONS = gql`
   query InventoryProductOptions {

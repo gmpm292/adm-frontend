@@ -10,10 +10,10 @@ import { FormField, InfoRow } from "../../../../components/ui";
 import { getErrorMessage } from "../../../../utils/errors";
 import {
   CREATE_INVENTORY,
-  GET_OFFICE_OPTIONS,
   GET_PRODUCT_OPTIONS,
   UPDATE_INVENTORY,
 } from "../graphql/queries";
+import { GET_OFFICE_OPTIONS } from "../../../company/shared/queries";
 import { formatQuantity } from "../../format";
 
 /**
@@ -229,7 +229,7 @@ export function InventoryForm({ inventory, onHide, onSaved }) {
                 <InputNumber
                   inputId="inventory-stock"
                   value={form.currentStock}
-                  onValueChange={(e) => set("currentStock", e.value)}
+                  onChange={(e) => set("currentStock", e.value)}
                   min={0}
                   suffix={unit?.symbol ? ` ${unit.symbol}` : undefined}
                 />
@@ -245,7 +245,7 @@ export function InventoryForm({ inventory, onHide, onSaved }) {
               <InputNumber
                 inputId="inventory-min"
                 value={form.minStock}
-                onValueChange={(e) => set("minStock", e.value)}
+                onChange={(e) => set("minStock", e.value)}
                 min={0}
                 placeholder="Sin mínimo"
                 suffix={unit?.symbol ? ` ${unit.symbol}` : undefined}

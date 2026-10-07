@@ -6,7 +6,7 @@ import { PayrollPeriodListPage } from "./payroll-period/pages/PayrollPeriodListP
 import { WorkScheduleListPage } from "./work-schedule/pages/WorkScheduleListPage";
 import { WorkerPaymentListPage } from "./worker-payment/pages/WorkerPaymentListPage";
 import { WorkerListPage } from "./worker/pages/WorkerListPage";
-import { AttendanceListPage } from "./attendance";
+import { AttendanceListPage } from "./attendance/pages/AttendanceListPage";
 import MaterialCostListPage from "./material-cost/pages/MaterialCostListPage";
 
 

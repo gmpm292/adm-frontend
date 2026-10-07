@@ -1,15 +1,14 @@
-import React from 'react';
-import { PageHeader } from '../../../../components/ui';
-import { WorkScheduleTable } from '../components/WorkScheduleTable';
+import { PageHeader } from "../../../../components/ui";
+import { WorkScheduleTable } from "../components/WorkScheduleTable";
 
 export function WorkScheduleListPage() {
-    return (
-        <>
-            <PageHeader
-                title="Horarios laborales"
-                subtitle="Define los periodos y días de trabajo de cada oficina."
-            />
-            <WorkScheduleTable />
-        </>
-    );
+  return (
+    <>
+      <PageHeader
+        title="Horarios"
+        subtitle="Semanas de trabajo de cada oficina y qué días se trabaja en ellas."
+      />
+      <WorkScheduleTable />
+    </>
+  );
 }

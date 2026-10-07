@@ -1,44 +1,48 @@
 import { gql } from "@apollo/client";
 
+const WORKER_FIELDS = `
+  id
+  workerType
+  otherType
+  baseSalary
+  deletedAt
+  tempFirstName
+  tempLastName
+  tempEmail
+  tempPhone
+  user {
+    id
+    name
+    lastName
+    email
+    mobile
+    enabled
+  }
+  business {
+    id
+    name
+  }
+  office {
+    id
+    name
+  }
+  department {
+    id
+    name
+  }
+  team {
+    id
+    name
+  }
+`;
+
+/** Lo usan también Asistencia, Pagos y Ventas (publicistas) */
 export const GET_WORKERS = gql`
   query Workers($options: ListOptions) {
     workers(options: $options) {
       totalCount
       data {
-        id
-        workerType
-        baseSalary
-        createdAt
-        updatedAt
-        user {
-          enabled
-          id
-          name
-          lastName
-          email
-          role
-        }
-        tempFirstName
-        tempLastName
-        tempEmail
-        tempPhone
-        tempRole
-        business {
-          id
-          name
-        }
-        office {
-          id
-          name
-        }
-        department {
-          id
-          name
-        }
-        team {
-          id
-          name
-        }
+        ${WORKER_FIELDS}
       }
     }
   }
@@ -47,62 +51,30 @@ export const GET_WORKERS = gql`
 export const GET_WORKER_BY_ID = gql`
   query Worker($id: Int!) {
     worker(id: $id) {
-      id
-      workerType
-      baseSalary
-      customPaymentSettings
+      ${WORKER_FIELDS}
       createdAt
       updatedAt
-      user {
-        enabled
+      createdBy {
         id
         name
         lastName
-        email
-      }
-      tempFirstName
-      tempLastName
-      tempEmail
-      tempPhone
-      tempRole
-      business {
-        id
-        name
-      }
-      office {
-        id
-        name
-      }
-      department {
-        id
-        name
-      }
-      team {
-        id
-        name
-      }
-      paymentRule {
-        id
-        name
       }
     }
   }
 `;
 
 export const CREATE_WORKER = gql`
-  mutation CreateWorker($createWorkerInput: CreateWorkerInput!) {
-    createWorker(createWorkerInput: $createWorkerInput) {
+  mutation CreateWorker($worker: CreateWorkerInput!) {
+    createWorker(createWorkerInput: $worker) {
       id
     }
   }
 `;
 
 export const UPDATE_WORKER = gql`
-  mutation UpdateWorker($updateWorkerInput: UpdateWorkerInput!) {
-    updateWorker(updateWorkerInput: $updateWorkerInput) {
+  mutation UpdateWorker($worker: UpdateWorkerInput!) {
+    updateWorker(updateWorkerInput: $worker) {
       id
-      workerType
-      baseSalary
     }
   }
 `;
@@ -117,43 +89,23 @@ export const REMOVE_WORKERS = gql`
 
 export const RESTORE_WORKERS = gql`
   mutation RestoreWorkers($ids: [Int!]!) {
-    restoreWorkers(ids: $ids) {
-      id
-    }
+    restoreWorkers(ids: $ids)
   }
 `;
 
-export const ASSOCIATE_USER_TO_WORKER = gql`
-  mutation AssociateUserToWorker($workerId: Int!, $userId: Int!) {
-    associateUserToWorker(workerId: $workerId, userId: $userId) {
-      id
-      user {
+/** Cuentas que se pueden vincular a un trabajador */
+export const GET_WORKER_FORM_OPTIONS = gql`
+  query WorkerFormOptions {
+    users(options: { take: 500, sorts: [{ property: "name", direction: ASC }] }) {
+      data {
         id
         name
         lastName
-      }
-    }
-  }
-`;
-
-export const CREATE_USER_FROM_WORKER = gql`
-  mutation CreateUserFromWorker($workerId: Int!) {
-    createUserFromWorker(workerId: $workerId) {
-      id
-      user {
-        id
-        name
-        lastName
-      }
-    }
-  }
-`;
-
-export const GET_WORKER_TYPES = gql`
-  query {
-    __type(name: "WorkerType") {
-      enumValues {
-        name
+        email
+        role
+        business {
+          id
+        }
       }
     }
   }

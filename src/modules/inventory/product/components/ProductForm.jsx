@@ -13,10 +13,8 @@ import { getErrorMessage } from "../../../../utils/errors";
 import { CategorySelector } from "../../category/components/CategorySelector";
 import UnitOfMeasureDropdown from "../../unit-of-measure/components/UnitOfMeasureDropdown";
 import MaterialCostDropdown from "../../../payroll/material-cost/components/MaterialCostDropdown";
-import {
-  CREATE_INVENTORY,
-  GET_OFFICE_OPTIONS,
-} from "../../inventory/graphql/queries";
+import { CREATE_INVENTORY } from "../../inventory/graphql/queries";
+import { GET_OFFICE_OPTIONS } from "../../../company/shared/queries";
 import {
   CREATE_PRODUCT,
   GET_ACTIVE_CURRENCIES,
@@ -461,7 +459,7 @@ function ProductFormDialog({ product, onHide, onSaved }) {
                   <InputNumber
                     inputId="product-material-qty"
                     value={form.materialQuantity}
-                    onValueChange={(e) => {
+                    onChange={(e) => {
                       set("materialQuantity", e.value);
                       applyMaterial(material, e.value);
                     }}
@@ -482,7 +480,7 @@ function ProductFormDialog({ product, onHide, onSaved }) {
                   <InputNumber
                     inputId="product-cost"
                     value={form.costPrice}
-                    onValueChange={(e) => set("costPrice", e.value)}
+                    onChange={(e) => set("costPrice", e.value)}
                     min={0}
                     minFractionDigits={2}
                     locale="es-ES"
@@ -512,7 +510,7 @@ function ProductFormDialog({ product, onHide, onSaved }) {
                   <InputNumber
                     inputId="product-price"
                     value={form.basePrice}
-                    onValueChange={(e) => set("basePrice", e.value)}
+                    onChange={(e) => set("basePrice", e.value)}
                     min={0}
                     minFractionDigits={2}
                     locale="es-ES"
@@ -596,7 +594,7 @@ function ProductFormDialog({ product, onHide, onSaved }) {
                   <InputNumber
                     inputId={`product-fixed-${code}`}
                     value={form.fixedPrices[code] ?? null}
-                    onValueChange={(e) =>
+                    onChange={(e) =>
                       set("fixedPrices", { ...form.fixedPrices, [code]: e.value })
                     }
                     min={0}
@@ -619,7 +617,7 @@ function ProductFormDialog({ product, onHide, onSaved }) {
                     <InputNumber
                       inputId="product-rate-margin"
                       value={form.exchangeRateMargin}
-                      onValueChange={(e) => set("exchangeRateMargin", e.value)}
+                      onChange={(e) => set("exchangeRateMargin", e.value)}
                       suffix=" %"
                       min={0}
                       maxFractionDigits={2}
@@ -634,7 +632,7 @@ function ProductFormDialog({ product, onHide, onSaved }) {
                     <InputNumber
                       inputId="product-decimals"
                       value={form.decimalPlaces}
-                      onValueChange={(e) => set("decimalPlaces", e.value)}
+                      onChange={(e) => set("decimalPlaces", e.value)}
                       min={0}
                       max={6}
                     />
@@ -659,7 +657,7 @@ function ProductFormDialog({ product, onHide, onSaved }) {
                 <InputNumber
                   inputId="product-min"
                   value={form.minQuantity}
-                  onValueChange={(e) => set("minQuantity", e.value)}
+                  onChange={(e) => set("minQuantity", e.value)}
                   min={1}
                   placeholder="Sin mínimo"
                   invalid={!!shown("quantities")}
@@ -671,7 +669,7 @@ function ProductFormDialog({ product, onHide, onSaved }) {
                 <InputNumber
                   inputId="product-max"
                   value={form.maxQuantity}
-                  onValueChange={(e) => set("maxQuantity", e.value)}
+                  onChange={(e) => set("maxQuantity", e.value)}
                   min={1}
                   placeholder="Sin máximo"
                   invalid={!!shown("quantities")}
@@ -689,7 +687,7 @@ function ProductFormDialog({ product, onHide, onSaved }) {
                   <InputNumber
                     inputId={`discount-qty-${index}`}
                     value={discount.minQty}
-                    onValueChange={(e) =>
+                    onChange={(e) =>
                       updateRow("bulkDiscounts", index, { minQty: e.value })
                     }
                     min={1}
@@ -701,7 +699,7 @@ function ProductFormDialog({ product, onHide, onSaved }) {
                   <InputNumber
                     inputId={`discount-pct-${index}`}
                     value={discount.discount}
-                    onValueChange={(e) =>
+                    onChange={(e) =>
                       updateRow("bulkDiscounts", index, { discount: e.value })
                     }
                     suffix=" %"
