@@ -14,7 +14,7 @@ import {
   workerName,
   workerTypeLabel,
 } from "../../format";
-import { useHasRole } from "../../useHasRole";
+import { useHasRole } from "../../../../hooks/useHasRole";
 import { WorkerForm } from "./WorkerForm";
 import { WorkerDetailForm } from "./WorkerDetailForm";
 

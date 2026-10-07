@@ -55,7 +55,8 @@ function App() {
       window.location.hash && window.location.hash === "#/system/email";
 
     if (code && scope && prompt && !isRedirect) {
-      const newUrl = `/#/system/email?${searchParams.toString()}`;
+      // Con la base de Vite (/adm-frontend/): sin ella se saldría de la aplicación
+      const newUrl = `${import.meta.env.BASE_URL}#/system/email?${searchParams.toString()}`;
       window.location.replace(newUrl);
     }
   }, []);

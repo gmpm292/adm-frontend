@@ -19,7 +19,7 @@ import {
   formatMoney,
   workerName,
 } from "../../format";
-import { useHasRole } from "../../useHasRole";
+import { useHasRole } from "../../../../hooks/useHasRole";
 import { WorkerPaymentForm } from "./WorkerPaymentForm";
 import { WorkerPaymentDetailForm } from "./WorkerPaymentDetailForm";
 

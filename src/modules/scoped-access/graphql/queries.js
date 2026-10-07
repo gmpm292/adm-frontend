@@ -1,48 +1,39 @@
 import { gql } from "@apollo/client";
 
+const SCOPED_ACCESS_FIELDS = `
+  id
+  accessLevels
+  entityStatus
+  deletedAt
+  business {
+    id
+    name
+  }
+  roleGuard {
+    id
+    queryOrEndPointURL
+    type
+  }
+`;
+
 export const GET_SCOPED_ACCESSES = gql`
   query ScopedAccesses($options: ListOptions) {
     scopedAccesses(options: $options) {
       totalCount
       data {
-        id
-        accessLevels
-        entityStatus
-        createdAt
-        updatedAt
-        business {
-          id
-          name
-        }
-        roleGuard {
-          id
-          queryOrEndPointURL
-          type
-          description
-        }
+        ${SCOPED_ACCESS_FIELDS}
       }
     }
   }
 `;
 
-export const GET_SCOPED_ACCESS_BY_ID = gql`
-  query ScopedAccess($id: Int!) {
-    scopedAccess(id: $id) {
-      id
-      accessLevels
-      entityStatus
-      createdAt
-      updatedAt
-      business {
-        id
-        name
-      }
-      roleGuard {
+export const GET_OPERATION_OPTIONS = gql`
+  query OperationOptions {
+    roleGuards(options: { skip: 0, take: 1000 }) {
+      data {
         id
         queryOrEndPointURL
         type
-        description
-        roles
       }
     }
   }
@@ -53,9 +44,7 @@ export const CREATE_SCOPED_ACCESS = gql`
     $createScopedAccessInput: CreateScopedAccessInput!
   ) {
     createScopedAccess(createScopedAccessInput: $createScopedAccessInput) {
-      id
-      accessLevels
-      entityStatus
+      ${SCOPED_ACCESS_FIELDS}
     }
   }
 `;
@@ -65,9 +54,7 @@ export const UPDATE_SCOPED_ACCESS = gql`
     $updateScopedAccessInput: UpdateScopedAccessInput!
   ) {
     updateScopedAccess(updateScopedAccessInput: $updateScopedAccessInput) {
-      id
-      accessLevels
-      entityStatus
+      ${SCOPED_ACCESS_FIELDS}
     }
   }
 `;
@@ -77,5 +64,11 @@ export const REMOVE_SCOPED_ACCESSES = gql`
     removeScopedAccesses(ids: $ids) {
       id
     }
+  }
+`;
+
+export const RESTORE_SCOPED_ACCESSES = gql`
+  mutation RestoreScopedAccesses($ids: [Int!]!) {
+    restoreScopedAccesses(ids: $ids)
   }
 `;

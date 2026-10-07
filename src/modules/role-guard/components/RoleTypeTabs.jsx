@@ -1,21 +1,20 @@
-import React from "react";
 import { Button } from "primereact/button";
 
-export function RoleTypeTabs({ activeTab, onTabChange }) {
-  const tabs = [
-    { key: "ALL", label: "Todos", icon: "pi pi-list" },
-    { key: "QUERY", label: "Consultas", icon: "pi pi-search" },
-    { key: "MUTATION", label: "Mutaciones", icon: "pi pi-pencil" },
-    { key: "SUBSCRIPTION", label: "Suscripciones", icon: "pi pi-bell" },
-  ];
+const TABS = [
+  { key: null, label: "Todas", icon: "pi pi-list" },
+  { key: "Query", label: "Consultas", icon: "pi pi-search" },
+  { key: "Mutation", label: "Cambios", icon: "pi pi-pencil" },
+  { key: "Subscription", label: "Suscripciones", icon: "pi pi-bell" },
+];
 
+export function RoleTypeTabs({ activeTab, onTabChange }) {
   return (
     <div className="flex flex-wrap gap-1">
-      {tabs.map((tab) => {
+      {TABS.map((tab) => {
         const isActive = activeTab === tab.key;
         return (
           <Button
-            key={tab.key}
+            key={tab.label}
             icon={tab.icon}
             label={tab.label}
             size="small"

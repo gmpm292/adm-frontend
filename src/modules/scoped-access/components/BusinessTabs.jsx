@@ -1,19 +1,11 @@
-import React from "react";
+import { useQuery } from "@apollo/client";
 import { Button } from "primereact/button";
-import { useLazyQuery } from "@apollo/client";
-import { GET_BUSINESSES } from "../../company/business/graphql/queries";
+import { GET_BUSINESS_OPTIONS } from "../../company/shared/queries";
 
+/** Filtro por empresa: `null` son todas */
 export function BusinessTabs({ selectedBusiness, onBusinessChange }) {
-  const [getBusinesses, { data, loading }] = useLazyQuery(GET_BUSINESSES, {
-    variables: { options: { take: 100 } },
-    fetchPolicy: "network-only",
-  });
-
-  React.useEffect(() => {
-    getBusinesses();
-  }, [getBusinesses]);
-
-  const businesses = data?.businesses?.data || [];
+  const { data, loading } = useQuery(GET_BUSINESS_OPTIONS);
+  const businesses = data?.businesses?.data ?? [];
 
   // Pestaña activa: contorno principal; el resto, texto neutro
   const tabProps = (isActive) => ({
@@ -27,19 +19,19 @@ export function BusinessTabs({ selectedBusiness, onBusinessChange }) {
     <div className="flex flex-wrap align-items-center gap-1">
       <Button
         icon="pi pi-building"
-        label="Todos"
-        {...tabProps(selectedBusiness === "ALL")}
-        onClick={() => onBusinessChange("ALL")}
+        label="Todas"
+        {...tabProps(selectedBusiness === null)}
+        onClick={() => onBusinessChange(null)}
       />
       {businesses.map((business) => (
         <Button
           key={business.id}
           label={business.name}
-          {...tabProps(selectedBusiness === business.id.toString())}
-          onClick={() => onBusinessChange(business.id.toString())}
+          {...tabProps(selectedBusiness === business.id)}
+          onClick={() => onBusinessChange(business.id)}
         />
       ))}
-      {loading && <i className="pi pi-spinner pi-spin ml-2"></i>}
+      {loading && <i className="pi pi-spinner pi-spin ml-2" />}
     </div>
   );
 }

@@ -13,7 +13,7 @@ import {
   RESTORE_PAYROLL_PERIODS,
 } from "../graphql/queries";
 import { formatTotals, periodRange, totalsByCurrency } from "../../format";
-import { useHasRole } from "../../useHasRole";
+import { useHasRole } from "../../../../hooks/useHasRole";
 import { PayrollPeriodForm } from "./PayrollPeriodForm";
 import { PayrollPeriodDetailForm } from "./PayrollPeriodDetailForm";
 

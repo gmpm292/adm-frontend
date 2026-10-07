@@ -7,7 +7,7 @@ export const UnitOfMeasureListPage = () => {
     <>
       <PageHeader
         title="Unidades de medida"
-        subtitle="Define las unidades en las que se compran, almacenan y venden los productos."
+        subtitle="Unidades en las que se compran, almacenan y venden los productos. Son comunes a todas las empresas."
       />
       <UnitOfMeasureTable />
     </>

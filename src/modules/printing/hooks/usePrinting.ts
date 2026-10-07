@@ -1,74 +1,55 @@
 import { useState, useCallback } from "react";
 import { useApolloClient } from "@apollo/client";
-import { PrintingService, PrintData } from "../services/printing.service";
+import { PrintingService } from "../services/printing.service";
 
+/** Impresión térmica con QZ Tray; `isPrinting` mientras se envía */
 export const usePrinting = () => {
   const [isPrinting, setIsPrinting] = useState(false);
-  const [error, setError] = useState(null);
   const apolloClient = useApolloClient();
 
-  const print = useCallback(
-    async (printData: PrintData): Promise<boolean> => {
+  const run = useCallback(
+    async (send: (service: PrintingService) => Promise<boolean>) => {
       setIsPrinting(true);
-      setError(null);
-
       try {
-        const printingService = PrintingService.getInstance(apolloClient);
-        const success = await printingService.print(printData);
-
-        if (!success) {
-          throw new Error("No se pudo completar la impresión");
-        }
-
-        return true;
-      } catch (err: any) {
-        const errorMessage = err.message || "Error desconocido al imprimir";
-        setError(errorMessage);
-        console.error("Error en usePrinting:", err);
-        return false;
+        return await send(PrintingService.getInstance(apolloClient));
       } finally {
         setIsPrinting(false);
       }
     },
-    [apolloClient]
+    [apolloClient],
   );
 
   const printTicket = useCallback(
-    async (ventaData: any) => {
-      const printingService = PrintingService.getInstance(apolloClient);
-      return printingService.printTicket(ventaData);
-    },
-    [apolloClient]
+    (ventaData: Parameters<PrintingService["printTicket"]>[0]) =>
+      run((service) => service.printTicket(ventaData)),
+    [run],
   );
 
-  // 👇 NUEVA FUNCIÓN: Para imprimir movimientos de inventario
   const printMovement = useCallback(
-    async (movementData: any) => {
-      const printingService = PrintingService.getInstance(apolloClient);
-      return printingService.printMovement(movementData);
-    },
-    [apolloClient]
+    (movementData: Parameters<PrintingService["printMovement"]>[0]) =>
+      run((service) => service.printMovement(movementData)),
+    [run],
   );
 
-  const printWarranty = useCallback(
-    async (garantiaData: any) => {
-      const printingService = PrintingService.getInstance(apolloClient);
-      return printingService.printWarranty(garantiaData);
-    },
-    [apolloClient]
+  /** Hoja corta para comprobar que QZ Tray y la impresora responden */
+  const printTest = useCallback(
+    () =>
+      run((service) =>
+        service.print({
+          type: "TEST",
+          content: [
+            "********************************",
+            "      PRUEBA DE IMPRESIÓN",
+            "********************************",
+            new Date().toLocaleString("es-ES"),
+            "Si lees esto, la impresión",
+            "funciona correctamente.",
+          ].map((line) => `${line}\n`),
+          config: { cutAfterPrint: true },
+        }),
+      ),
+    [run],
   );
 
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
-
-  return {
-    isPrinting,
-    error,
-    print,
-    printTicket,
-    printMovement, // 👈 Exportar la nueva función
-    printWarranty,
-    clearError,
-  };
+  return { isPrinting, printTicket, printMovement, printTest };
 };

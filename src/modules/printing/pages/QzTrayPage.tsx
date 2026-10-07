@@ -1,4 +1,3 @@
-import React from "react";
 import { PageHeader } from "../../../components/ui";
 import { QzTrayConfig } from "../components/QzTrayConfig";
 
@@ -6,8 +5,8 @@ export function QzTrayPage() {
   return (
     <>
       <PageHeader
-        title="Impresión Térmica"
-        subtitle="Descarga el certificado de seguridad e instálalo en QZ Tray para habilitar la impresión."
+        title="Impresión"
+        subtitle="Tickets de venta y comprobantes en impresoras térmicas, a través de QZ Tray."
       />
       <div className="grid">
         <div className="col-12 lg:col-8 xl:col-6">

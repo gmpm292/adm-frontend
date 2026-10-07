@@ -8,7 +8,7 @@ declare global {
 }
 
 export interface PrintData {
-  type: "TICKET" | "WARRANTY" | "RECEIPT" | "CUSTOM" | "MOVEMENT";
+  type: "TICKET" | "MOVEMENT" | "TEST";
   content: string[];
   config?: {
     copies?: number;
@@ -16,6 +16,12 @@ export interface PrintData {
     encoding?: string;
   };
 }
+
+/** Centra un texto en el ancho del papel (32 caracteres) */
+const center = (text: string) =>
+  text.length >= 32
+    ? text.substring(0, 32)
+    : " ".repeat(Math.floor((32 - text.length) / 2)) + text;
 
 export class PrintingService {
   private static instance: PrintingService;
@@ -80,36 +86,6 @@ export class PrintingService {
   }
 
   /**
-   * Obtiene la impresora por defecto
-   */
-  async getDefaultPrinter(): Promise<string | null> {
-    try {
-      await qz.websocket.connect();
-      const printer = await qz.printers.getDefault();
-      await qz.websocket.disconnect();
-      return printer;
-    } catch (error) {
-      console.error("Error obteniendo impresora por defecto:", error);
-      return null;
-    }
-  }
-
-  /**
-   * Obtiene lista de impresoras disponibles
-   */
-  async getAvailablePrinters(): Promise<string[]> {
-    try {
-      await qz.websocket.connect();
-      const printers = await qz.printers.find();
-      await qz.websocket.disconnect();
-      return printers;
-    } catch (error) {
-      console.error("Error obteniendo impresoras:", error);
-      return [];
-    }
-  }
-
-  /**
    * Imprime contenido en la impresora térmica
    */
   async print(printData: PrintData): Promise<boolean> {
@@ -155,14 +131,17 @@ export class PrintingService {
    * Imprime un ticket de venta
    */
   async printTicket(ventaData: {
+    tienda?: string;
     numeroVenta: string;
     fecha: string;
     productos: Array<{
       nombre: string;
       cantidad: number;
       precio: number;
+      moneda: string;
     }>;
     total: number;
+    moneda: string;
     cliente?: string;
     vendedor: string;
   }): Promise<boolean> {
@@ -196,56 +175,35 @@ export class PrintingService {
   }
 
   /**
-   * Imprime una garantía
-   */
-  async printWarranty(garantiaData: {
-    numeroGarantia: string;
-    fecha: string;
-    producto: string;
-    cliente: string;
-    vendedor: string;
-    duracion: string;
-    condiciones: string[];
-  }): Promise<boolean> {
-    const content = this.formatWarrantyContent(garantiaData);
-    return this.print({
-      type: "WARRANTY",
-      content,
-      config: { cutAfterPrint: true },
-    });
-  }
-
-  /**
    * Formatea contenido para ticket
    */
   private formatTicketContent(ventaData: any): string[] {
+    const amount = (value: number, currency: string) =>
+      `${Number(value).toFixed(2)} ${currency}`;
     const lines = [
       "********************************",
-      "         TIENDA XYZ",
+      center(ventaData.tienda || "COMPROBANTE DE VENTA"),
       "********************************",
       `Venta: ${ventaData.numeroVenta}`,
       `Fecha: ${ventaData.fecha}`,
       `Vendedor: ${ventaData.vendedor}`,
       ...(ventaData.cliente ? [`Cliente: ${ventaData.cliente}`] : []),
       "--------------------------------",
-      "Producto      Cant.   Precio",
-      "--------------------------------",
     ];
 
-    // Productos
+    // Una línea por producto: cantidad y nombre, y debajo el precio
     ventaData.productos.forEach((producto: any) => {
-      const nombre = producto.nombre.substring(0, 12).padEnd(12);
-      const cantidad = producto.cantidad.toString().padEnd(4);
-      const precio = `$${producto.precio.toFixed(2)}`;
-      lines.push(`${nombre} ${cantidad} ${precio}`);
+      lines.push(
+        `${producto.cantidad} x ${producto.nombre}`.substring(0, 32),
+        `${amount(producto.precio, producto.moneda)}`.padStart(32),
+      );
     });
 
-    // Total
     lines.push(
       "--------------------------------",
-      `TOTAL: $${ventaData.total.toFixed(2)}`,
+      `TOTAL: ${amount(ventaData.total, ventaData.moneda)}`,
       "********************************",
-      "     ¡Gracias por su compra!",
+      center("¡Gracias por su compra!"),
       "********************************",
     );
 
@@ -284,32 +242,6 @@ export class PrintingService {
       "      ¡Operación exitosa!",
       "********************************",
     );
-
-    return lines.map((line) => line + "\n");
-  }
-
-  /**
-   * Formatea contenido para garantía
-   */
-  private formatWarrantyContent(garantiaData: any): string[] {
-    const lines = [
-      "********************************",
-      "        GARANTÍA",
-      "********************************",
-      `Garantía: ${garantiaData.numeroGarantia}`,
-      `Fecha: ${garantiaData.fecha}`,
-      `Producto: ${garantiaData.producto}`,
-      `Cliente: ${garantiaData.cliente}`,
-      `Vendedor: ${garantiaData.vendedor}`,
-      `Duración: ${garantiaData.duracion}`,
-      "--------------------------------",
-      "CONDICIONES:",
-      ...garantiaData.condiciones.map((cond: string) => `• ${cond}`),
-      "--------------------------------",
-      "Firma del cliente:",
-      "__________________",
-      "********************************",
-    ];
 
     return lines.map((line) => line + "\n");
   }

@@ -1,149 +1,171 @@
-import React, { useCallback, useState, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
-import { GET_CATEGORIES, DELETE_CATEGORIES } from "../graphql/queries";
-import GenericDataTable from "../../../../components/BaseTable/index";
-import { Column } from "primereact/column";
 import { Button } from "primereact/button";
+import { Column } from "primereact/column";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
-import { CategoryEditForm } from "./CategoryEditForm";
-import { CategoryCreateForm } from "./CategoryCreateForm";
-import { CategoryDetailForm } from "./CategoryDetailForm";
-import { formatDate } from "../../../../utils/dateUtils";
+import GenericDataTable from "../../../../components/BaseTable";
+import { getErrorMessage } from "../../../../utils/errors";
+import { useHasRole } from "../../../../hooks/useHasRole";
+import {
+  DELETE_CATEGORIES,
+  GET_CATEGORIES,
+  RESTORE_CATEGORIES,
+} from "../graphql/queries";
+import { CategoryForm } from "./CategoryForm";
+
+const nameColumn = {
+  field: "name",
+  header: "Nombre",
+  sortable: true,
+  filter: true,
+  body: (row) => (
+    <span className="flex flex-column">
+      <span className="font-medium text-900">{row.name}</span>
+      {row.description && (
+        <small className="text-color-secondary">{row.description}</small>
+      )}
+    </span>
+  ),
+};
+
+const businessColumn = {
+  field: "business.name",
+  header: "Empresa",
+  sortable: true,
+  filter: true,
+  body: (row) => row.business?.name,
+};
+
+const productsColumn = {
+  field: "productCount",
+  header: "Productos",
+  sortable: false,
+  bodyClassName: "text-right",
+  headerClassName: "text-right",
+  body: (row) => row.productCount ?? 0,
+};
 
 export function CategoryTable() {
-  const [getCategories, { loading, data, error }] = useLazyQuery(
-    GET_CATEGORIES,
-    {
-      fetchPolicy: "network-only",
-    }
-  );
-  const [deleteCategories] = useMutation(DELETE_CATEGORIES);
-  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
-  const [editDialogVisible, setEditDialogVisible] = useState(false);
-  const [createDialogVisible, setCreateDialogVisible] = useState(false);
-  const [detailDialogVisible, setDetailDialogVisible] = useState(false);
   const toast = useRef(null);
-
-  const tableStateRef = useRef({
-    filters: {},
-    sorts: [],
-    pagination: { first: 0, rows: 10 },
-  });
+  const lastParams = useRef(null);
+  const hasRole = useHasRole();
+  const canEdit = hasRole("SUPER", "PRINCIPAL");
+  const isSuper = hasRole("SUPER");
+  // { category } al editar, {} al crear
+  const [form, setForm] = useState(null);
+  const [fetchCategories, { loading, data, error }] = useLazyQuery(
+    GET_CATEGORIES,
+    { fetchPolicy: "network-only" }
+  );
+  const [removeCategories] = useMutation(DELETE_CATEGORIES);
+  const [restoreCategories] = useMutation(RESTORE_CATEGORIES);
 
   const handleFetchData = useCallback(
     async (params) => {
+      lastParams.current = params;
       try {
-        tableStateRef.current = {
-          filters: params.filters || {},
-          sorts: params.sorts || [],
-          pagination: {
-            first: params.skip,
-            rows: params.take,
-          },
-        };
-
-        const { data: responseData } = await getCategories({
+        const { data: response } = await fetchCategories({
           variables: {
             options: {
               skip: params.skip,
               take: params.take,
+              withDeleted: params.showDeleted,
               filters: params.filters,
               sorts: params.sorts,
             },
           },
         });
-
         return {
-          data: responseData?.categories?.data,
-          totalCount: responseData?.categories?.totalCount,
+          data: response?.categories?.data,
+          totalCount: response?.categories?.totalCount,
         };
-      } catch (err) {
-        console.error("Error fetching categories:", err);
-        return {
-          data: [],
-          totalCount: 0,
-        };
+      } catch {
+        return { data: [], totalCount: 0 };
       }
     },
-    [getCategories]
+    [fetchCategories]
   );
 
   const handleRefresh = useCallback(() => {
-    handleFetchData({
-      skip: tableStateRef.current.pagination.first,
-      take: tableStateRef.current.pagination.rows,
-      filters: tableStateRef.current.filters,
-      sorts: tableStateRef.current.sorts,
-    });
+    if (lastParams.current) handleFetchData(lastParams.current);
   }, [handleFetchData]);
 
-  const handleEditSuccess = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
+  const notify = (severity, summary, detail) =>
+    toast.current?.show({ severity, summary, detail, life: 6000 });
 
-  const handleCreateSuccess = useCallback(() => {
+  const handleSaved = (saved, { created }) => {
+    setForm(null);
     handleRefresh();
-  }, [handleRefresh]);
-
-  const handleEdit = (categoryId) => {
-    setSelectedCategoryId(categoryId);
-    setEditDialogVisible(true);
+    notify(
+      "success",
+      created ? "Categoría creada" : "Categoría actualizada",
+      saved?.name
+    );
   };
 
-  const handleViewDetails = (categoryId) => {
-    setSelectedCategoryId(categoryId);
-    setDetailDialogVisible(true);
-  };
-
-  const handleDelete = (categoryId) => {
+  const handleDelete = (row) => {
+    if (row.productCount > 0) {
+      notify(
+        "warn",
+        "No se puede eliminar",
+        `«${row.name}» tiene ${row.productCount} producto(s): pásalos a otra categoría antes`
+      );
+      return;
+    }
     confirmDialog({
-      message: "¿Estás seguro de que deseas eliminar esta categoría?",
-      header: "Confirmación",
+      header: "Eliminar categoría",
+      message: `Se eliminará la categoría «${row.name}». Puedes restaurarla después.`,
       icon: "pi pi-exclamation-triangle",
+      acceptLabel: "Eliminar",
+      rejectLabel: "Cancelar",
+      acceptClassName: "p-button-danger",
       accept: async () => {
         try {
-          await deleteCategories({ variables: { ids: [categoryId] } });
-
-          toast.current.show({
-            severity: "success",
-            summary: "Éxito",
-            detail: "Categoría eliminada correctamente",
-            life: 3000,
-          });
-
+          await removeCategories({ variables: { ids: [row.id] } });
+          notify("success", "Categoría eliminada", row.name);
           handleRefresh();
         } catch (err) {
-          toast.current.show({
-            severity: "error",
-            summary: "Error",
-            detail: err.message,
-            life: 3000,
-          });
+          notify("error", "No se pudo eliminar", getErrorMessage(err));
         }
       },
     });
   };
 
-  const dateBodyTemplate = (rowData, field) => {
-    return formatDate(rowData[field]);
+  const handleRestore = async (row) => {
+    try {
+      await restoreCategories({ variables: { ids: [row.id] } });
+      notify("success", "Categoría restaurada", row.name);
+      handleRefresh();
+    } catch (err) {
+      notify("error", "No se pudo restaurar", getErrorMessage(err));
+    }
   };
 
-  const entityBodyTemplate = (rowData, field) => {
-    return rowData[field]?.name || "N/A";
-  };
-
-  const actionBodyTemplate = (rowData) => {
-    return (
+  const actionBodyTemplate = (row) =>
+    !canEdit ? null : row.deletedAt ? (
+      <div className="actions-column">
+        <Button
+          icon="pi pi-history"
+          text
+          rounded
+          severity="success"
+          tooltip="Restaurar categoría"
+          tooltipOptions={{ position: "top" }}
+          aria-label="Restaurar categoría"
+          onClick={() => handleRestore(row)}
+        />
+      </div>
+    ) : (
       <div className="actions-column">
         <Button
           icon="pi pi-pencil"
           text
           rounded
-          severity="secondary"
           tooltip="Editar categoría"
           tooltipOptions={{ position: "top" }}
-          onClick={() => handleEdit(rowData.id)}
+          aria-label="Editar categoría"
+          onClick={() => setForm({ category: row })}
         />
         <Button
           icon="pi pi-trash"
@@ -152,77 +174,11 @@ export function CategoryTable() {
           severity="danger"
           tooltip="Eliminar categoría"
           tooltipOptions={{ position: "top" }}
-          onClick={() => handleDelete(rowData.id)}
-        />
-        <Button
-          icon="pi pi-eye"
-          text
-          rounded
-          severity="secondary"
-          tooltip="Ver detalles"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleViewDetails(rowData.id)}
+          aria-label="Eliminar categoría"
+          onClick={() => handleDelete(row)}
         />
       </div>
     );
-  };
-
-  const columns = [
-    {
-      field: "name",
-      header: "Nombre",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "description",
-      header: "Descripción",
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "business",
-      header: "Negocio",
-      body: (rowData) => entityBodyTemplate(rowData, "business"),
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "office",
-      header: "Oficina",
-      body: (rowData) => entityBodyTemplate(rowData, "office"),
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "department",
-      header: "Departamento",
-      body: (rowData) => entityBodyTemplate(rowData, "department"),
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "team",
-      header: "Equipo",
-      body: (rowData) => entityBodyTemplate(rowData, "team"),
-      sortable: true,
-      filter: true,
-    },
-    {
-      field: "createdAt",
-      header: "Fecha de Creación",
-      body: (rowData) => dateBodyTemplate(rowData, "createdAt"),
-      sortable: true,
-    },
-  ];
-
-  const addCategoryButton = (
-    <Button
-      icon="pi pi-plus"
-      tooltip="Crear Nueva Categoría"
-      onClick={() => setCreateDialogVisible(true)}
-    />
-  );
 
   return (
     <>
@@ -230,44 +186,49 @@ export function CategoryTable() {
       <ConfirmDialog />
 
       <GenericDataTable
-        columns={columns}
+        columns={
+          isSuper
+            ? [nameColumn, businessColumn, productsColumn]
+            : [nameColumn, productsColumn]
+        }
         data={data?.categories?.data}
         totalRecords={data?.categories?.totalCount}
         loading={loading}
         error={error}
         globalFilterFields={["name", "description"]}
-        emptyMessage="No se encontraron categorías"
+        emptyMessage="No hay categorías"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} categorías"
         onRefresh={handleRefresh}
         onFetchData={handleFetchData}
         initialPageSize={10}
-        header={addCategoryButton}
+        initialSorts={[{ field: "name", order: 1 }]}
+        header={
+          canEdit && (
+            <Button
+              label="Nueva categoría"
+              icon="pi pi-plus"
+              onClick={() => setForm({})}
+            />
+          )
+        }
+        showDeleted={canEdit}
       >
-        <Column
-          body={actionBodyTemplate}
-          header="Acciones"
-          headerClassName="w-10rem"
-        />
+        {canEdit && (
+          <Column
+            body={actionBodyTemplate}
+            header="Acciones"
+            className="w-8rem"
+          />
+        )}
       </GenericDataTable>
 
-      <CategoryEditForm
-        categoryId={selectedCategoryId}
-        visible={editDialogVisible}
-        onHide={() => setEditDialogVisible(false)}
-        onSuccess={handleEditSuccess}
-      />
-
-      <CategoryCreateForm
-        visible={createDialogVisible}
-        onHide={() => setCreateDialogVisible(false)}
-        onSuccess={handleCreateSuccess}
-      />
-
-      <CategoryDetailForm
-        categoryId={selectedCategoryId}
-        visible={detailDialogVisible}
-        onHide={() => setDetailDialogVisible(false)}
-      />
+      {form && (
+        <CategoryForm
+          category={form.category}
+          onHide={() => setForm(null)}
+          onSaved={handleSaved}
+        />
+      )}
     </>
   );
 }

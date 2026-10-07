@@ -10,7 +10,13 @@ import {
 import { formatDate } from "../../../../utils/dateUtils";
 
 /** Resumen de la venta recién cobrada, con el cambio y la opción de imprimirla */
-export function SaleReceiptDialog({ sale, change, sellerName, onNewSale }) {
+export function SaleReceiptDialog({
+  sale,
+  change,
+  sellerName,
+  storeName,
+  onNewSale,
+}) {
   const { printTicket, isPrinting } = usePrinting();
   const [printError, setPrintError] = useState(null);
   const currency = sale.totalAmountCurrency;
@@ -19,14 +25,17 @@ export function SaleReceiptDialog({ sale, change, sellerName, onNewSale }) {
     setPrintError(null);
     try {
       const printed = await printTicket({
+        tienda: storeName,
         numeroVenta: sale.invoiceNumber ?? String(sale.id),
         fecha: formatDate(sale.effectiveDate),
         productos: sale.details.map((detail) => ({
           nombre: detail.product.name,
           cantidad: detail.quantity,
           precio: detail.unitPrice,
+          moneda: detail.currency,
         })),
         total: sale.totalAmount,
+        moneda: currency,
         cliente: sale.customer?.fullName,
         vendedor: sellerName ?? "",
       });

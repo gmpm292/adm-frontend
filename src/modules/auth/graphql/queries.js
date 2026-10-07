@@ -23,9 +23,11 @@ const GET_PROFILE = gql`
       role
       business {
         id
+        name
       }
       office {
         id
+        name
       }
       department {
         id

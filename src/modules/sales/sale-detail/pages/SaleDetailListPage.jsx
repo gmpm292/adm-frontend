@@ -3,9 +3,13 @@ import { useParams } from "react-router-dom";
 import { SaleDetailTable } from "../components/SaleDetailTable";
 import { SaleDetailGeneralTable } from "../components/SaleDetailGeneralTable";
 import { PageHeader } from "../../../../components/ui";
+import { useHasRole } from "../../../../hooks/useHasRole";
 
 export function SaleDetailListPage() {
   const { saleId } = useParams();
+  const hasRole = useHasRole();
+  // Un vendedor sin mando solo ve sus ventas (lo filtra el backend)
+  const sellerOnly = !hasRole("SUPER", "PRINCIPAL", "ADMIN", "MANAGER", "SUPERVISOR");
 
   // Vista general cuando no hay saleId (accedido desde el menú)
   if (!saleId) {
@@ -13,7 +17,11 @@ export function SaleDetailListPage() {
       <>
         <PageHeader
           title="Detalles de ventas"
-          subtitle="Consulta los productos vendidos en todas las ventas."
+          subtitle={
+            sellerOnly
+              ? "Consulta los productos vendidos en tus ventas."
+              : "Consulta los productos vendidos en todas las ventas."
+          }
         />
         <SaleDetailGeneralTable />
       </>

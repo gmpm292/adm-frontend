@@ -20,37 +20,6 @@ export const GET_CONFIGS = gql`
   }
 `;
 
-export const GET_CONFIG = gql`
-  query Config($id: Int!) {
-    config(id: $id) {
-      id
-      createdAt
-      updatedAt
-      deletedAt
-      category
-      group
-      description
-      values
-      configVisibility
-      configStatus
-    }
-  }
-`;
-
-export const CREATE_CONFIG = gql`
-  mutation CreateConfig($input: CreateConfigInput!) {
-    createConfig(createConfigInput: $input) {
-      id
-      category
-      group
-      description
-      values
-      configVisibility
-      configStatus
-    }
-  }
-`;
-
 export const UPDATE_CONFIG = gql`
   mutation UpdateConfig($input: UpdateConfigInput!) {
     updateConfig(updateConfigInput: $input) {
@@ -61,14 +30,6 @@ export const UPDATE_CONFIG = gql`
       values
       configVisibility
       configStatus
-    }
-  }
-`;
-
-export const REMOVE_CONFIGS = gql`
-  mutation RemoveConfigs($ids: [Int!]!) {
-    removeConfigs(ids: $ids) {
-      id
     }
   }
 `;

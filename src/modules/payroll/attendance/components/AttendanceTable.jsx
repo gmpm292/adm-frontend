@@ -24,7 +24,7 @@ import {
   workerName,
   workerTypeLabel,
 } from "../../format";
-import { useHasRole } from "../../useHasRole";
+import { useHasRole } from "../../../../hooks/useHasRole";
 import { AttendanceForm } from "./AttendanceForm";
 
 const EMPTY = <span className="text-color-secondary">—</span>;
