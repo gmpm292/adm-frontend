@@ -8,9 +8,11 @@ import { InputSwitch } from "primereact/inputswitch";
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import { Message } from "primereact/message";
+import { MultiSelect } from "primereact/multiselect";
 import { SelectButton } from "primereact/selectbutton";
 import { FormField, FormSection } from "../../../../components/ui";
 import { getErrorMessage } from "../../../../utils/errors";
+import { workerName } from "../../../sales/format";
 import {
   CREATE_PAYMENT_RULE,
   GET_RULE_FORM_OPTIONS,
@@ -38,6 +40,7 @@ const toForm = (rule) => ({
   paymentType: rule?.paymentType ?? "PERCENTAGE",
   workerType: rule?.workerType ?? "AGENT",
   otherType: rule?.otherType ?? "",
+  specificWorkersIds: (rule?.specificWorkers ?? []).map((w) => w.id),
   paymentCurrency: rule?.paymentCurrency ?? null,
   scope: rule?.scope ?? "BUSINESS",
   distributeProfits: rule?.distributeProfits ?? false,
@@ -184,6 +187,7 @@ export function PaymentRuleForm({ rule, onHide, onSaved }) {
       paymentType: form.paymentType,
       workerType: form.workerType,
       otherType: form.workerType === "OTHER" ? form.otherType.trim() || null : null,
+      specificWorkersIds: form.specificWorkersIds,
       paymentCurrency: form.paymentCurrency,
       scope: form.scope,
       distributeProfits: canChooseSharing ? form.distributeProfits : isSaleType,
@@ -346,6 +350,26 @@ export function PaymentRuleForm({ rule, onHide, onSaved }) {
                 </FormField>
               </div>
             )}
+            <div className="col-12">
+              <FormField
+                label="Trabajadores específicos"
+                htmlFor="rule-specific-workers"
+                hint="Vacío: todos los de ese tipo. Elige algunos para limitar la regla a ellos."
+              >
+                <MultiSelect
+                  inputId="rule-specific-workers"
+                  value={form.specificWorkersIds}
+                  options={(options?.workers?.data ?? [])
+                    .filter((w) => w.workerType === form.workerType)
+                    .map((w) => ({ label: workerName(w), value: w.id }))}
+                  onChange={(e) => set("specificWorkersIds", e.value ?? [])}
+                  placeholder="Todos"
+                  loading={loadingOptions}
+                  filter
+                  display="chip"
+                />
+              </FormField>
+            </div>
             {canChooseSharing && (
               <div className="col-12">
                 <FormField label="De cada venta cobra" htmlFor="rule-sharing">
