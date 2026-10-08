@@ -10,6 +10,7 @@ import GenericDataTable from "../../../../components/BaseTable";
 import { getErrorMessage } from "../../../../utils/errors";
 import {
   GET_ATTENDANCES,
+  MARK_ATTENDANCES_AS_PAID,
   REMOVE_ATTENDANCES,
   RESTORE_ATTENDANCES,
   UPDATE_ATTENDANCE,
@@ -103,6 +104,7 @@ export function AttendanceTable() {
   const canEdit = hasRole("SUPER", "PRINCIPAL", "ADMIN", "MANAGER");
   const canDelete = hasRole("SUPER", "PRINCIPAL", "ADMIN");
   const canRestore = hasRole("SUPER");
+  const canMarkPaid = hasRole("SUPER", "PRINCIPAL", "ADMIN");
   const [day, setDay] = useState(today);
   const dayRef = useRef(day);
   const [fetchAttendances, { loading, data, error }] = useLazyQuery(
@@ -112,6 +114,7 @@ export function AttendanceTable() {
   const [updateAttendance] = useMutation(UPDATE_ATTENDANCE);
   const [removeAttendances] = useMutation(REMOVE_ATTENDANCES);
   const [restoreAttendances] = useMutation(RESTORE_ATTENDANCES);
+  const [markAttendancesAsPaid] = useMutation(MARK_ATTENDANCES_AS_PAID);
   // { attendance } al editar, {} al crear
   const [form, setForm] = useState(null);
   const isToday = dayKey(day) === dayKey(today());
@@ -219,6 +222,24 @@ export function AttendanceTable() {
       },
     });
 
+  const handleMarkPaid = (row) =>
+    confirmDialog({
+      header: "Marcar como pagada",
+      message: `Se marcará como pagada la asistencia de ${workerName(row.worker)} de este día. No se puede deshacer desde aquí.`,
+      icon: "pi pi-exclamation-triangle",
+      acceptLabel: "Marcar pagada",
+      rejectLabel: "Cancelar",
+      accept: async () => {
+        try {
+          await markAttendancesAsPaid({ variables: { ids: [row.id] } });
+          notify("success", "Asistencia marcada como pagada", workerName(row.worker));
+          handleRefresh();
+        } catch (err) {
+          notify("error", "No se pudo marcar como pagada", getErrorMessage(err));
+        }
+      },
+    });
+
   const handleRestore = async (row) => {
     try {
       await restoreAttendances({ variables: { ids: [row.id] } });
@@ -284,6 +305,18 @@ export function AttendanceTable() {
             tooltipOptions={{ position: "top" }}
             aria-label="Editar asistencia"
             onClick={() => setForm({ attendance: row })}
+          />
+        )}
+        {canMarkPaid && !row.isPaid && (
+          <Button
+            icon="pi pi-dollar"
+            text
+            rounded
+            severity="success"
+            tooltip="Marcar como pagada"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Marcar como pagada"
+            onClick={() => handleMarkPaid(row)}
           />
         )}
         {canDelete && !row.isPaid && (

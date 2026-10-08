@@ -56,6 +56,15 @@ export const UPDATE_ATTENDANCE = gql`
   }
 `;
 
+export const MARK_ATTENDANCES_AS_PAID = gql`
+  mutation MarkAsPaid($ids: [Int!]!) {
+    markAsPaid(ids: $ids) {
+      id
+      isPaid
+    }
+  }
+`;
+
 export const REMOVE_ATTENDANCES = gql`
   mutation RemoveAttendances($ids: [Int!]!) {
     removeAttendances(ids: $ids) {
