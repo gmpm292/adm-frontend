@@ -24,7 +24,6 @@ export const useFilteredMenu = () => {
       if (requiredRoles.length > 0) {
         hasAccess = hasRole(requiredRoles);
         if (!hasAccess) {
-          console.log(`🚫 Acceso denegado por roles para: ${item.label}`);
           return false;
         }
       }
@@ -33,12 +32,10 @@ export const useFilteredMenu = () => {
       if (hasAccess && permissions.length > 0) {
         hasAccess = await hasAnyPermission(permissions);
         if (!hasAccess) {
-          console.log(`🚫 Acceso denegado por permisos para: ${item.label}`);
           return false;
         }
       }
 
-      console.log(`✅ Acceso concedido para: ${item.label}`);
       return hasAccess;
     },
     [hasRole, hasAnyPermission]
@@ -91,12 +88,10 @@ export const useFilteredMenu = () => {
     const filterMenu = async () => {
       setLoading(true);
       try {
-        console.log("🔄 Filtrando menú según permisos...");
         const filtered = await filterMenuItems(menuConfig);
-        console.log("✅ Menú filtrado:", filtered);
         setFilteredMenu(filtered);
       } catch (error) {
-        console.error("❌ Error filtrando menú:", error);
+        console.error("Error filtrando menú:", error);
         setFilteredMenu([]);
       } finally {
         setLoading(false);

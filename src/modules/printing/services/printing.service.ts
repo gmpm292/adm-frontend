@@ -77,10 +77,9 @@ export class PrintingService {
       });
 
       this.isInitialized = true;
-      console.log("✅ PrintingService inicializado correctamente");
       return true;
     } catch (error) {
-      console.error("❌ Error inicializando PrintingService:", error);
+      console.error("Error inicializando PrintingService:", error);
       return false;
     }
   }
@@ -118,10 +117,9 @@ export class PrintingService {
       await qz.print(config, data);
       await qz.websocket.disconnect();
 
-      console.log("✅ Contenido impreso correctamente");
       return true;
     } catch (error) {
-      console.error("❌ Error al imprimir:", error);
+      console.error("Error al imprimir:", error);
       await qz.websocket.disconnect().catch(() => {});
       return false;
     }

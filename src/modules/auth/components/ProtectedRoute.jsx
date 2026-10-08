@@ -49,13 +49,9 @@ const ProtectedRoute = () => {
 
       lastCheckedPath.current = currentPath;
 
-      console.log(`🔐 Verificando permisos para ruta: ${currentPath}`);
-
       // Obtener configuración de permisos para la ruta actual
       const routeConfig = routePermissions[currentPath] || {};
       const { permissions = [], requiredRoles = [] } = routeConfig;
-
-      console.log(`📋 Configuración de ruta:`, { permissions, requiredRoles });
 
       let access = true;
 
@@ -63,14 +59,7 @@ const ProtectedRoute = () => {
       if (requiredRoles.length > 0) {
         const hasRequiredRole = hasRole(requiredRoles);
         if (!hasRequiredRole) {
-          console.log(
-            `❌ Acceso denegado por roles. Requeridos: ${requiredRoles.join(
-              ", "
-            )}`
-          );
           access = false;
-        } else {
-          console.log(`✅ Roles verificados: ${requiredRoles.join(", ")}`);
         }
       }
 
@@ -79,14 +68,7 @@ const ProtectedRoute = () => {
         try {
           const hasPerms = await hasAnyPermission(permissions);
           if (!hasPerms) {
-            console.log(
-              `❌ Acceso denegado por permisos. Requeridos: ${permissions.join(
-                ", "
-              )}`
-            );
             access = false;
-          } else {
-            console.log(`✅ Permisos verificados: ${permissions.join(", ")}`);
           }
         } catch (error) {
           console.error("Error en verificación de permisos:", error);
@@ -96,19 +78,6 @@ const ProtectedRoute = () => {
           setPermissionChecked(true);
         }
       }
-
-      // 3. Si no hay configuración de permisos, permitir acceso
-      if (permissions.length === 0 && requiredRoles.length === 0) {
-        console.log(
-          `⚠️ Ruta sin configuración de permisos, acceso permitido por defecto`
-        );
-      }
-
-      console.log(
-        `🎯 Resultado final para ${currentPath}: ${
-          access ? "ACCESO CONCEDIDO" : "ACCESO DENEGADO"
-        }`
-      );
 
       setHasAccess(access);
       setPermissionChecked(true);
@@ -134,7 +103,6 @@ const ProtectedRoute = () => {
     if (getTwoFactorStep()) {
       return <Navigate to="/two-factor" replace />;
     }
-    console.log("🔐 Redirigiendo a login - No autenticado");
     return <Navigate to="/login" replace />;
   }
 
@@ -145,12 +113,10 @@ const ProtectedRoute = () => {
 
   // Verificación de acceso
   if (!hasAccess) {
-    console.log("🚫 Redirigiendo a unauthorized - Sin permisos");
     return <Navigate to="/unauthorized" replace />;
   }
 
   // Acceso concedido
-  console.log("✅ Acceso concedido a ruta protegida");
   return <Outlet />;
 };
 

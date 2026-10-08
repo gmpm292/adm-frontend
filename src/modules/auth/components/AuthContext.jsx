@@ -87,9 +87,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("userAuthenticated");
       sessionStorage.removeItem(TWO_FACTOR_STEP_KEY);
       if (!isLoginPage) {
-        console.log("Estoy redirigiendo en AuthProvider.");
         navigate("/login");
-        //window.location.href = "/login";
       }
     };
 
