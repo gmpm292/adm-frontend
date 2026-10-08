@@ -53,7 +53,6 @@ export const PublicistSelector = ({
   };
 
   const getSelectedPublicists = () => {
-    console.log("selectedPublicistIds: ", selectedPublicistIds);
     const data = selectedPublicistIds
       .map((id) => {
         const worker = workers.find((w) => w.value === id);

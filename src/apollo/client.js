@@ -8,8 +8,6 @@ import { onError } from "@apollo/client/link/error";
 import { REFRESH_TOKEN } from "../modules/auth/graphql/queries";
 import { Observable } from "@apollo/client/core";
 
-console.log("API URL:", import.meta.env.VITE_API_URL);
-
 let refreshPromise = null;
 
 const errorLink = onError(({ graphQLErrors, operation, forward }) => {

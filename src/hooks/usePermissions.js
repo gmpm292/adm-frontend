@@ -54,14 +54,10 @@ export const usePermissions = () => {
       for (const operationName of operationNames) {
         const hasPerm = await hasPermission(operationName);
         if (hasPerm) {
-          console.log(`Permiso concedido para: ${operationName}`);
           return true;
         }
       }
 
-      console.log(
-        `No tiene permisos para ninguna de: ${operationNames.join(", ")}`
-      );
       return false;
     },
     [user, hasPermission]
@@ -80,9 +76,6 @@ export const usePermissions = () => {
         userRoles.includes(role)
       );
 
-      console.log(
-        `Verificación de roles - Usuario: ${userRoles}, Requeridos: ${requiredRoles}, Resultado: ${hasRequired}`
-      );
       return hasRequired;
     },
     [user]

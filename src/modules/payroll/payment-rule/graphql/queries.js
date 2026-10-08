@@ -20,6 +20,16 @@ const RULE_FIELDS = `
     id
     name
   }
+  specificWorkers {
+    id
+    tempFirstName
+    tempLastName
+    user {
+      id
+      name
+      lastName
+    }
+  }
   conditions {
     fixedAmount {
       amount
@@ -106,6 +116,20 @@ export const GET_RULE_FORM_OPTIONS = gql`
       data {
         id
         name
+      }
+    }
+    workers(options: { take: 1000, sorts: [{ property: "tempFirstName", direction: ASC }] }) {
+      data {
+        id
+        workerType
+        otherType
+        tempFirstName
+        tempLastName
+        user {
+          id
+          name
+          lastName
+        }
       }
     }
   }
