@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Button } from "primereact/button";
 import { Menu } from "primereact/menu";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -6,6 +6,7 @@ import { useAuthContext } from "../../modules/auth/components/AuthContext";
 import { routePermissions } from "../../config/routes";
 import { menuConfig } from "../../config/menuConfig";
 import { roleLabel } from "../../modules/user/roles";
+import { HelpPanel } from "../../modules/help/components/HelpPanel";
 
 /** Sección del menú a la que pertenece la ruta, para la miga de pan */
 const getSectionLabel = (pathname) =>
@@ -28,6 +29,7 @@ export function TopBar({ onToggleSidebar }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const userMenu = useRef(null);
+  const [helpVisible, setHelpVisible] = useState(false);
 
   const title = routePermissions[pathname]?.title ?? "";
   const section = getSectionLabel(pathname);
@@ -37,6 +39,11 @@ export function TopBar({ onToggleSidebar }) {
       label: "Mi perfil",
       icon: "pi pi-user",
       command: () => navigate("/profile"),
+    },
+    {
+      label: "Ayuda",
+      icon: "pi pi-question-circle",
+      command: () => navigate("/help"),
     },
     { separator: true },
     {
@@ -67,6 +74,18 @@ export function TopBar({ onToggleSidebar }) {
       </nav>
 
       <div className="app-topbar__actions">
+        {pathname !== "/help" && (
+          <Button
+            icon="pi pi-question-circle"
+            text
+            rounded
+            severity="secondary"
+            aria-label="Ayuda de esta pantalla"
+            tooltip="Ayuda de esta pantalla"
+            tooltipOptions={{ position: "bottom" }}
+            onClick={() => setHelpVisible(true)}
+          />
+        )}
         {/* Empresa del usuario; SUPER no pertenece a ninguna */}
         {user?.business?.name && (
           <div className="app-company">
@@ -103,6 +122,7 @@ export function TopBar({ onToggleSidebar }) {
         </button>
         <Menu model={userMenuItems} popup ref={userMenu} />
       </div>
+      <HelpPanel visible={helpVisible} onHide={() => setHelpVisible(false)} />
     </header>
   );
 }

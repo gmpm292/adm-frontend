@@ -1,0 +1,252 @@
+/* ============================================================================
+   AYUDA — centro de ayuda (índice de guías y guía abierta) y panel lateral
+   con la guía de la pantalla actual. Solo tokens (ver README.md).
+   ============================================================================ */
+
+/* --- Índice ---------------------------------------------------------------- */
+.help-search {
+  display: block;
+  max-width: var(--dialog-width-wide);
+  margin-bottom: var(--space-6);
+}
+
+.help-search .p-inputtext {
+  width: 100%;
+}
+
+.help-section + .help-section {
+  margin-top: var(--space-6);
+}
+
+.help-section__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  color: var(--text-color-strong);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.help-section__title .pi {
+  color: var(--primary-600);
+}
+
+.help-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--guide-card-min), 1fr));
+  gap: var(--space-4);
+}
+
+/* Tarjeta de una guía: todo el bloque es el botón que la abre */
+.help-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--surface-200);
+  border-radius: var(--radius-lg);
+  background: var(--surface-0);
+  color: var(--text-color);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.help-card:hover {
+  border-color: var(--primary-300);
+  box-shadow: var(--shadow-md);
+}
+
+.help-card:focus-visible {
+  outline: 0;
+  box-shadow: var(--focus-ring);
+}
+
+.help-card__title {
+  color: var(--text-color-strong);
+  font-weight: var(--font-weight-semibold);
+}
+
+.help-card__summary {
+  flex: 1;
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+}
+
+.help-card__more {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--primary-600);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.help-card__more .pi {
+  font-size: var(--font-size-xs);
+}
+
+/* --- Guía ------------------------------------------------------------------ */
+.help-page__guide {
+  max-width: var(--dialog-width-wide);
+}
+
+.help-guide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  line-height: var(--line-height-normal);
+}
+
+.help-guide__summary {
+  margin: 0;
+  color: var(--text-color);
+  font-size: var(--font-size-lg);
+}
+
+.help-guide__block-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  color: var(--text-color-strong);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.help-guide__block-title .pi {
+  color: var(--primary-600);
+}
+
+.help-guide__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.help-guide__block--notes {
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--info-100);
+  border-radius: var(--radius-lg);
+  background: var(--info-50);
+}
+
+.help-guide__block--notes .help-guide__block-title .pi {
+  color: var(--info-600);
+}
+
+/* Lo que se ve en pantalla (botones, campos, opciones) */
+.help-label {
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--surface-100);
+  color: var(--text-color-strong);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+/* Pasos numerados */
+.help-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.help-step {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.help-step__number {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: var(--guide-step-badge);
+  height: var(--guide-step-badge);
+  border-radius: var(--radius-full);
+  background: var(--primary-50);
+  color: var(--primary-700);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.help-step__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  min-width: 0;
+  padding-top: var(--space-1);
+}
+
+.help-step__text {
+  margin: 0;
+}
+
+.p-button.help-step__link {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.help-related {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* --- Panel lateral --------------------------------------------------------- */
+.p-sidebar.help-panel-sidebar {
+  width: 100%;
+  max-width: var(--dialog-width-wide);
+}
+
+.help-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.help-panel__title {
+  margin: 0;
+  color: var(--text-color-strong);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+.p-button.help-panel__back {
+  align-self: flex-start;
+  padding-left: 0;
+}
+
+.help-panel__intro {
+  margin: 0;
+  color: var(--text-color-secondary);
+}
+
+.help-panel__choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.help-panel__status {
+  display: grid;
+  place-items: center;
+  padding: var(--space-7) 0;
+}
+
+.help-panel__footer {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--surface-200);
+}
