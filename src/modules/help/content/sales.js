@@ -98,7 +98,7 @@ export const salesGuides = [
     notes: [
       "Un borrador con mensajería se puede guardar sin mensajero, pero no se cobra hasta asignarlo.",
       "Una venta cobrada no se cancela: se devuelve.",
-      "Agregar, cambiar o quitar productos de un borrador depende del rol; si sale «No tienes permiso para realizar esta acción», pídeselo a tu responsable.",
+      "Cambiar los productos de un borrador depende del rol: si no ves el icono «Cambiar productos» o alguno de sus botones, pídeselo a tu responsable.",
     ],
     related: ["venta-integrada", "devoluciones"],
   },
