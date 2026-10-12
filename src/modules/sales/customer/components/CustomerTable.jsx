@@ -13,6 +13,7 @@ import {
 } from "../graphql/queries";
 import { CustomerDetailForm } from "./CustomerDetailForm";
 import { CustomerFormDialog } from "./CustomerForm";
+import { useSalesRoles } from "../../useSalesRoles";
 
 const EMPTY = <span className="text-color-secondary">—</span>;
 const textOrEmpty = (field) => (row) => row[field] || EMPTY;
@@ -57,6 +58,7 @@ const COLUMNS = [
 
 export function CustomerTable() {
   const toast = useRef(null);
+  const { canManageCustomers } = useSalesRoles();
   const [getCustomers, { loading, data, error }] = useLazyQuery(GET_CUSTOMERS, {
     fetchPolicy: "network-only",
   });
@@ -141,18 +143,20 @@ export function CustomerTable() {
 
   const actionBodyTemplate = (row) =>
     row.deletedAt ? (
-      <div className="actions-column">
-        <Button
-          icon="pi pi-history"
-          text
-          rounded
-          severity="success"
-          tooltip="Restaurar cliente"
-          tooltipOptions={{ position: "top" }}
-          aria-label="Restaurar cliente"
-          onClick={() => handleRestore(row)}
-        />
-      </div>
+      canManageCustomers && (
+        <div className="actions-column">
+          <Button
+            icon="pi pi-history"
+            text
+            rounded
+            severity="success"
+            tooltip="Restaurar cliente"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Restaurar cliente"
+            onClick={() => handleRestore(row)}
+          />
+        </div>
+      )
     ) : (
       <div className="actions-column">
         <Button
@@ -174,16 +178,18 @@ export function CustomerTable() {
           aria-label="Editar cliente"
           onClick={() => setDialog({ mode: "edit", customer: row })}
         />
-        <Button
-          icon="pi pi-trash"
-          text
-          rounded
-          severity="danger"
-          tooltip="Eliminar cliente"
-          tooltipOptions={{ position: "top" }}
-          aria-label="Eliminar cliente"
-          onClick={() => handleDelete(row)}
-        />
+        {canManageCustomers && (
+          <Button
+            icon="pi pi-trash"
+            text
+            rounded
+            severity="danger"
+            tooltip="Eliminar cliente"
+            tooltipOptions={{ position: "top" }}
+            aria-label="Eliminar cliente"
+            onClick={() => handleDelete(row)}
+          />
+        )}
       </div>
     );
 
@@ -211,7 +217,7 @@ export function CustomerTable() {
             onClick={() => setDialog({ mode: "create" })}
           />
         }
-        showDeleted={true}
+        showDeleted={canManageCustomers}
       >
         <Column
           body={actionBodyTemplate}

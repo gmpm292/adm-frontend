@@ -6,6 +6,7 @@ import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
 import GenericDataTable from "../../../components/BaseTable";
 import { getErrorMessage } from "../../../utils/errors";
+import { useHasRole } from "../../../hooks/useHasRole";
 import { CompanyUnitForm } from "./CompanyUnitForm";
 
 const EMPTY = <span className="text-color-secondary">—</span>;
@@ -18,6 +19,9 @@ const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
  */
 export function CompanyUnitTable({ unit }) {
   const toast = useRef(null);
+  const hasRole = useHasRole();
+  // Restaurar y ver lo eliminado: solo quien puede restaurar en el backend
+  const canRestore = hasRole(...unit.restoreRoles);
   const [fetchRows, { loading, data, error }] = useLazyQuery(unit.query, {
     fetchPolicy: "network-only",
   });
@@ -127,18 +131,20 @@ export function CompanyUnitTable({ unit }) {
 
   const actionBodyTemplate = (row) =>
     row.deletedAt ? (
-      <div className="actions-column">
-        <Button
-          icon="pi pi-history"
-          text
-          rounded
-          severity="success"
-          tooltip={`Restaurar ${unit.singular}`}
-          tooltipOptions={{ position: "top" }}
-          aria-label={`Restaurar ${unit.singular}`}
-          onClick={() => handleRestore(row)}
-        />
-      </div>
+      canRestore && (
+        <div className="actions-column">
+          <Button
+            icon="pi pi-history"
+            text
+            rounded
+            severity="success"
+            tooltip={`Restaurar ${unit.singular}`}
+            tooltipOptions={{ position: "top" }}
+            aria-label={`Restaurar ${unit.singular}`}
+            onClick={() => handleRestore(row)}
+          />
+        </div>
+      )
     ) : (
       <div className="actions-column">
         <Button
@@ -187,7 +193,7 @@ export function CompanyUnitTable({ unit }) {
             onClick={() => setForm({})}
           />
         }
-        showDeleted={true}
+        showDeleted={canRestore}
       >
         <Column
           body={actionBodyTemplate}

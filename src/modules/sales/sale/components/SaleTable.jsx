@@ -26,6 +26,7 @@ import {
 import { MakeSaleComponent } from "./MakeSaleComponent";
 import { SaleDetailForm } from "./SaleDetailForm";
 import { SaleEditForm } from "./SaleEditForm";
+import { useSalesRoles } from "../../useSalesRoles";
 
 const EMPTY = <span className="text-color-secondary">—</span>;
 
@@ -148,7 +149,8 @@ const DELIVERY_COLUMNS = [
   {
     field: "deliveryNotes",
     header: "Indicaciones",
-    bodyClassName: "max-w-20rem white-space-nowrap overflow-hidden text-overflow-ellipsis",
+    bodyClassName:
+      "max-w-20rem white-space-nowrap overflow-hidden text-overflow-ellipsis",
     body: (row) => row.deliveryNotes || EMPTY,
   },
   totalColumn,
@@ -162,6 +164,8 @@ const DELIVERY_COLUMNS = [
 export function SaleTable({ deliveryOnly = false }) {
   const toast = useRef(null);
   const navigate = useNavigate();
+  const { canRefund, canAddProduct, canDeleteSale, canRestoreSale } =
+    useSalesRoles();
   const [getSales, { loading, data, error }] = useLazyQuery(GET_SALES, {
     fetchPolicy: "network-only",
   });
@@ -292,6 +296,7 @@ export function SaleTable({ deliveryOnly = false }) {
 
   const actionBodyTemplate = (row) => {
     if (row.deletedAt) {
+      if (!canRestoreSale) return null;
       return (
         <div className="actions-column">
           {action({
@@ -312,7 +317,7 @@ export function SaleTable({ deliveryOnly = false }) {
         {action({
           icon: "pi pi-eye",
           severity: "secondary",
-          tooltip: paid ? "Ver venta y devoluciones" : "Ver venta",
+          tooltip: paid && canRefund ? "Ver venta y devoluciones" : "Ver venta",
           onClick: () => setDialog({ mode: "view", sale: row }),
         })}
         {isDraft &&
@@ -329,6 +334,7 @@ export function SaleTable({ deliveryOnly = false }) {
             onClick: () => setDialog({ mode: "edit", sale: row }),
           })}
         {isDraft &&
+          canAddProduct &&
           action({
             icon: "pi pi-list",
             severity: "secondary",
@@ -344,6 +350,7 @@ export function SaleTable({ deliveryOnly = false }) {
           })}
         {!isDraft &&
           !paid &&
+          canDeleteSale &&
           action({
             icon: "pi pi-trash",
             severity: "danger",
@@ -395,7 +402,7 @@ export function SaleTable({ deliveryOnly = false }) {
         onFetchData={handleFetchData}
         initialPageSize={10}
         header={header}
-        showDeleted={true}
+        showDeleted={canRestoreSale}
       >
         <Column
           body={actionBodyTemplate}
