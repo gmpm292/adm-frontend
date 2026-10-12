@@ -14,6 +14,7 @@ import { SaleDetailCreateForm } from "./SaleDetailCreateForm";
 import { Tag } from "primereact/tag";
 import { SALE_DETAIL_STATUS, formatMoney, workerName } from "../../format";
 import { getErrorMessage } from "../../../../utils/errors";
+import { useSalesRoles } from "../../useSalesRoles";
 
 const EMPTY = <span className="text-color-secondary">—</span>;
 
@@ -21,12 +22,14 @@ const money = (field) => (row) =>
   row[field] != null ? formatMoney(row[field], row.currency) : EMPTY;
 
 export function SaleDetailTable({ saleId }) {
+  const { canAddProduct, canChangeQuantity, canRemoveProduct } =
+    useSalesRoles();
   const [getSaleDetails, { loading, data, error }] = useLazyQuery(
     GET_SALE_DETAILS_BY_SALE,
     {
       variables: { saleId },
       fetchPolicy: "network-only",
-    }
+    },
   );
   const [deleteSaleDetails] = useMutation(DELETE_SALE_DETAILS);
   const [selectedSaleDetailId, setSelectedSaleDetailId] = useState(null);
@@ -78,7 +81,7 @@ export function SaleDetailTable({ saleId }) {
         };
       }
     },
-    [getSaleDetails, saleId]
+    [getSaleDetails, saleId],
   );
 
   // Función handleRefresh corregida - IMPORTANTE: pasar todos los parámetros necesarios
@@ -106,7 +109,8 @@ export function SaleDetailTable({ saleId }) {
 
   const handleDelete = (saleDetailId) => {
     confirmDialog({
-      message: "El producto se quitará de la venta y volverá a estar disponible.",
+      message:
+        "El producto se quitará de la venta y volverá a estar disponible.",
       header: "Quitar producto",
       acceptLabel: "Quitar",
       rejectLabel: "Cancelar",
@@ -141,23 +145,27 @@ export function SaleDetailTable({ saleId }) {
     if (rowData.saleDetailStatus !== "DRAFT") return null;
     return (
       <div className="actions-column">
-        <Button
-          icon="pi pi-pencil"
-          text
-          rounded
-          tooltip="Cambiar cantidad"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleEdit(rowData.id)}
-        />
-        <Button
-          icon="pi pi-trash"
-          text
-          rounded
-          severity="danger"
-          tooltip="Quitar producto"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => handleDelete(rowData.id)}
-        />
+        {canChangeQuantity && (
+          <Button
+            icon="pi pi-pencil"
+            text
+            rounded
+            tooltip="Cambiar cantidad"
+            tooltipOptions={{ position: "top" }}
+            onClick={() => handleEdit(rowData.id)}
+          />
+        )}
+        {canRemoveProduct && (
+          <Button
+            icon="pi pi-trash"
+            text
+            rounded
+            severity="danger"
+            tooltip="Quitar producto"
+            tooltipOptions={{ position: "top" }}
+            onClick={() => handleDelete(rowData.id)}
+          />
+        )}
       </div>
     );
   };
@@ -204,7 +212,7 @@ export function SaleDetailTable({ saleId }) {
   ];
 
   const isDraft = data?.saleDetailsBySale?.[0]?.sale?.saleStatus === "DRAFT";
-  const addSaleDetailButton = isDraft && (
+  const addSaleDetailButton = isDraft && canAddProduct && (
     <Button
       label="Agregar producto"
       icon="pi pi-plus"

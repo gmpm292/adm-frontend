@@ -72,6 +72,8 @@ export const UNITS = {
     update: UPDATE_BUSINESS,
     remove: REMOVE_BUSINESSES,
     restore: RESTORE_BUSINESSES,
+    // Quién restaura (lo mismo que exige el backend)
+    restoreRoles: ["SUPER"],
     searchFields: ["name", "taxId", "contactEmail"],
     columns: [
       { field: "name", header: "Nombre", sortable: true, filter: true, main: true },
@@ -104,6 +106,7 @@ export const UNITS = {
     update: UPDATE_OFFICE,
     remove: REMOVE_OFFICES,
     restore: RESTORE_OFFICES,
+    restoreRoles: ["SUPER", "PRINCIPAL"],
     searchFields: ["name", "business.name", "address"],
     columns: [
       { field: "name", header: "Nombre", sortable: true, filter: true, main: true },
@@ -158,6 +161,7 @@ export const UNITS = {
     update: UPDATE_DEPARTMENT,
     remove: REMOVE_DEPARTMENTS,
     restore: RESTORE_DEPARTMENTS,
+    restoreRoles: ["SUPER", "PRINCIPAL"],
     searchFields: ["name", "office.name", "address"],
     columns: [
       { field: "name", header: "Nombre", sortable: true, filter: true, main: true },
@@ -208,6 +212,7 @@ export const UNITS = {
     update: UPDATE_TEAM,
     remove: REMOVE_TEAMS,
     restore: RESTORE_TEAMS,
+    restoreRoles: ["SUPER", "PRINCIPAL"],
     searchFields: ["name", "department.name"],
     columns: [
       { field: "name", header: "Nombre", sortable: true, filter: true, main: true },

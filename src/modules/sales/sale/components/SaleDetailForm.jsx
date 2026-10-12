@@ -19,6 +19,7 @@ import {
   workerName,
 } from "../../format";
 import { GET_SALE_BY_ID, REFUND_SALE } from "../graphql/queries";
+import { useSalesRoles } from "../../useSalesRoles";
 
 /**
  * Ficha de una venta: quién la hizo, a quién, cómo se cobró y sus productos.
@@ -26,6 +27,7 @@ import { GET_SALE_BY_ID, REFUND_SALE } from "../graphql/queries";
  */
 export function SaleDetailForm({ saleId, onHide, onChanged }) {
   const [refundError, setRefundError] = useState(null);
+  const { canRefund } = useSalesRoles();
   const { data, loading, error } = useQuery(GET_SALE_BY_ID, {
     variables: { id: saleId },
     fetchPolicy: "network-only",
@@ -140,12 +142,13 @@ export function SaleDetailForm({ saleId, onHide, onChanged }) {
                   label={
                     <span className="flex align-items-center gap-2">
                       {detail.quantity} × {detail.product?.name}
-                      {lineStatus && detail.saleDetailStatus !== "CONFIRMED" && (
-                        <Tag
-                          severity={lineStatus.severity}
-                          value={lineStatus.label}
-                        />
-                      )}
+                      {lineStatus &&
+                        detail.saleDetailStatus !== "CONFIRMED" && (
+                          <Tag
+                            severity={lineStatus.severity}
+                            value={lineStatus.label}
+                          />
+                        )}
                     </span>
                   }
                   detail={
@@ -158,7 +161,8 @@ export function SaleDetailForm({ saleId, onHide, onChanged }) {
                     {detail.subtotal != null
                       ? formatMoney(detail.subtotal, detail.currency)
                       : "—"}
-                    {detail.saleDetailStatus === "CONFIRMED" &&
+                    {canRefund &&
+                      detail.saleDetailStatus === "CONFIRMED" &&
                       soldLines.length > 1 && (
                         <Button
                           icon="pi pi-undo"
@@ -203,7 +207,7 @@ export function SaleDetailForm({ saleId, onHide, onChanged }) {
           )}
 
           <div className="flex justify-content-end gap-2 mt-4">
-            {isPaid(sale) && soldLines.length > 0 && (
+            {canRefund && isPaid(sale) && soldLines.length > 0 && (
               <Button
                 label={
                   sale.saleStatus === "PARTIALLY_REFUNDED"
