@@ -154,5 +154,10 @@ export const routePermissions = {
     requiredRoles: ["SUPER"],
     title: "Niveles de acceso",
   },
+  "/help": {
+    permissions: [],
+    requiredRoles: [],
+    title: "Ayuda",
+  },
   // ... Agrega aquí el resto de tus rutas
 };

@@ -37,6 +37,7 @@ import { setupLocales } from "./locales/i18n";
 import { QzTrayPage } from "./modules/printing/printing.module";
 import { RoleGuardListPage } from "./modules/role-guard";
 import { ScopedAccessListPage } from "./modules/scoped-access";
+import { HelpPage } from "./modules/help/pages/HelpPage";
 
 function App() {
   // Inicializar locales
@@ -132,6 +133,7 @@ function App() {
                   path="/system/security/scoped-access"
                   element={<ScopedAccessListPage />}
                 />
+                <Route path="/help" element={<HelpPage />} />
                 </Route>
               </Route>
 

@@ -133,6 +133,9 @@
   --pos-ticket-width: 28rem;
   --pos-product-min: 11rem;
   --pos-product-height: 8.5rem;
+  /* Centro de ayuda */
+  --guide-card-min: 18rem;
+  --guide-step-badge: 1.75rem;
 
   /* --- Capas --- */
   --layer-sidebar: 900;
