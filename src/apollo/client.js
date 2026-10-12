@@ -1,5 +1,6 @@
 import {
   ApolloClient,
+  ApolloLink,
   InMemoryCache,
   createHttpLink,
   from,
@@ -9,6 +10,24 @@ import { REFRESH_TOKEN } from "../modules/auth/graphql/queries";
 import { Observable } from "@apollo/client/core";
 
 let refreshPromise = null;
+
+/**
+ * Cada login abre una sesión nueva. Una petición lanzada antes (por ejemplo,
+ * la comprobación de perfil al abrir la página) puede fallar con 401 cuando
+ * el login ya terminó: ese fallo es de la sesión anterior y no debe cerrar
+ * la nueva.
+ */
+let authEpoch = 0;
+export const getAuthEpoch = () => authEpoch;
+export const startAuthSession = () => {
+  authEpoch += 1;
+  refreshPromise = null;
+};
+
+const authEpochLink = new ApolloLink((operation, forward) => {
+  operation.setContext({ authEpoch });
+  return forward(operation);
+});
 
 const errorLink = onError(({ graphQLErrors, operation, forward }) => {
   const unauthorized = graphQLErrors?.some(
@@ -22,7 +41,13 @@ const errorLink = onError(({ graphQLErrors, operation, forward }) => {
     return;
   }
 
+  const epoch = operation.getContext().authEpoch;
+  if (epoch !== authEpoch) {
+    return;
+  }
+
   const clearAuthentication = () => {
+    if (epoch !== authEpoch) return;
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("userAuthenticated");
     window.dispatchEvent(new Event("auth-failed"));
@@ -34,7 +59,7 @@ const errorLink = onError(({ graphQLErrors, operation, forward }) => {
   }
 
   if (!refreshPromise) {
-    refreshPromise = client
+    const promise = client
       .mutate({
         mutation: REFRESH_TOKEN,
         context: { skipAuthRefresh: true },
@@ -50,8 +75,9 @@ const errorLink = onError(({ graphQLErrors, operation, forward }) => {
         throw error;
       })
       .finally(() => {
-        refreshPromise = null;
+        if (refreshPromise === promise) refreshPromise = null;
       });
+    refreshPromise = promise;
   }
 
   operation.setContext({ authRefreshRetried: true });
@@ -91,7 +117,7 @@ const httpLink = createHttpLink({
 
 // Cliente con más opciones de debug
 export const client = new ApolloClient({
-  link: from([errorLink, httpLink]),
+  link: from([authEpochLink, errorLink, httpLink]),
   cache: new InMemoryCache({
     typePolicies: {
       // Filas de clasificaciones (productos, vendedores, clientes...): su id es
