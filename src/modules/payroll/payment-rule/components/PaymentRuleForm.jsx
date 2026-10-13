@@ -42,6 +42,8 @@ const toForm = (rule) => ({
   otherType: rule?.otherType ?? "",
   specificWorkersIds: (rule?.specificWorkers ?? []).map((w) => w.id),
   paymentCurrency: rule?.paymentCurrency ?? null,
+  // Los tramos de precio se miden en una moneda, todos en la misma
+  saleCurrency: rule?.conditions?.priceRanges?.[0]?.currency ?? null,
   scope: rule?.scope ?? "BUSINESS",
   distributeProfits: rule?.distributeProfits ?? false,
   isActive: rule?.isActive ?? true,
@@ -83,9 +85,15 @@ export function PaymentRuleForm({ rule, onHide, onSaved }) {
   const error = createState.error ?? updateState.error;
 
   const currencies = (options?.currencies?.data ?? [])
-    .filter((c) => c.isActive || c.code === form.paymentCurrency)
+    .filter(
+      (c) =>
+        c.isActive ||
+        c.code === form.paymentCurrency ||
+        c.code === form.saleCurrency,
+    )
     .map((c) => ({ label: `${c.code} · ${c.name}`, value: c.code }));
   const isSaleType = SALE_PAYMENT_TYPES.includes(form.paymentType);
+  const isPriceRange = form.paymentType === "PRICE_RANGE";
   const canChooseSharing =
     isSaleType && SALE_ROLE_TYPES.includes(form.workerType);
   const shared = isSaleType && (form.distributeProfits || !canChooseSharing);
@@ -142,6 +150,10 @@ export function PaymentRuleForm({ rule, onHide, onSaved }) {
   const errors = {
     name: form.name.trim() ? null : "Escribe un nombre",
     paymentCurrency: form.paymentCurrency ? null : "Elige la moneda",
+    saleCurrency:
+      !isPriceRange || form.saleCurrency
+        ? null
+        : "Elige en qué moneda se miden los precios",
     conditions: conditionError,
   };
   const hasErrors = Object.values(errors).some(Boolean);
@@ -158,7 +170,7 @@ export function PaymentRuleForm({ rule, onHide, onSaved }) {
           priceRanges: form.priceRanges.map((r) => ({
             min: r.min,
             max: r.max ?? null,
-            currency: form.paymentCurrency,
+            currency: form.saleCurrency,
             ...(r.kind === "percentage"
               ? { percentage: r.value }
               : { amount: r.value }),
@@ -288,17 +300,28 @@ export function PaymentRuleForm({ rule, onHide, onSaved }) {
             </div>
             <div className="col-12 md:col-6">
               <FormField
-                label="Moneda"
+                label={isPriceRange ? "Moneda de pago" : "Moneda"}
                 htmlFor="rule-currency"
                 required
-                hint="En la que se paga y se miden los precios"
+                hint={
+                  isPriceRange
+                    ? "En la que cobra el trabajador"
+                    : "En la que se paga y se miden los precios"
+                }
                 error={shown("paymentCurrency")}
               >
                 <Dropdown
                   inputId="rule-currency"
                   value={form.paymentCurrency}
                   options={currencies}
-                  onChange={(e) => set("paymentCurrency", e.value)}
+                  onChange={(e) =>
+                    // Lo normal es medir y pagar en la misma: se propone igual
+                    setForm((current) => ({
+                      ...current,
+                      paymentCurrency: e.value,
+                      saleCurrency: current.saleCurrency ?? e.value,
+                    }))
+                  }
                   placeholder="Elige la moneda"
                   loading={loadingOptions}
                   invalid={!!shown("paymentCurrency")}
@@ -472,8 +495,35 @@ export function PaymentRuleForm({ rule, onHide, onSaved }) {
             </div>
           )}
 
-          {form.paymentType === "PRICE_RANGE" && (
+          {isPriceRange && (
             <>
+              <div className="formgrid grid">
+                <div className="col-12 md:col-6">
+                  <FormField
+                    label="Moneda de la venta"
+                    htmlFor="rule-sale-currency"
+                    required
+                    hint={
+                      form.saleCurrency &&
+                      form.paymentCurrency &&
+                      form.saleCurrency !== form.paymentCurrency
+                        ? `Los tramos se miden en ${form.saleCurrency}; un porcentaje se pasa a ${form.paymentCurrency} con la tasa de cambio`
+                        : "En la que se miden los precios de los tramos"
+                    }
+                    error={shown("saleCurrency")}
+                  >
+                    <Dropdown
+                      inputId="rule-sale-currency"
+                      value={form.saleCurrency}
+                      options={currencies}
+                      onChange={(e) => set("saleCurrency", e.value)}
+                      placeholder="Elige la moneda"
+                      loading={loadingOptions}
+                      invalid={!!shown("saleCurrency")}
+                    />
+                  </FormField>
+                </div>
+              </div>
               {form.priceRanges.map((row, index) => (
                 <div className="formgrid grid align-items-end" key={index}>
                   <div className="col-6 md:col-3">
@@ -483,6 +533,7 @@ export function PaymentRuleForm({ rule, onHide, onSaved }) {
                         value={row.min}
                         onChange={(e) => updateRow("priceRanges", index, { min: e.value })}
                         min={0}
+                        suffix={form.saleCurrency ? ` ${form.saleCurrency}` : undefined}
                         {...MONEY}
                       />
                     </FormField>
@@ -494,6 +545,7 @@ export function PaymentRuleForm({ rule, onHide, onSaved }) {
                         value={row.max}
                         onChange={(e) => updateRow("priceRanges", index, { max: e.value })}
                         min={0}
+                        suffix={form.saleCurrency ? ` ${form.saleCurrency}` : undefined}
                         placeholder="Sin límite"
                         {...MONEY}
                       />

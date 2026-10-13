@@ -35,8 +35,9 @@ export const salesGuides = [
       },
     ],
     notes: [
-      "Si «Cobrar» está desactivado, debajo se indica el motivo (falta el vendedor, falta el mensajero, productos sin moneda común...).",
-      "El ticket solo se imprime desde la ventana «Venta cobrada», justo después de cobrar. Para imprimir hace falta QZ Tray abierto en el equipo.",
+      "Si «Cobrar» está desactivado, debajo se indica el motivo (falta el vendedor, productos sin moneda común...).",
+      "Con «Lleva mensajería» el botón pasa a «Agregar a mensajería y terminar»: la venta no se cobra ahora, queda reservada en Mensajerías.",
+      "El ticket se imprime desde «Venta cobrada» o, más tarde, desde la ficha de la venta con «Imprimir vale». Para imprimir hace falta QZ Tray abierto en el equipo.",
       "Si sale «Stock insuficiente», otro vendedor se llevó el producto mientras tanto: el catálogo se recarga solo; revisa las cantidades.",
       "Si quieres reservar los productos y cobrar más tarde, usa «Guardar borrador» en lugar de «Cobrar».",
     ],
@@ -137,18 +138,18 @@ export const salesGuides = [
     ],
     steps: [
       {
-        text: "En el ticket de la Venta Integrada activa «Lleva mensajería», elige el mensajero en «Selecciona el mensajero» y escribe la dirección en «Dirección e indicaciones de la entrega».",
+        text: "En el ticket de la Venta Integrada activa «Lleva mensajería», elige el mensajero en «Selecciona el mensajero» (puede asignarse después) y escribe la dirección en «Dirección e indicaciones de la entrega».",
         path: "/sales/integrated-sale",
       },
       {
-        text: "Cobra la venta como siempre, o guárdala como borrador si aún no sabes quién la lleva.",
+        text: "Pulsa «Agregar a mensajería y terminar». La venta no se cobra todavía: los productos quedan reservados hasta que el mensajero entregue.",
       },
       {
         text: "En Mensajerías ves solo las ventas con entrega. Filtra por «Por cobrar», «Cobradas» o «Sin mensajero».",
         path: "/sales/deliveries",
       },
       {
-        text: "Para asignar o cambiar el mensajero, pulsa el camión («Mensajería») o el lápiz en la fila. Para cobrar un borrador, la cartera («Cobrar»).",
+        text: "Para asignar o cambiar el mensajero, pulsa el camión («Mensajería») o el lápiz en la fila. Cuando el mensajero vuelve con el dinero, cobra la venta con la cartera («Cobrar»).",
       },
     ],
     notes: [
@@ -227,7 +228,7 @@ export const salesGuides = [
         path: "/sales/sales",
       },
       {
-        text: "El ojo de cada fila abre la ficha: cliente, vendedor, pagos recibidos y productos.",
+        text: "El ojo de cada fila abre la ficha: cliente, vendedor, pagos recibidos y productos. Desde ella, «Imprimir vale» imprime el ticket de esa venta.",
       },
       {
         text: "Detalles de Venta muestra una línea por producto vendido, con cantidad, precio, importe y estado («Reservado», «Vendido», «Cancelado», «Devuelto»).",

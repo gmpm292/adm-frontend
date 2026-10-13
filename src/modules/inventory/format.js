@@ -17,6 +17,7 @@ export const MOVEMENT_REASON = {
   INTERNAL_USE: "Uso interno",
   OTHER: "Otro motivo",
   INITIAL_INVENTORY: "Existencias iniciales",
+  INVENTORY_TRANSFER: "Traslado entre inventarios",
   SALE_RESERVATION: "Reserva para una venta",
   SALE_CONFIRMED: "Venta",
   SALE_CANCELLATION: "Venta cancelada",

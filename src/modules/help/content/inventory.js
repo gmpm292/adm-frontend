@@ -127,13 +127,17 @@ export const inventoryGuides = [
         text: "Opcional: en «Referencia o nota», la factura del proveedor o el destino; marca «Imprimir comprobante» si lo necesitas. Pulsa «Registrar entrada» o «Registrar salida».",
       },
       {
+        text: "Para pasar existencias de un inventario a otro del mismo producto (otra ubicación u oficina de la empresa), pulsa las flechas («Trasladar a otro inventario») en la fila, o «Trasladar» en Movimientos. Elige el destino, la cantidad y pulsa «Trasladar». El destino tiene que existir: si el producto solo tiene un inventario, abre antes otro con una ubicación distinta (por ejemplo «Almacén») y existencias en 0.",
+      },
+      {
         text: "El historial completo está en Movimientos; con «Ver detalle» ves cada uno y, si vino de una venta, «Ver la venta».",
         path: "/inventory/movements",
       },
     ],
     notes: [
       "Un ajuste por conteo físico es una entrada o salida con el motivo «Ajuste por conteo», por la diferencia.",
-      "Un traslado son dos movimientos: una salida «Traslado» en el origen y una entrada «Traslado» en el destino.",
+      "Un traslado entre inventarios son dos movimientos «Traslado entre inventarios»: una salida en el origen y una entrada en el destino, registradas a la vez. Solo entre inventarios de la misma empresa.",
+      "El motivo «Traslado» a mano queda para lo que entra o sale hacia fuera de la empresa.",
       "Las ventas, reservas y devoluciones mueven el inventario solas; esos motivos no se eligen a mano.",
       "Los movimientos no se editan ni se eliminan: un error se corrige con otro movimiento en sentido contrario.",
       "Las existencias nunca quedan en negativo: no se puede sacar más de lo que hay.",

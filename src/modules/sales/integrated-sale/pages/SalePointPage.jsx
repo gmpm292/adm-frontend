@@ -167,9 +167,7 @@ export function SalePointPage() {
           ? "Selecciona el vendedor"
           : !catalog.canChooseSeller && !catalog.currentWorkerId
             ? "Tu usuario no está vinculado a un trabajador: pide a un administrador que lo asocie"
-            : cart.hasDelivery && !cart.deliveryWorkerId
-              ? "Selecciona el mensajero o guarda la venta como borrador"
-              : null;
+            : null;
 
   const officeParked = parkedSales.filter((s) => s.officeId === office?.id);
 
@@ -238,12 +236,25 @@ export function SalePointPage() {
       refetchCatalog();
       toast.current?.show({
         severity: "success",
-        summary: `Borrador #${result.createSale.id} guardado`,
-        detail: "Los productos quedan reservados. Cóbralo desde Ventas.",
+        ...(cart.hasDelivery
+          ? {
+              summary: `Venta #${result.createSale.id} en mensajería`,
+              detail:
+                "Los productos quedan reservados. Se cobra cuando el mensajero entregue, desde Mensajerías.",
+            }
+          : {
+              summary: `Borrador #${result.createSale.id} guardado`,
+              detail: "Los productos quedan reservados. Cóbralo desde Ventas.",
+            }),
         life: 5000,
       });
     } catch (error) {
-      showError(error, "No se pudo guardar el borrador");
+      showError(
+        error,
+        cart.hasDelivery
+          ? "No se pudo agregar a mensajería"
+          : "No se pudo guardar el borrador",
+      );
       refetchCatalog();
     }
   };

@@ -3,11 +3,7 @@ import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { Message } from "primereact/message";
 import { usePrinting } from "../../../printing/printing.module";
-import {
-  PAYMENT_METHOD_LABELS,
-  formatMoney,
-} from "../../../statistics/format";
-import { formatDate } from "../../../../utils/dateUtils";
+import { PAYMENT_METHOD_LABELS, formatMoney, saleTicket } from "../../format";
 
 /** Resumen de la venta recién cobrada, con el cambio y la opción de imprimirla */
 export function SaleReceiptDialog({
@@ -24,21 +20,9 @@ export function SaleReceiptDialog({
   const handlePrint = async () => {
     setPrintError(null);
     try {
-      const printed = await printTicket({
-        tienda: storeName,
-        numeroVenta: sale.invoiceNumber ?? String(sale.id),
-        fecha: formatDate(sale.effectiveDate),
-        productos: sale.details.map((detail) => ({
-          nombre: detail.product.name,
-          cantidad: detail.quantity,
-          precio: detail.unitPrice,
-          moneda: detail.currency,
-        })),
-        total: sale.totalAmount,
-        moneda: currency,
-        cliente: sale.customer?.fullName,
-        vendedor: sellerName ?? "",
-      });
+      const printed = await printTicket(
+        saleTicket(sale, { storeName, sellerName }),
+      );
       if (!printed) throw new Error();
     } catch {
       setPrintError(

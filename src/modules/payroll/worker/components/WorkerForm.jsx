@@ -63,14 +63,15 @@ export function WorkerForm({ worker, onHide, onSaved }) {
   const departments = (departmentData?.departments?.data ?? []).filter(
     (d) => d.office?.id === form.officeId,
   );
-  // Cuentas de personal (no de clientes) de la empresa de la oficina
+  // Cuentas de personal (no de clientes) de la empresa de la oficina. El
+  // backend ya limita la lista al lugar de quien la pide.
   const accounts = (options?.users?.data ?? []).filter(
     (u) =>
       u.email !== SYSTEM_USER_EMAIL &&
       !u.role?.includes("USER") &&
       (!office?.business?.id ||
-        !u.business?.id ||
-        u.business.id === office.business.id),
+        u.business?.id === office.business.id ||
+        u.id === worker?.user?.id),
   );
   const account = accounts.find((u) => u.id === form.userId);
 

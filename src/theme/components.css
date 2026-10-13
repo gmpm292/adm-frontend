@@ -62,6 +62,26 @@
   min-width: 0;
 }
 
+/*
+ * Lista de un desplegable: PrimeReact le da como mínimo el ancho del campo y
+ * la deja crecer con el texto más largo. Se limita (el mínimo del campo sigue
+ * mandando si es mayor) y los textos largos pasan a la línea siguiente.
+ */
+.p-dropdown-panel,
+.p-multiselect-panel,
+.p-autocomplete-panel {
+  max-width: min(var(--select-panel-max-width), calc(100vw - 2 * var(--space-4)));
+}
+
+.p-dropdown-panel .p-dropdown-item,
+.p-dropdown-panel .p-dropdown-empty-message,
+.p-multiselect-panel .p-multiselect-item,
+.p-multiselect-panel .p-multiselect-empty-message,
+.p-autocomplete-panel .p-autocomplete-item {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 /* --- Tarjetas -------------------------------------------------------------- */
 .p-card {
   border: 1px solid var(--surface-200);
