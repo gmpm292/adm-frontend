@@ -8,6 +8,7 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { Tag } from "primereact/tag";
 import { InfoRow, NoData } from "../../../../components/ui";
 import { getErrorMessage } from "../../../../utils/errors";
+import { usePrinting } from "../../../printing/printing.module";
 import {
   PAYMENT_METHOD_LABELS,
   SALE_DETAIL_STATUS,
@@ -16,6 +17,7 @@ import {
   formatMoney,
   isPaid,
   saleLabel,
+  saleTicket,
   workerName,
 } from "../../format";
 import { GET_SALE_BY_ID, REFUND_SALE } from "../graphql/queries";
@@ -23,10 +25,13 @@ import { useSalesRoles } from "../../useSalesRoles";
 
 /**
  * Ficha de una venta: quién la hizo, a quién, cómo se cobró y sus productos.
- * Desde aquí se devuelve la venta completa o un producto concreto.
+ * Desde aquí se imprime su vale y se devuelve la venta completa o un
+ * producto concreto.
  */
 export function SaleDetailForm({ saleId, onHide, onChanged }) {
   const [refundError, setRefundError] = useState(null);
+  const [printError, setPrintError] = useState(null);
+  const { printTicket, isPrinting } = usePrinting();
   const { canRefund } = useSalesRoles();
   const { data, loading, error } = useQuery(GET_SALE_BY_ID, {
     variables: { id: saleId },
@@ -42,6 +47,22 @@ export function SaleDetailForm({ saleId, onHide, onChanged }) {
   const soldLines = (sale?.details ?? []).filter(
     (detail) => detail.saleDetailStatus === "CONFIRMED",
   );
+
+  const handlePrint = async () => {
+    setPrintError(null);
+    try {
+      const printed = await printTicket(
+        saleTicket(sale, {
+          storeName: sale.business?.name ?? sale.office?.name,
+        }),
+      );
+      if (!printed) throw new Error();
+    } catch {
+      setPrintError(
+        "No se pudo imprimir. Comprueba que QZ Tray está abierto y la impresora configurada.",
+      );
+    }
+  };
 
   const refund = (refundInput, message) =>
     confirmDialog({
@@ -198,6 +219,9 @@ export function SaleDetailForm({ saleId, onHide, onChanged }) {
             </span>
           </div>
 
+          {printError && (
+            <Message severity="warn" text={printError} className="w-full mt-3" />
+          )}
           {refundError && (
             <Message
               severity="error"
@@ -206,7 +230,17 @@ export function SaleDetailForm({ saleId, onHide, onChanged }) {
             />
           )}
 
-          <div className="flex justify-content-end gap-2 mt-4">
+          <div className="flex flex-wrap justify-content-end gap-2 mt-4">
+            {sale.saleStatus !== "CANCELLED" && (
+              <Button
+                label="Imprimir vale"
+                icon="pi pi-print"
+                severity="secondary"
+                outlined
+                loading={isPrinting}
+                onClick={handlePrint}
+              />
+            )}
             {canRefund && isPaid(sale) && soldLines.length > 0 && (
               <Button
                 label={

@@ -71,7 +71,21 @@ export const CREATE_INVENTORY_MOVEMENT = gql`
   }
 `;
 
-/** Inventarios para elegir al registrar un movimiento */
+/** Traslado entre dos inventarios: devuelve la salida y la entrada */
+export const TRANSFER_INVENTORY = gql`
+  mutation TransferInventory($transfer: TransferInventoryInput!) {
+    transferInventory(transferInventoryInput: $transfer) {
+      outgoing {
+        id
+      }
+      incoming {
+        id
+      }
+    }
+  }
+`;
+
+/** Inventarios para elegir al registrar un movimiento o un traslado */
 export const GET_INVENTORY_OPTIONS = gql`
   query MovementInventoryOptions {
     inventories(options: { take: 1000 }) {
@@ -90,6 +104,9 @@ export const GET_INVENTORY_OPTIONS = gql`
         office {
           id
           name
+        }
+        business {
+          id
         }
       }
     }

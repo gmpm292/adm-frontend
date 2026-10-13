@@ -249,8 +249,13 @@ export const ruleSummary = (rule) => {
       return c.fixedAmount ? money(c.fixedAmount.amount, cur) : "—";
     case "PERCENTAGE":
       return c.percentage ? `${pct(c.percentage.percentage)} de lo vendido` : "—";
-    case "PRICE_RANGE":
-      return `${c.priceRanges?.length ?? 0} tramos de precio`;
+    case "PRICE_RANGE": {
+      // Los tramos se miden en la moneda de venta, que puede no ser la de pago
+      const saleCurrency = c.priceRanges?.[0]?.currency;
+      return `${c.priceRanges?.length ?? 0} tramos de precio${
+        saleCurrency && saleCurrency !== cur ? ` en ${saleCurrency}` : ""
+      }`;
+    }
     case "SALE_QUANTITY":
       return `${c.saleQuantity?.length ?? 0} escalones de cantidad`;
     default:

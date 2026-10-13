@@ -10,6 +10,7 @@ import {
   MOVEMENT_TYPE,
   formatDateTime,
   formatQuantity,
+  inventoryPlace,
   movementReference,
   personName,
   reasonLabel,
@@ -17,6 +18,7 @@ import {
 import { useInventoryRoles } from "../../useInventoryRoles";
 import { MovementForm } from "./MovementForm";
 import { MovementDetailForm } from "./MovementDetailForm";
+import { TransferForm } from "./TransferForm";
 
 const EMPTY = <span className="text-color-secondary">—</span>;
 
@@ -110,6 +112,8 @@ export function InventoryMovementTable() {
     { fetchPolicy: "network-only" },
   );
   const [creating, setCreating] = useState(false);
+  // {} al abrir el traslado (aquí sin inventario elegido)
+  const [transferring, setTransferring] = useState(null);
   const [detailId, setDetailId] = useState(null);
 
   const handleFetchData = useCallback(
@@ -155,6 +159,16 @@ export function InventoryMovementTable() {
     if (printError) notify("warn", "No se imprimió el comprobante", printError);
   };
 
+  const handleTransferred = ({ from, to, quantity }) => {
+    setTransferring(null);
+    handleRefresh();
+    notify(
+      "success",
+      "Traslado registrado",
+      `${formatQuantity(quantity, from.product?.unitOfMeasure)} de ${from.product?.name}: ${inventoryPlace(from)} → ${inventoryPlace(to)}`,
+    );
+  };
+
   return (
     <>
       <Toast ref={toast} />
@@ -180,11 +194,20 @@ export function InventoryMovementTable() {
         initialSorts={[{ field: "createdAt", order: -1 }]}
         header={
           canEdit && (
-            <Button
-              label="Registrar movimiento"
-              icon="pi pi-plus"
-              onClick={() => setCreating(true)}
-            />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                label="Registrar movimiento"
+                icon="pi pi-plus"
+                onClick={() => setCreating(true)}
+              />
+              <Button
+                label="Trasladar"
+                icon="pi pi-arrow-right-arrow-left"
+                severity="secondary"
+                outlined
+                onClick={() => setTransferring({})}
+              />
+            </div>
           )
         }
       >
@@ -210,6 +233,12 @@ export function InventoryMovementTable() {
 
       {creating && (
         <MovementForm onHide={() => setCreating(false)} onSaved={handleSaved} />
+      )}
+      {transferring && (
+        <TransferForm
+          onHide={() => setTransferring(null)}
+          onSaved={handleTransferred}
+        />
       )}
       {detailId && (
         <MovementDetailForm

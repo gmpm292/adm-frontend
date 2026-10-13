@@ -39,3 +39,27 @@ export const formatDateTime = (value) =>
 
 /** Cómo se nombra una venta: su factura o, si aún no tiene, su número */
 export const saleLabel = (sale) => sale.invoiceNumber || `Borrador #${sale.id}`;
+
+/**
+ * Datos del vale de una venta para `printTicket`. Las líneas devueltas o
+ * canceladas salen marcadas; el total es el de la venta.
+ */
+export const saleTicket = (sale, { storeName, sellerName } = {}) => ({
+  tienda: storeName,
+  numeroVenta: saleLabel(sale),
+  fecha: formatDateTime(sale.effectiveDate ?? sale.createdAt),
+  productos: (sale.details ?? []).map((detail) => ({
+    nombre:
+      detail.saleDetailStatus === "REFUNDED" ||
+      detail.saleDetailStatus === "CANCELLED"
+        ? `${detail.product?.name} (${SALE_DETAIL_STATUS[detail.saleDetailStatus].label.toLowerCase()})`
+        : detail.product?.name,
+    cantidad: detail.quantity,
+    precio: detail.unitPrice ?? 0,
+    moneda: detail.currency ?? sale.totalAmountCurrency ?? "",
+  })),
+  total: sale.totalAmount ?? 0,
+  moneda: sale.totalAmountCurrency ?? "",
+  cliente: sale.customer?.fullName,
+  vendedor: sellerName ?? workerName(sale.salesWorker) ?? "",
+});

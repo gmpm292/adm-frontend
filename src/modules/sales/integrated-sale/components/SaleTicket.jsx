@@ -12,7 +12,9 @@ const PUBLICIST_TYPES = ["PUBLICIST", "COMMUNITY_MANAGER"];
 
 /**
  * Ticket de la venta en curso: cliente, vendedor, productos, mensajería y
- * total, con las acciones para cobrarla o apartarla.
+ * total, con las acciones para cobrarla o apartarla. Una venta con
+ * mensajería no se cobra aquí: queda reservada en Mensajerías y se cobra
+ * cuando el mensajero entrega.
  */
 export function SaleTicket({
   catalog,
@@ -46,6 +48,11 @@ export function SaleTicket({
   const otherTotals = totals.filter((t) => t.currency !== saleCurrency);
   const isEmpty = lines.length === 0;
   const hasLineErrors = lines.some((line) => line.error);
+  const cannotSave =
+    isEmpty ||
+    busy ||
+    hasLineErrors ||
+    (catalog.canChooseSeller && !cart.sellerId);
 
   return (
     <aside className="pos-ticket" aria-label="Venta actual">
@@ -212,13 +219,25 @@ export function SaleTicket({
         {!isEmpty && blockReason && (
           <small className="ui-field__hint">{blockReason}</small>
         )}
-        <Button
-          label="Cobrar"
-          icon="pi pi-wallet"
-          size="large"
-          disabled={isEmpty || !!blockReason || busy}
-          onClick={onCharge}
-        />
+        {cart.hasDelivery ? (
+          <Button
+            label="Agregar a mensajería y terminar"
+            icon="pi pi-truck"
+            size="large"
+            disabled={cannotSave || !!blockReason}
+            tooltip="Reserva los productos; se cobra cuando el mensajero entregue, desde Mensajerías"
+            tooltipOptions={{ position: "top", showOnDisabled: false }}
+            onClick={onSaveDraft}
+          />
+        ) : (
+          <Button
+            label="Cobrar"
+            icon="pi pi-wallet"
+            size="large"
+            disabled={isEmpty || !!blockReason || busy}
+            onClick={onCharge}
+          />
+        )}
         <div className="flex gap-2">
           <Button
             label="En espera"
@@ -231,22 +250,19 @@ export function SaleTicket({
             tooltipOptions={{ position: "top", showOnDisabled: false }}
             onClick={onPark}
           />
-          <Button
-            label="Guardar borrador"
-            icon="pi pi-save"
-            severity="secondary"
-            outlined
-            className="flex-1"
-            disabled={
-              isEmpty ||
-              busy ||
-              hasLineErrors ||
-              (catalog.canChooseSeller && !cart.sellerId)
-            }
-            tooltip="Reserva los productos; se cobra después desde Ventas"
-            tooltipOptions={{ position: "top", showOnDisabled: false }}
-            onClick={onSaveDraft}
-          />
+          {!cart.hasDelivery && (
+            <Button
+              label="Guardar borrador"
+              icon="pi pi-save"
+              severity="secondary"
+              outlined
+              className="flex-1"
+              disabled={cannotSave}
+              tooltip="Reserva los productos; se cobra después desde Ventas"
+              tooltipOptions={{ position: "top", showOnDisabled: false }}
+              onClick={onSaveDraft}
+            />
+          )}
         </div>
       </div>
     </aside>

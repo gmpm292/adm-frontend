@@ -88,7 +88,7 @@ export const payrollGuides = [
     notes: [
       "Solo cuentan las líneas vendidas: las devueltas o canceladas no generan pago.",
       "Fuera de todos los tramos de precio, o por debajo del primer escalón de cantidad, no se paga (esas unidades sí cuentan para llegar al mínimo).",
-      "Nunca se mezclan monedas: los precios se miden en la moneda de la regla.",
+      "Nunca se mezclan monedas: los precios se miden en la moneda de la regla. En «Según el precio del producto» se eligen dos: la «Moneda de la venta», en la que se miden los tramos, y la «Moneda de pago», en la que cobra el trabajador; un porcentaje se convierte con la tasa de cambio.",
       "Las reglas se aplican al calcular el período; cambiar una regla no toca lo ya pagado.",
     ],
     related: ["periodo-nomina"],

@@ -12,9 +12,10 @@ import {
   GET_INVENTORIES,
   RESTORE_INVENTORIES,
 } from "../graphql/queries";
-import { formatQuantity, stockStatus } from "../../format";
+import { formatQuantity, inventoryPlace, stockStatus } from "../../format";
 import { useInventoryRoles } from "../../useInventoryRoles";
 import { MovementForm } from "../../inventory-movement/components/MovementForm";
+import { TransferForm } from "../../inventory-movement/components/TransferForm";
 import { InventoryForm } from "./InventoryForm";
 import { InventoryDetailForm } from "./InventoryDetailForm";
 
@@ -102,6 +103,8 @@ export function InventoryTable() {
   // { inventory, type } al registrar una entrada o salida
   const [movement, setMovement] = useState(null);
   const [detailId, setDetailId] = useState(null);
+  // El inventario de origen al trasladar existencias a otro
+  const [transferFrom, setTransferFrom] = useState(null);
 
   const handleFetchData = useCallback(
     async (params) => {
@@ -156,6 +159,16 @@ export function InventoryTable() {
       `${formatQuantity(quantity, product?.unitOfMeasure)} de ${product?.name}`,
     );
     if (printError) notify("warn", "No se imprimió el comprobante", printError);
+  };
+
+  const handleTransferred = ({ from, to, quantity }) => {
+    setTransferFrom(null);
+    handleRefresh();
+    notify(
+      "success",
+      "Traslado registrado",
+      `${formatQuantity(quantity, from.product?.unitOfMeasure)} de ${from.product?.name}: ${inventoryPlace(from)} → ${inventoryPlace(to)}`,
+    );
   };
 
   const handleDelete = (row) =>
@@ -227,6 +240,16 @@ export function InventoryTable() {
               aria-label="Registrar salida"
               disabled={row.currentStock <= 0}
               onClick={() => setMovement({ inventory: row, type: "OUT" })}
+            />
+            <Button
+              icon="pi pi-arrow-right-arrow-left"
+              text
+              rounded
+              tooltip="Trasladar a otro inventario"
+              tooltipOptions={{ position: "top" }}
+              aria-label="Trasladar a otro inventario"
+              disabled={row.currentStock <= 0}
+              onClick={() => setTransferFrom(row)}
             />
           </>
         )}
@@ -303,7 +326,7 @@ export function InventoryTable() {
         <Column
           body={actionBodyTemplate}
           header="Acciones"
-          className="w-14rem"
+          className="w-16rem"
         />
       </GenericDataTable>
 
@@ -320,6 +343,13 @@ export function InventoryTable() {
           type={movement.type}
           onHide={() => setMovement(null)}
           onSaved={handleMovementSaved}
+        />
+      )}
+      {transferFrom && (
+        <TransferForm
+          inventory={transferFrom}
+          onHide={() => setTransferFrom(null)}
+          onSaved={handleTransferred}
         />
       )}
       {detailId && (

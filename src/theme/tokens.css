@@ -129,6 +129,8 @@
   --icon-tile-size: 3.75rem;
   --icon-tile-glyph: 1.75rem;
   --dialog-width-wide: 42rem;
+  /* Lo más que crece la lista de un desplegable por encima de su campo */
+  --select-panel-max-width: 30rem;
   /* Venta integrada */
   --pos-ticket-width: 28rem;
   --pos-product-min: 11rem;
