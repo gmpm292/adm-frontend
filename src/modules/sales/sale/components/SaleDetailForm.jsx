@@ -8,7 +8,7 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { Tag } from "primereact/tag";
 import { InfoRow, NoData } from "../../../../components/ui";
 import { getErrorMessage } from "../../../../utils/errors";
-import { usePrinting } from "../../../printing/printing.module";
+import { PRINT_ERROR, useSaleReceipt } from "../useSaleReceipt";
 import {
   PAYMENT_METHOD_LABELS,
   SALE_DETAIL_STATUS,
@@ -17,7 +17,6 @@ import {
   formatMoney,
   isPaid,
   saleLabel,
-  saleTicket,
   workerName,
 } from "../../format";
 import { GET_SALE_BY_ID, REFUND_SALE } from "../graphql/queries";
@@ -31,7 +30,7 @@ import { useSalesRoles } from "../../useSalesRoles";
 export function SaleDetailForm({ saleId, onHide, onChanged }) {
   const [refundError, setRefundError] = useState(null);
   const [printError, setPrintError] = useState(null);
-  const { printTicket, isPrinting } = usePrinting();
+  const { printSale, isPrinting } = useSaleReceipt();
   const { canRefund } = useSalesRoles();
   const { data, loading, error } = useQuery(GET_SALE_BY_ID, {
     variables: { id: saleId },
@@ -51,16 +50,9 @@ export function SaleDetailForm({ saleId, onHide, onChanged }) {
   const handlePrint = async () => {
     setPrintError(null);
     try {
-      const printed = await printTicket(
-        saleTicket(sale, {
-          storeName: sale.business?.name ?? sale.office?.name,
-        }),
-      );
-      if (!printed) throw new Error();
+      if (!(await printSale(sale))) throw new Error();
     } catch {
-      setPrintError(
-        "No se pudo imprimir. Comprueba que QZ Tray está abierto y la impresora configurada.",
-      );
+      setPrintError(PRINT_ERROR);
     }
   };
 

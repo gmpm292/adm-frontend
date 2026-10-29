@@ -114,6 +114,7 @@ function ProductFormDialog({ product, onHide, onSaved }) {
   const client = useApolloClient();
   const [form, setForm] = useState(() => toForm(product));
   const [material, setMaterial] = useState(product?.materialCost ?? null);
+  const [typedMargin, setTypedMargin] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -167,12 +168,29 @@ function ProductFormDialog({ product, onHide, onSaved }) {
 
   const sameCurrency =
     form.costCurrency && form.costCurrency === form.baseCurrency;
+  // El margen escrito a mano se respeta; si no, sale de costo y precio. Así,
+  // al pasar por el campo no se recalcula el precio desde un margen redondeado.
   const margin = sameCurrency
-    ? marginOf(form.costPrice, form.basePrice)
+    ? (typedMargin ?? marginOf(form.costPrice, form.basePrice))
     : null;
 
-  const set = (field, value) =>
+  const set = (field, value) => {
+    if (["costPrice", "basePrice", "costCurrency", "baseCurrency"].includes(field)) {
+      setTypedMargin(null);
+    }
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  /** Solo el margen que escribe el usuario cambia el precio de venta */
+  const handleMarginChange = (value) => {
+    if (value === margin) return;
+    setTypedMargin(value);
+    if (value === null || value >= 100 || !(form.costPrice > 0)) return;
+    setForm((current) => ({
+      ...current,
+      basePrice: round2(current.costPrice / (1 - value / 100)),
+    }));
+  };
 
   const errors = {
     category: form.category ? null : "Elige la categoría",
@@ -215,6 +233,7 @@ function ProductFormDialog({ product, onHide, onSaved }) {
   // Al elegir un material, el costo sale de su precio por la cantidad usada
   const applyMaterial = (nextMaterial, quantity) => {
     if (!nextMaterial) return;
+    setTypedMargin(null);
     setForm((current) => ({
       ...current,
       costPrice: round2((quantity || 1) * nextMaterial.costPrice),
@@ -544,12 +563,7 @@ function ProductFormDialog({ product, onHide, onSaved }) {
                 <InputNumber
                   inputId="product-margin"
                   value={margin}
-                  onChange={(e) => {
-                    if (e.value === null || e.value >= 100) return;
-                    if (form.costPrice > 0) {
-                      set("basePrice", round2(form.costPrice / (1 - e.value / 100)));
-                    }
-                  }}
+                  onChange={(e) => handleMarginChange(e.value)}
                   suffix=" %"
                   max={99.99}
                   maxFractionDigits={2}

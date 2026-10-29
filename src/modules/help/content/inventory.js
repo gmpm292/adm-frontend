@@ -124,7 +124,7 @@ export const inventoryGuides = [
         text: "Elige el «Motivo». Entradas: «Compra a proveedor», «Devolución de un cliente», «Traslado», «Ajuste por conteo», «Otro motivo». Salidas: «Pérdida o rotura», «Uso interno», «Traslado», «Ajuste por conteo», «Otro motivo».",
       },
       {
-        text: "Opcional: en «Referencia o nota», la factura del proveedor o el destino; marca «Imprimir comprobante» si lo necesitas. Pulsa «Registrar entrada» o «Registrar salida».",
+        text: "En una entrada, «Referencia o nota» es opcional (la factura del proveedor, de dónde viene). En una salida la «Nota» es obligatoria: a quién se entrega o para qué. Marca «Imprimir comprobante» si lo necesitas y pulsa «Registrar entrada» o «Registrar salida».",
       },
       {
         text: "Para pasar existencias de un inventario a otro del mismo producto (otra ubicación u oficina de la empresa), pulsa las flechas («Trasladar a otro inventario») en la fila, o «Trasladar» en Movimientos. Elige el destino, la cantidad y pulsa «Trasladar». El destino tiene que existir: si el producto solo tiene un inventario, abre antes otro con una ubicación distinta (por ejemplo «Almacén») y existencias en 0.",

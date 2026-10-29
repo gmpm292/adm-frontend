@@ -36,8 +36,8 @@ export const salesGuides = [
     ],
     notes: [
       "Si «Cobrar» está desactivado, debajo se indica el motivo (falta el vendedor, productos sin moneda común...).",
-      "Con «Lleva mensajería» el botón pasa a «Agregar a mensajería y terminar»: la venta no se cobra ahora, queda reservada en Mensajerías.",
-      "El ticket se imprime desde «Venta cobrada» o, más tarde, desde la ficha de la venta con «Imprimir vale». Para imprimir hace falta QZ Tray abierto en el equipo.",
+      "Con «Lleva mensajería» el botón pasa a «Añadir a mensajería»: la venta no se cobra ahora, queda reservada en Mensajerías.",
+      "El ticket se imprime desde «Venta cobrada» o, más tarde, desde el listado de ventas (botón de la impresora en cada fila) o desde la ficha de la venta con «Imprimir vale». Para imprimir hace falta QZ Tray abierto en el equipo.",
       "Si sale «Stock insuficiente», otro vendedor se llevó el producto mientras tanto: el catálogo se recarga solo; revisa las cantidades.",
       "Si quieres reservar los productos y cobrar más tarde, usa «Guardar borrador» en lugar de «Cobrar».",
     ],
@@ -142,7 +142,7 @@ export const salesGuides = [
         path: "/sales/integrated-sale",
       },
       {
-        text: "Pulsa «Agregar a mensajería y terminar». La venta no se cobra todavía: los productos quedan reservados hasta que el mensajero entregue.",
+        text: "Pulsa «Añadir a mensajería». La venta no se cobra todavía: los productos quedan reservados hasta que el mensajero entregue.",
       },
       {
         text: "En Mensajerías ves solo las ventas con entrega. Filtra por «Por cobrar», «Cobradas» o «Sin mensajero».",
@@ -228,7 +228,7 @@ export const salesGuides = [
         path: "/sales/sales",
       },
       {
-        text: "El ojo de cada fila abre la ficha: cliente, vendedor, pagos recibidos y productos. Desde ella, «Imprimir vale» imprime el ticket de esa venta.",
+        text: "El ojo de cada fila abre la ficha: cliente, vendedor, pagos recibidos y productos. Desde ella, o con el botón de la impresora de la fila, «Imprimir vale» imprime el ticket de esa venta.",
       },
       {
         text: "Detalles de Venta muestra una línea por producto vendido, con cantidad, precio, importe y estado («Reservado», «Vendido», «Cancelado», «Devuelto»).",

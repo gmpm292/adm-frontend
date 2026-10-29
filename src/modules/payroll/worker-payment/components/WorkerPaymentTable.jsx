@@ -22,6 +22,7 @@ import {
 import { useHasRole } from "../../../../hooks/useHasRole";
 import { WorkerPaymentForm } from "./WorkerPaymentForm";
 import { WorkerPaymentDetailForm } from "./WorkerPaymentDetailForm";
+import { DailyPaymentReport } from "./DailyPaymentReport";
 
 const STATUS_OPTIONS = [
   { label: "Pendientes", value: "pending" },
@@ -106,6 +107,7 @@ export function WorkerPaymentTable() {
   // { payment } al corregir, {} al registrar
   const [form, setForm] = useState(null);
   const [detail, setDetail] = useState(null);
+  const [showReport, setShowReport] = useState(false);
 
   const handleFetchData = useCallback(
     async (params) => {
@@ -288,6 +290,13 @@ export function WorkerPaymentTable() {
                 onClick={() => setForm({})}
               />
             )}
+            <Button
+              label="Informe del día"
+              icon="pi pi-print"
+              severity="secondary"
+              outlined
+              onClick={() => setShowReport(true)}
+            />
             <SelectButton
               value={status}
               options={STATUS_OPTIONS}
@@ -310,6 +319,12 @@ export function WorkerPaymentTable() {
           payment={form.payment}
           onHide={() => setForm(null)}
           onSaved={handleSaved}
+        />
+      )}
+      {showReport && (
+        <DailyPaymentReport
+          onHide={() => setShowReport(false)}
+          onChanged={handleRefresh}
         />
       )}
       {detail && (

@@ -702,3 +702,101 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: var(--font-size-sm);
 }
+
+/* --- Informes imprimibles (pagos del día...) -------------------------------- */
+.ui-report__title {
+  margin: 0 0 var(--space-4);
+  color: var(--text-color-strong);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ui-report__group {
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--surface-200);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+
+.ui-report__group-header,
+.ui-report__total {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-color-strong);
+}
+
+.ui-report__group-header {
+  background: var(--surface-50);
+  border-bottom: 1px solid var(--surface-200);
+}
+
+.ui-report__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.ui-report__table th,
+.ui-report__table td {
+  padding: var(--space-1) var(--space-3);
+  text-align: left;
+  border-bottom: 1px solid var(--surface-100);
+}
+
+.ui-report__table th {
+  color: var(--text-color-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.ui-report__table .text-right {
+  text-align: right;
+}
+
+.ui-report__total {
+  border-top: 2px solid var(--surface-300);
+  font-size: var(--font-size-lg);
+}
+
+.ui-report__signatures {
+  display: none;
+}
+
+.ui-print-only {
+  display: none;
+}
+
+@media print {
+  body {
+    background: #fff !important;
+  }
+
+  body > *:not(.ui-print-only) {
+    display: none !important;
+  }
+
+  body > .ui-print-only {
+    display: block;
+    padding: 0;
+    color: #000;
+  }
+
+  .ui-print-only .ui-report__group {
+    break-inside: avoid;
+  }
+
+  .ui-print-only .ui-report__signatures {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3rem;
+  }
+
+  .ui-print-only .ui-report__signatures span {
+    width: 40%;
+    padding-top: var(--space-2);
+    border-top: 1px solid #000;
+    text-align: center;
+  }
+}
