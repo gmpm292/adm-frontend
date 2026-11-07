@@ -64,6 +64,11 @@ export const routePermissions = {
     requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER", "SUPERVISOR"],
     title: "Movimientos",
   },
+  "/inventory/sheet": {
+    permissions: [],
+    requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN"],
+    title: "Cargar o enviar",
+  },
   "/inventory/units-of-measure": {
     permissions: [],
     requiredRoles: ["SUPER", "PRINCIPAL", "ADMIN", "MANAGER"],

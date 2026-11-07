@@ -75,6 +75,10 @@ export function MovementForm({ inventory, type = "IN", onHide, onSaved }) {
         ? `Solo hay ${formatQuantity(selected.currentStock, unit)}`
         : null,
     reason: form.reason ? null : "Elige el motivo",
+    referenceId:
+      isOut && !form.referenceId.trim()
+        ? "Explica la salida: a quién o para qué"
+        : null,
   };
   const hasErrors = Object.values(errors).some(Boolean);
   const shown = (field) => (submitted ? errors[field] : null);
@@ -271,15 +275,22 @@ export function MovementForm({ inventory, type = "IN", onHide, onSaved }) {
           </div>
           <div className="col-12">
             <FormField
-              label="Referencia o nota"
+              label={isOut ? "Nota" : "Referencia o nota"}
               htmlFor="movement-reference"
-              hint="Opcional: factura del proveedor, destino del traslado..."
+              required={isOut}
+              hint={
+                isOut
+                  ? "Obligatoria en las salidas: a quién se entrega, para qué..."
+                  : "Opcional: factura del proveedor, de dónde viene..."
+              }
+              error={shown("referenceId")}
             >
               <InputText
                 id="movement-reference"
                 value={form.referenceId}
                 onChange={(e) => set("referenceId", e.target.value)}
                 maxLength={255}
+                invalid={!!shown("referenceId")}
               />
             </FormField>
           </div>

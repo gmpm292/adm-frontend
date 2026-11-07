@@ -135,13 +135,17 @@ export function ProductTable() {
   const notify = (severity, summary, detail) =>
     toast.current?.show({ severity, summary, detail, life: 6000 });
 
-  const handleSaved = (product, { created, inventoryError }) => {
+  const handleSaved = (product, { created, inventoryError, count }) => {
     setForm(null);
     handleRefresh();
     notify(
       "success",
-      created ? "Producto creado" : "Producto actualizado",
-      product?.name,
+      count > 1
+        ? `${count} productos creados`
+        : created
+          ? "Producto creado"
+          : "Producto actualizado",
+      count > 1 ? "Uno por cada variante" : product?.name,
     );
     if (inventoryError) {
       notify("warn", "No se pudo abrir algún inventario", inventoryError);

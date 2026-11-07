@@ -11,6 +11,8 @@ import { Message } from "primereact/message";
 import { FormField } from "../../../../components/ui";
 import { getErrorMessage } from "../../../../utils/errors";
 import { GET_OFFICE_OPTIONS } from "../../../company/shared/queries";
+import { BusinessField } from "../../../company/shared/BusinessField";
+import { useChoosesBusiness } from "../../../company/shared/business";
 import { CREATE_WORK_SCHEDULE, UPDATE_WORK_SCHEDULE } from "../graphql/queries";
 import { WEEK_DAYS, dayFromApi, dayToApi } from "../../format";
 
@@ -38,11 +40,16 @@ const addDays = (date, days) => {
   return result;
 };
 
-/** Alta o edición de un horario (con `schedule` edita) */
+/**
+ * Alta o edición de un horario (con `schedule` edita). Sin oficina vale para
+ * toda la empresa: el SUPER la elige al crearlo; los demás, la suya.
+ */
 export function WorkScheduleForm({ schedule, onHide, onSaved }) {
   const isEdit = !!schedule;
+  const chooseBusiness = useChoosesBusiness(isEdit);
   const start = nextMonday();
   const [form, setForm] = useState({
+    businessId: null,
     name: schedule?.name ?? "",
     startDate: schedule ? dayFromApi(schedule.startDate) : start,
     endDate: schedule ? dayFromApi(schedule.endDate) : addDays(start, 6),
@@ -63,10 +70,14 @@ export function WorkScheduleForm({ schedule, onHide, onSaved }) {
   const saving = createState.loading || updateState.loading;
   const error = createState.error ?? updateState.error;
 
-  const offices = officeData?.offices?.data ?? [];
+  // SUPER ve las oficinas de la empresa que eligió
+  const offices = (officeData?.offices?.data ?? []).filter(
+    (o) => !chooseBusiness || o.business?.id === form.businessId,
+  );
   const office = offices.find((o) => o.id === form.officeId);
 
   const errors = {
+    businessId: chooseBusiness && !form.businessId ? "Elige la empresa" : null,
     name: form.name.trim() ? null : "Escribe un nombre",
     startDate: form.startDate ? null : "Elige la fecha de inicio",
     endDate: !form.endDate
@@ -109,6 +120,7 @@ export function WorkScheduleForm({ schedule, onHide, onSaved }) {
           variables: {
             schedule: {
               ...values,
+              ...(chooseBusiness && { businessId: form.businessId }),
               ...(office && {
                 officeId: office.id,
                 businessId: office.business?.id,
@@ -221,6 +233,23 @@ export function WorkScheduleForm({ schedule, onHide, onSaved }) {
               </div>
             </FormField>
           </div>
+          {chooseBusiness && (
+            <div className="col-12">
+              <BusinessField
+                id="schedule-business"
+                value={form.businessId}
+                // Cambiar de empresa quita la oficina, que era de la anterior
+                onChange={(value) =>
+                  setForm((current) => ({
+                    ...current,
+                    businessId: value,
+                    officeId: null,
+                  }))
+                }
+                error={shown("businessId")}
+              />
+            </div>
+          )}
           <div className="col-12">
             <FormField
               label="Oficina"

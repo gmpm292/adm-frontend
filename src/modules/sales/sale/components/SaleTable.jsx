@@ -27,6 +27,7 @@ import { MakeSaleComponent } from "./MakeSaleComponent";
 import { SaleDetailForm } from "./SaleDetailForm";
 import { SaleEditForm } from "./SaleEditForm";
 import { useSalesRoles } from "../../useSalesRoles";
+import { PRINT_ERROR, useSaleReceipt } from "../useSaleReceipt";
 
 const EMPTY = <span className="text-color-secondary">—</span>;
 
@@ -175,6 +176,8 @@ export function SaleTable({ deliveryOnly = false }) {
   // { mode: "view" | "edit" | "charge", sale }
   const [dialog, setDialog] = useState(null);
   const [view, setView] = useState(null);
+  const [printingId, setPrintingId] = useState(null);
+  const { printSale } = useSaleReceipt();
   const lastParams = useRef(null);
   const viewRef = useRef(view);
 
@@ -272,6 +275,18 @@ export function SaleTable({ deliveryOnly = false }) {
       "No se pudo restaurar",
     );
 
+  const handlePrint = async (sale) => {
+    setPrintingId(sale.id);
+    try {
+      if (!(await printSale(sale.id))) throw new Error();
+      notify("success", `Vale de ${saleLabel(sale)} enviado a la impresora`);
+    } catch {
+      notify("error", "No se pudo imprimir", PRINT_ERROR);
+    } finally {
+      setPrintingId(null);
+    }
+  };
+
   const handleCharged = (sale, change) => {
     setDialog(null);
     handleRefresh();
@@ -320,6 +335,15 @@ export function SaleTable({ deliveryOnly = false }) {
           tooltip: paid && canRefund ? "Ver venta y devoluciones" : "Ver venta",
           onClick: () => setDialog({ mode: "view", sale: row }),
         })}
+        {row.saleStatus !== "CANCELLED" &&
+          action({
+            icon: "pi pi-print",
+            severity: "secondary",
+            tooltip: "Imprimir vale",
+            loading: printingId === row.id,
+            disabled: printingId !== null,
+            onClick: () => handlePrint(row),
+          })}
         {isDraft &&
           action({
             icon: "pi pi-wallet",

@@ -67,6 +67,18 @@ const columns = [
   },
 ];
 
+/** Solo para SUPER, que ve las de todas: una regla sin empresa es común */
+const businessColumn = {
+  field: "business.name",
+  header: "Empresa",
+  sortable: true,
+  filter: true,
+  body: (row) =>
+    row.business?.name ?? (
+      <span className="text-color-secondary">Todas las empresas</span>
+    ),
+};
+
 export function PaymentRuleTable() {
   const toast = useRef(null);
   const lastParams = useRef(null);
@@ -201,7 +213,11 @@ export function PaymentRuleTable() {
       <ConfirmDialog />
 
       <GenericDataTable
-        columns={columns}
+        columns={
+          hasRole("SUPER")
+            ? [columns[0], businessColumn, ...columns.slice(1)]
+            : columns
+        }
         data={data?.paymentRules?.data}
         totalRecords={data?.paymentRules?.totalCount}
         loading={loading}

@@ -12,6 +12,10 @@ const RULE_FIELDS = `
   distributeProfits
   isActive
   deletedAt
+  business {
+    id
+    name
+  }
   product {
     id
     name
@@ -95,7 +99,10 @@ export const RESTORE_PAYMENT_RULES = gql`
   }
 `;
 
-/** Monedas, productos y categorías para el formulario */
+/**
+ * Monedas, productos, categorías y trabajadores para el formulario. Con su
+ * empresa: el SUPER solo ve los de la empresa que elige.
+ */
 export const GET_RULE_FORM_OPTIONS = gql`
   query PaymentRuleFormOptions {
     currencies(options: { take: 100 }) {
@@ -110,17 +117,26 @@ export const GET_RULE_FORM_OPTIONS = gql`
       data {
         id
         name
+        business {
+          id
+        }
       }
     }
     categories(options: { take: 500, sorts: [{ property: "name", direction: ASC }] }) {
       data {
         id
         name
+        business {
+          id
+        }
       }
     }
     workers(options: { take: 1000, sorts: [{ property: "tempFirstName", direction: ASC }] }) {
       data {
         id
+        business {
+          id
+        }
         workerType
         otherType
         tempFirstName

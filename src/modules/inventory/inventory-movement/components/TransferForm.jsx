@@ -151,7 +151,7 @@ export function TransferForm({ inventory, onHide, onSaved }) {
             itemTemplate={itemTemplate}
             onChange={(e) => set("toId", e.value)}
             placeholder={from ? "Inventario al que entran" : "Elige antes el origen"}
-            emptyMessage="Este producto no tiene otro inventario. Ábrelo en Inventarios con otra ubicación (por ejemplo «Almacén») y existencias en 0."
+            emptyMessage="Este producto no tiene otro inventario. Para llevarlo a otra oficina usa «Cargar o enviar»: allí el destino se abre solo."
             emptyFilterMessage="Ningún inventario coincide"
             disabled={!from}
             invalid={!!shown("toId")}

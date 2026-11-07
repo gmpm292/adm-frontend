@@ -221,7 +221,7 @@ export function SaleTicket({
         )}
         {cart.hasDelivery ? (
           <Button
-            label="Agregar a mensajería y terminar"
+            label="Añadir a mensajería"
             icon="pi pi-truck"
             size="large"
             disabled={cannotSave || !!blockReason}

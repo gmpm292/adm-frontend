@@ -150,6 +150,14 @@ export const menuConfig = [
           routePermissions["/inventory/inventories"]?.requiredRoles || [],
       },
       {
+        label: "Cargar o enviar",
+        icon: "pi pi-table",
+        path: "/inventory/sheet",
+        permissions: routePermissions["/inventory/sheet"]?.permissions || [],
+        requiredRoles:
+          routePermissions["/inventory/sheet"]?.requiredRoles || [],
+      },
+      {
         label: "Movimientos",
         icon: "pi pi-sync",
         path: "/inventory/movements",

@@ -154,6 +154,31 @@ export const payrollGuides = [
       "El selector «Pendientes» / «Pagados» / «Todos» filtra la lista.",
       "Un pago ya hecho, o de un período cerrado, no se corrige ni se elimina.",
     ],
-    related: ["periodo-nomina"],
+    related: ["periodo-nomina", "informe-dia"],
+  },
+  {
+    id: "informe-dia",
+    title: "Pagar cada día a los publicistas",
+    summary:
+      "Calcula las comisiones de las ventas de un día y saca el informe para imprimirlo o guardarlo en PDF.",
+    routes: ["/payroll/worker-payments"],
+    before: ["Una regla de pago activa para «Publicista» y las ventas con sus publicistas."],
+    steps: [
+      {
+        text: "En Pagos pulsa «Informe del día».",
+        path: "/payroll/worker-payments",
+      },
+      {
+        text: "Elige el «Día» y los «Trabajadores» (por defecto, publicistas) y pulsa «Generar informe». Con «Calcular antes las comisiones» marcado se calculan las ventas cobradas ese día, sin esperar al fin del período.",
+      },
+      {
+        text: "Pulsa «Imprimir o guardar PDF»: en la ventana de impresión elige la impresora o «Guardar como PDF». Al entregar el dinero, pulsa «Marcar todo como pagado».",
+      },
+    ],
+    notes: [
+      "Recalcular no toca lo ya pagado.",
+      "Las comisiones van al período que contiene el día; si no existe, se crea solo.",
+    ],
+    related: ["pagos-manuales", "periodo-nomina"],
   },
 ];

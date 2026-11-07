@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useApolloClient, useMutation, useQuery } from "@apollo/client";
 import { Button } from "primereact/button";
+import { Chips } from "primereact/chips";
 import { Dialog } from "primereact/dialog";
 import { Dropdown } from "primereact/dropdown";
 import { InputNumber } from "primereact/inputnumber";
@@ -17,6 +18,7 @@ import { CREATE_INVENTORY } from "../../inventory/graphql/queries";
 import { GET_OFFICE_OPTIONS } from "../../../company/shared/queries";
 import {
   CREATE_PRODUCT,
+  CREATE_PRODUCT_VARIANTS,
   GET_ACTIVE_CURRENCIES,
   GET_MATERIAL_COST_BY_ID,
   GET_PRODUCT_BY_ID,
@@ -63,11 +65,18 @@ const toForm = (product) => ({
     value: String(value),
   })),
   inventoryOffices: [],
+  variantName: "",
+  variantValues: [],
 });
+
+/** Valores escritos en «Valores», sin espacios sobrantes ni vacíos */
+const cleanValues = (values) =>
+  values.map((value) => value.trim()).filter(Boolean);
 
 /**
  * Alta o edición de un producto (con `productId` edita). Al crear se puede
- * abrir a la vez su inventario en una o varias oficinas.
+ * abrir a la vez su inventario en una o varias oficinas, y crearlo en varias
+ * variantes (Talla 1, 2, 3...): un producto por cada valor.
  */
 export function ProductForm({ productId, onHide, onSaved }) {
   const { data, loading, error } = useQuery(GET_PRODUCT_BY_ID, {
@@ -114,6 +123,7 @@ function ProductFormDialog({ product, onHide, onSaved }) {
   const client = useApolloClient();
   const [form, setForm] = useState(() => toForm(product));
   const [material, setMaterial] = useState(product?.materialCost ?? null);
+  const [typedMargin, setTypedMargin] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -128,6 +138,19 @@ function ProductFormDialog({ product, onHide, onSaved }) {
   const [createProduct] = useMutation(CREATE_PRODUCT);
   const [updateProduct] = useMutation(UPDATE_PRODUCT);
   const [createInventory] = useMutation(CREATE_INVENTORY);
+  const [createProductVariants] = useMutation(CREATE_PRODUCT_VARIANTS);
+
+  // Variantes: un producto por cada valor, llamado «Nombre · Talla 1»
+  const variantName = form.variantName.trim();
+  const variantValues = isEdit ? [] : form.variantValues;
+  const repeatedValue = variantValues.find((value, index) =>
+    variantValues
+      .slice(0, index)
+      .some((other) => other.toLowerCase() === value.toLowerCase()),
+  );
+  const variantNames = variantValues.map(
+    (value) => `${form.name.trim()} · ${variantName} ${value}`,
+  );
 
   const currencies = useMemo(
     () =>
@@ -167,12 +190,29 @@ function ProductFormDialog({ product, onHide, onSaved }) {
 
   const sameCurrency =
     form.costCurrency && form.costCurrency === form.baseCurrency;
+  // El margen escrito a mano se respeta; si no, sale de costo y precio. Así,
+  // al pasar por el campo no se recalcula el precio desde un margen redondeado.
   const margin = sameCurrency
-    ? marginOf(form.costPrice, form.basePrice)
+    ? (typedMargin ?? marginOf(form.costPrice, form.basePrice))
     : null;
 
-  const set = (field, value) =>
+  const set = (field, value) => {
+    if (["costPrice", "basePrice", "costCurrency", "baseCurrency"].includes(field)) {
+      setTypedMargin(null);
+    }
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  /** Solo el margen que escribe el usuario cambia el precio de venta */
+  const handleMarginChange = (value) => {
+    if (value === margin) return;
+    setTypedMargin(value);
+    if (value === null || value >= 100 || !(form.costPrice > 0)) return;
+    setForm((current) => ({
+      ...current,
+      basePrice: round2(current.costPrice / (1 - value / 100)),
+    }));
+  };
 
   const errors = {
     category: form.category ? null : "Elige la categoría",
@@ -208,6 +248,17 @@ function ProductFormDialog({ product, onHide, onSaved }) {
           form.attributes.length
         ? "Hay dos características con el mismo nombre"
         : null,
+    variantName:
+      variantValues.length && !variantName
+        ? "Escribe qué cambia: Talla, Color..."
+        : null,
+    variantValues: repeatedValue
+      ? `El valor «${repeatedValue}» está repetido`
+      : variantName && !variantValues.length
+        ? "Escribe al menos un valor, o deja vacío «Qué cambia»"
+        : variantNames.some((name) => name.length > 100)
+          ? "Algún nombre pasa de 100 caracteres: acorta el nombre o los valores"
+          : null,
   };
   const hasErrors = Object.values(errors).some(Boolean);
   const shown = (field) => (submitted ? errors[field] : null);
@@ -215,6 +266,7 @@ function ProductFormDialog({ product, onHide, onSaved }) {
   // Al elegir un material, el costo sale de su precio por la cantidad usada
   const applyMaterial = (nextMaterial, quantity) => {
     if (!nextMaterial) return;
+    setTypedMargin(null);
     setForm((current) => ({
       ...current,
       costPrice: round2((quantity || 1) * nextMaterial.costPrice),
@@ -311,6 +363,28 @@ function ProductFormDialog({ product, onHide, onSaved }) {
           },
         });
         onSaved(saved.updateProduct, { created: false });
+        return;
+      }
+
+      // Variantes: todas con su inventario de una vez; si una falla, ninguna
+      if (variantValues.length) {
+        const { data: saved } = await createProductVariants({
+          variables: {
+            input: {
+              product: {
+                ...input,
+                ...(form.materialCostId && {
+                  materialCostId: form.materialCostId,
+                }),
+              },
+              variantName,
+              values: variantValues,
+              officeIds: form.inventoryOffices,
+            },
+          },
+        });
+        const created = saved.createProductVariants;
+        onSaved(created[0], { created: true, count: created.length });
         return;
       }
 
@@ -544,12 +618,7 @@ function ProductFormDialog({ product, onHide, onSaved }) {
                 <InputNumber
                   inputId="product-margin"
                   value={margin}
-                  onChange={(e) => {
-                    if (e.value === null || e.value >= 100) return;
-                    if (form.costPrice > 0) {
-                      set("basePrice", round2(form.costPrice / (1 - e.value / 100)));
-                    }
-                  }}
+                  onChange={(e) => handleMarginChange(e.value)}
                   suffix=" %"
                   max={99.99}
                   maxFractionDigits={2}
@@ -836,6 +905,62 @@ function ProductFormDialog({ product, onHide, onSaved }) {
 
         {!isEdit && (
           <FormSection
+            title="Tallas, colores u otras variantes"
+            hint="Opcional: se crea un producto por cada valor, con todo lo demás igual. Cada uno lleva sus propias existencias y se vende por separado."
+          >
+            <div className="formgrid grid">
+              <div className="col-12 md:col-4">
+                <FormField
+                  label="Qué cambia"
+                  htmlFor="product-variant-name"
+                  error={shown("variantName")}
+                >
+                  <InputText
+                    id="product-variant-name"
+                    value={form.variantName}
+                    onChange={(e) => set("variantName", e.target.value)}
+                    placeholder="Talla"
+                    maxLength={50}
+                    invalid={!!shown("variantName")}
+                  />
+                </FormField>
+              </div>
+              <div className="col-12 md:col-8">
+                <FormField
+                  label="Valores"
+                  htmlFor="product-variant-values"
+                  hint="Sepáralos con coma o pulsa Enter después de cada uno"
+                  error={shown("variantValues")}
+                >
+                  <Chips
+                    inputId="product-variant-values"
+                    value={form.variantValues}
+                    onChange={(e) =>
+                      set("variantValues", cleanValues(e.value ?? []))
+                    }
+                    separator=","
+                    addOnBlur
+                    max={50}
+                    placeholder={
+                      form.variantValues.length ? undefined : "1, 2, 3..."
+                    }
+                    invalid={!!shown("variantValues")}
+                  />
+                </FormField>
+              </div>
+            </div>
+            {variantValues.length > 0 && variantName && form.name.trim() && (
+              <p className="text-sm text-color-secondary mt-0">
+                Se crearán {variantValues.length}{" "}
+                {variantValues.length === 1 ? "producto" : "productos"}:{" "}
+                {variantNames.join(", ")}.
+              </p>
+            )}
+          </FormSection>
+        )}
+
+        {!isEdit && (
+          <FormSection
             title="Inventario"
             hint="Abre ya su inventario donde se vaya a vender. Empieza vacío: las existencias entran después con un movimiento de entrada."
           >
@@ -881,7 +1006,13 @@ function ProductFormDialog({ product, onHide, onSaved }) {
           />
           <Button
             type="submit"
-            label={isEdit ? "Guardar cambios" : "Guardar producto"}
+            label={
+              isEdit
+                ? "Guardar cambios"
+                : variantValues.length > 1
+                  ? `Guardar ${variantValues.length} productos`
+                  : "Guardar producto"
+            }
             loading={saving}
           />
         </div>

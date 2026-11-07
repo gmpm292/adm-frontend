@@ -108,3 +108,45 @@ export const GET_PAYMENT_FORM_OPTIONS = gql`
     }
   }
 `;
+
+/** Ventas cobradas de un día: solo los ids, para calcular sus comisiones */
+export const GET_DAY_SALE_IDS = gql`
+  query DaySaleIds($options: ListOptions) {
+    sales(options: $options) {
+      data {
+        id
+      }
+    }
+  }
+`;
+
+/** Calcula (o recalcula lo no pagado de) las comisiones de esas ventas */
+export const PROCESS_SALES_PAYMENTS = gql`
+  mutation ProcessSalesPayments($saleIds: [Int!]!) {
+    processBatchSalePayments(saleIds: $saleIds) {
+      successful
+      failed
+      results {
+        saleId
+        error
+      }
+    }
+  }
+`;
+
+/** Pagos de las ventas de un día, para el informe diario */
+export const GET_DAY_PAYMENTS = gql`
+  query DayPayments($options: ListOptions) {
+    workerPayments(options: $options) {
+      totalCount
+      data {
+        ${PAYMENT_FIELDS}
+        sale {
+          id
+          invoiceNumber
+          effectiveDate
+        }
+      }
+    }
+  }
+`;
