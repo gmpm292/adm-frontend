@@ -115,6 +115,16 @@ export const GET_PRODUCT_BY_ID = gql`
   }
 `;
 
+/** Un producto por cada valor (Talla 1, 2, 3...); todos o ninguno */
+export const CREATE_PRODUCT_VARIANTS = gql`
+  mutation CreateProductVariants($input: CreateProductVariantsInput!) {
+    createProductVariants(createProductVariantsInput: $input) {
+      id
+      name
+    }
+  }
+`;
+
 export const CREATE_PRODUCT = gql`
   mutation CreateProduct($product: CreateProductInput!) {
     createProduct(createProductInput: $product) {

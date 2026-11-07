@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
-import { Dropdown } from "primereact/dropdown";
 import { InputNumber } from "primereact/inputnumber";
 import { InputSwitch } from "primereact/inputswitch";
 import { InputText } from "primereact/inputtext";
@@ -10,8 +9,8 @@ import { InputTextarea } from "primereact/inputtextarea";
 import { Message } from "primereact/message";
 import { FormField } from "../../../../components/ui";
 import { getErrorMessage } from "../../../../utils/errors";
-import { useHasRole } from "../../../../hooks/useHasRole";
-import { GET_BUSINESS_OPTIONS } from "../../../company/shared/queries";
+import { BusinessField } from "../../../company/shared/BusinessField";
+import { useChoosesBusiness } from "../../../company/shared/business";
 import UnitOfMeasureDropdown from "../../../inventory/unit-of-measure/components/UnitOfMeasureDropdown";
 import { CurrencyDropdown } from "../../currency/components/CurrencyDropdown";
 import {
@@ -25,8 +24,7 @@ import {
  */
 export function MaterialCostForm({ material, onHide, onSaved }) {
   const isEdit = !!material;
-  const hasRole = useHasRole();
-  const chooseBusiness = !isEdit && hasRole("SUPER");
+  const chooseBusiness = useChoosesBusiness(isEdit);
   const [form, setForm] = useState({
     businessId: null,
     name: material?.name ?? "",
@@ -38,10 +36,6 @@ export function MaterialCostForm({ material, onHide, onSaved }) {
   });
   const [submitted, setSubmitted] = useState(false);
 
-  const { data: businessData, loading: loadingBusinesses } = useQuery(
-    GET_BUSINESS_OPTIONS,
-    { skip: !chooseBusiness }
-  );
   const [createMaterial, createState] = useMutation(CREATE_MATERIAL_COST);
   const [updateMaterial, updateState] = useMutation(UPDATE_MATERIAL_COST);
   const saving = createState.loading || updateState.loading;
@@ -119,25 +113,12 @@ export function MaterialCostForm({ material, onHide, onSaved }) {
         <div className="formgrid grid">
           {chooseBusiness && (
             <div className="col-12">
-              <FormField
-                label="Empresa"
-                htmlFor="material-business"
-                required
+              <BusinessField
+                id="material-business"
+                value={form.businessId}
+                onChange={(value) => set("businessId", value)}
                 error={shown("businessId")}
-              >
-                <Dropdown
-                  inputId="material-business"
-                  value={form.businessId}
-                  options={businessData?.businesses?.data ?? []}
-                  optionLabel="name"
-                  optionValue="id"
-                  onChange={(e) => set("businessId", e.value)}
-                  placeholder="Elige la empresa"
-                  emptyMessage="No hay empresas"
-                  loading={loadingBusinesses}
-                  invalid={!!shown("businessId")}
-                />
-              </FormField>
+              />
             </div>
           )}
           <div className="col-12">

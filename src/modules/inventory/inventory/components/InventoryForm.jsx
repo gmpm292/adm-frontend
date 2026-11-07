@@ -48,12 +48,10 @@ export function InventoryForm({ inventory, onHide, onSaved }) {
   const products = productData?.products?.data ?? [];
   const product = products.find((p) => p.id === form.productId);
 
-  // Un producto de una oficina solo tiene inventario en ella; uno de toda la
-  // empresa, en cualquiera de sus oficinas.
-  const offices = (officeData?.offices?.data ?? []).filter((office) =>
-    product?.office?.id
-      ? office.id === product.office.id
-      : !product?.business?.id || office.business?.id === product.business.id,
+  // El producto es de toda la empresa: inventario en cualquiera de sus oficinas
+  const offices = (officeData?.offices?.data ?? []).filter(
+    (office) =>
+      !product?.business?.id || office.business?.id === product.business.id,
   );
   const officeId =
     form.officeId && offices.some((o) => o.id === form.officeId)
@@ -173,11 +171,6 @@ export function InventoryForm({ inventory, onHide, onSaved }) {
                 label="Oficina"
                 htmlFor="inventory-office"
                 required
-                hint={
-                  product?.office
-                    ? "El producto es solo de esta oficina"
-                    : undefined
-                }
                 error={shown("officeId")}
               >
                 <Dropdown

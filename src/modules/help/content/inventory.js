@@ -13,7 +13,7 @@ export const inventoryGuides = [
     ],
     before: [
       "Monedas y unidades son comunes a todas las empresas y solo las cambia el rol Super.",
-      "Categorías y materiales son de cada empresa; los crean Super y Principal.",
+      "Categorías y materiales son de cada empresa (no de una oficina); los crean Super y Principal.",
     ],
     steps: [
       {
@@ -65,17 +65,21 @@ export const inventoryGuides = [
         text: "Opcional: en «Reglas de venta», cantidades mínima y máxima por venta y descuentos por cantidad; en «Características», talla, color, etc.",
       },
       {
-        text: "En «Inventario» marca las «Oficinas» donde se va a vender: se abre allí su inventario vacío. Guarda con «Guardar producto».",
+        text: "Si el producto viene en varias tallas, colores o medidas, en «Tallas, colores u otras variantes» escribe en «Qué cambia» (Talla) y en «Valores» cada una (1, 2, 3...). Se crea un producto por valor, «Anillo de Compromiso · Talla 1», «· Talla 2»..., con todo lo demás igual.",
       },
       {
-        text: "Mete las existencias con un movimiento de entrada desde Inventarios («Registrar entrada»).",
-        path: "/inventory/inventories",
+        text: "En «Inventario» marca las «Oficinas» donde se va a vender: se abre allí su inventario vacío (el de cada variante). Guarda con «Guardar producto».",
+      },
+      {
+        text: "Mete las existencias desde «Cargar o enviar» (varios productos a la vez) o con «Registrar entrada» en Inventarios.",
+        path: "/inventory/sheet",
       },
     ],
     notes: [
       "El nombre no se repite dentro de una categoría, contando los productos eliminados: si sale que hay uno eliminado con ese nombre, restáuralo.",
       "Un producto solo aparece en la Venta Integrada si tiene precio en una moneda activa y un inventario en esa oficina.",
       "La ficha («Ver ficha») muestra los precios en cada moneda y las existencias por ubicación.",
+      "Cada variante es un producto: lleva sus propias existencias, se carga en «Cargar o enviar» y se vende por separado. Para añadir otra talla más adelante, crea de nuevo el producto con el mismo nombre y solo la talla nueva; si una ya existe, no se crea ninguna. Cambiar el precio de una no cambia las demás.",
     ],
     related: ["nomencladores", "abrir-inventario", "movimientos"],
   },
@@ -127,7 +131,8 @@ export const inventoryGuides = [
         text: "En una entrada, «Referencia o nota» es opcional (la factura del proveedor, de dónde viene). En una salida la «Nota» es obligatoria: a quién se entrega o para qué. Marca «Imprimir comprobante» si lo necesitas y pulsa «Registrar entrada» o «Registrar salida».",
       },
       {
-        text: "Para pasar existencias de un inventario a otro del mismo producto (otra ubicación u oficina de la empresa), pulsa las flechas («Trasladar a otro inventario») en la fila, o «Trasladar» en Movimientos. Elige el destino, la cantidad y pulsa «Trasladar». El destino tiene que existir: si el producto solo tiene un inventario, abre antes otro con una ubicación distinta (por ejemplo «Almacén») y existencias en 0.",
+        text: "Para pasar un producto de una ubicación a otra que ya existe (de «Almacén» a «Vitrina»), pulsa las flechas («Trasladar a otro inventario») en la fila, o «Trasladar» en Movimientos. Para llevar mercancía a otra oficina, o varios productos a la vez, usa «Cargar o enviar».",
+        path: "/inventory/sheet",
       },
       {
         text: "El historial completo está en Movimientos; con «Ver detalle» ves cada uno y, si vino de una venta, «Ver la venta».",
@@ -142,7 +147,42 @@ export const inventoryGuides = [
       "Los movimientos no se editan ni se eliminan: un error se corrige con otro movimiento en sentido contrario.",
       "Las existencias nunca quedan en negativo: no se puede sacar más de lo que hay.",
     ],
-    related: ["abrir-inventario", "eliminar-producto"],
+    related: ["cargar-o-enviar", "abrir-inventario", "eliminar-producto"],
+  },
+  {
+    id: "cargar-o-enviar",
+    title: "Cargar existencias o enviarlas a otra oficina, varios productos a la vez",
+    summary:
+      "Una hoja con todos los productos de la empresa: escribes las cantidades y guardas todo junto.",
+    routes: ["/inventory/sheet", "/inventory/inventories"],
+    before: [
+      "Los productos ya creados: son de toda la empresa y cada oficina tiene sus propias existencias.",
+      "Lo usan Super, Principal y Administrador. El administrador de una tienda carga y envía solo desde la suya, a cualquier otra oficina de su empresa.",
+    ],
+    steps: [
+      {
+        text: "En Inventario abre «Cargar o enviar» (o «Cargar o enviar varios» en Inventarios). Super y Principal eligen la «Oficina»; el administrador ve la suya.",
+        path: "/inventory/sheet",
+      },
+      {
+        text: "Para meter mercancía elige «Cargar existencias» y el «Motivo»: «Existencias iniciales» para el primer conteo, «Compra a proveedor» para lo que llega, etc. En «Nota» puedes poner la factura.",
+      },
+      {
+        text: "Para llevar mercancía a otra oficina elige «Enviar a otra oficina» y la oficina en «Hacia». La tabla muestra lo que hay aquí y lo que hay allí.",
+      },
+      {
+        text: "Escribe la cantidad en la columna de la derecha de cada producto que quieras (busca por nombre arriba de la tabla). Abajo se ve cuántos productos y unidades llevas.",
+      },
+      {
+        text: "Pulsa «Guardar entrada» o «Enviar a…». Si algo falla (por ejemplo, no hay tanto de un producto), no se guarda nada y se avisa de qué falló.",
+      },
+    ],
+    notes: [
+      "Si un producto nunca estuvo en la oficina, aparece como «No está en esta oficina» y se abre su inventario al guardar. Al enviar, si no estaba en el destino, se abre allí con la misma ubicación que en el origen.",
+      "Cada envío deja en Movimientos una salida en el origen («Hacia…») y una entrada en el destino («Desde…») por producto, con el motivo «Traslado entre inventarios».",
+      "Si un producto tiene varias ubicaciones en la oficina (vitrina, almacén...), sale una línea por cada una.",
+    ],
+    related: ["movimientos", "abrir-inventario"],
   },
   {
     id: "eliminar-producto",

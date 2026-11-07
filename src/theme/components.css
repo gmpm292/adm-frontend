@@ -498,6 +498,35 @@
   margin-left: auto;
 }
 
+/* --- Barra de acción fija al pie (resumen y botón de guardar) -------------- */
+.ui-action-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--surface-200);
+  border-radius: var(--radius-lg);
+  background: var(--surface-0);
+  box-shadow: var(--shadow-md);
+}
+
+.ui-action-bar__summary {
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.ui-action-bar__end {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
 /* --- NoData ---------------------------------------------------------------- */
 .ui-no-data {
   display: flex;

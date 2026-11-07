@@ -12,6 +12,13 @@ import { MultiSelect } from "primereact/multiselect";
 import { SelectButton } from "primereact/selectbutton";
 import { FormField, FormSection } from "../../../../components/ui";
 import { getErrorMessage } from "../../../../utils/errors";
+import { useHasRole } from "../../../../hooks/useHasRole";
+import { BusinessField } from "../../../company/shared/BusinessField";
+import {
+  ALL_BUSINESSES,
+  businessIdFor,
+  useChoosesBusiness,
+} from "../../../company/shared/business";
 import { workerName } from "../../../sales/format";
 import {
   CREATE_PAYMENT_RULE,
@@ -69,11 +76,31 @@ const KIND_OPTIONS = (currency) => [
   { label: "%", value: "percentage" },
 ];
 
-/** Alta o edición de una regla de pago (con `rule` edita) */
+/**
+ * Alta o edición de una regla de pago (con `rule` edita). El SUPER elige la
+ * empresa al crearla, o «Todas las empresas» para una regla común, que no
+ * lleva producto, categoría ni trabajadores concretos. Los demás la crean en
+ * la suya.
+ */
 export function PaymentRuleForm({ rule, onHide, onSaved }) {
   const isEdit = !!rule;
-  const [form, setForm] = useState(() => toForm(rule));
+  const hasRole = useHasRole();
+  const chooseBusiness = useChoosesBusiness(isEdit);
+  const [form, setForm] = useState(() => ({ ...toForm(rule), businessId: null }));
   const [submitted, setSubmitted] = useState(false);
+
+  // Empresa de la regla para filtrar opciones: solo hace falta con SUPER,
+  // que ve todas (al resto el backend ya le da las de la suya)
+  const ruleBusiness = chooseBusiness
+    ? form.businessId
+    : isEdit && hasRole("SUPER")
+      ? (rule.business?.id ?? ALL_BUSINESSES)
+      : undefined;
+  const isCommon = ruleBusiness === ALL_BUSINESSES;
+  const ofRuleBusiness = (list = []) =>
+    ruleBusiness === undefined
+      ? list
+      : list.filter((item) => item.business?.id === ruleBusiness);
 
   const { data: options, loading: loadingOptions } = useQuery(
     GET_RULE_FORM_OPTIONS,
@@ -148,6 +175,10 @@ export function PaymentRuleForm({ rule, onHide, onSaved }) {
     }
   })();
   const errors = {
+    businessId:
+      chooseBusiness && !form.businessId
+        ? "Elige la empresa o «Todas las empresas»"
+        : null,
     name: form.name.trim() ? null : "Escribe un nombre",
     paymentCurrency: form.paymentCurrency ? null : "Elige la moneda",
     saleCurrency:
@@ -199,13 +230,13 @@ export function PaymentRuleForm({ rule, onHide, onSaved }) {
       paymentType: form.paymentType,
       workerType: form.workerType,
       otherType: form.workerType === "OTHER" ? form.otherType.trim() || null : null,
-      specificWorkersIds: form.specificWorkersIds,
+      specificWorkersIds: isCommon ? [] : form.specificWorkersIds,
       paymentCurrency: form.paymentCurrency,
       scope: form.scope,
       distributeProfits: canChooseSharing ? form.distributeProfits : isSaleType,
       isActive: form.isActive,
-      productId: isSaleType ? form.productId : null,
-      categoryId: isSaleType ? form.categoryId : null,
+      productId: isSaleType && !isCommon ? form.productId : null,
+      categoryId: isSaleType && !isCommon ? form.categoryId : null,
       conditions: conditions(),
     };
     try {
@@ -215,7 +246,16 @@ export function PaymentRuleForm({ rule, onHide, onSaved }) {
         });
         onSaved(data.updatePaymentRule, { created: false });
       } else {
-        const { data } = await createRule({ variables: { rule: values } });
+        const { data } = await createRule({
+          variables: {
+            rule: {
+              ...values,
+              ...(chooseBusiness && {
+                businessId: businessIdFor(form.businessId),
+              }),
+            },
+          },
+        });
         onSaved(data.createPaymentRule, { created: true });
       }
     } catch {
@@ -253,6 +293,31 @@ export function PaymentRuleForm({ rule, onHide, onSaved }) {
 
         <FormSection title="La regla">
           <div className="formgrid grid">
+            {chooseBusiness && (
+              <div className="col-12">
+                <BusinessField
+                  id="rule-business"
+                  value={form.businessId}
+                  allowAll
+                  hint={
+                    isCommon
+                      ? "Se aplica en todas las empresas: sin producto, categoría ni trabajadores concretos"
+                      : undefined
+                  }
+                  // Lo elegido antes era de la empresa anterior
+                  onChange={(value) =>
+                    setForm((current) => ({
+                      ...current,
+                      businessId: value,
+                      productId: null,
+                      categoryId: null,
+                      specificWorkersIds: [],
+                    }))
+                  }
+                  error={shown("businessId")}
+                />
+              </div>
+            )}
             <div className="col-12 md:col-8">
               <FormField
                 label="Nombre"
@@ -373,26 +438,33 @@ export function PaymentRuleForm({ rule, onHide, onSaved }) {
                 </FormField>
               </div>
             )}
-            <div className="col-12">
-              <FormField
-                label="Trabajadores específicos"
-                htmlFor="rule-specific-workers"
-                hint="Vacío: todos los de ese tipo. Elige algunos para limitar la regla a ellos."
-              >
-                <MultiSelect
-                  inputId="rule-specific-workers"
-                  value={form.specificWorkersIds}
-                  options={(options?.workers?.data ?? [])
-                    .filter((w) => w.workerType === form.workerType)
-                    .map((w) => ({ label: workerName(w), value: w.id }))}
-                  onChange={(e) => set("specificWorkersIds", e.value ?? [])}
-                  placeholder="Todos"
-                  loading={loadingOptions}
-                  filter
-                  display="chip"
-                />
-              </FormField>
-            </div>
+            {!isCommon && (
+              <div className="col-12">
+                <FormField
+                  label="Trabajadores específicos"
+                  htmlFor="rule-specific-workers"
+                  hint="Vacío: todos los de ese tipo. Elige algunos para limitar la regla a ellos."
+                >
+                  <MultiSelect
+                    inputId="rule-specific-workers"
+                    value={form.specificWorkersIds}
+                    options={ofRuleBusiness(options?.workers?.data)
+                      .filter((w) => w.workerType === form.workerType)
+                      .map((w) => ({ label: workerName(w), value: w.id }))}
+                    onChange={(e) => set("specificWorkersIds", e.value ?? [])}
+                    placeholder="Todos"
+                    emptyMessage={
+                      ruleBusiness === null
+                        ? "Elige antes la empresa"
+                        : "No hay trabajadores de ese tipo"
+                    }
+                    loading={loadingOptions}
+                    filter
+                    display="chip"
+                  />
+                </FormField>
+              </div>
+            )}
             {canChooseSharing && (
               <div className="col-12">
                 <FormField label="De cada venta cobra" htmlFor="rule-sharing">
@@ -684,7 +756,7 @@ export function PaymentRuleForm({ rule, onHide, onSaved }) {
             </>
           )}
 
-          {isSaleType && (
+          {isSaleType && !isCommon && (
             <div className="formgrid grid mt-3">
               <div className="col-12 md:col-6">
                 <FormField
@@ -695,7 +767,7 @@ export function PaymentRuleForm({ rule, onHide, onSaved }) {
                   <Dropdown
                     inputId="rule-product"
                     value={form.productId}
-                    options={(options?.products?.data ?? []).map((p) => ({
+                    options={ofRuleBusiness(options?.products?.data).map((p) => ({
                       label: p.name,
                       value: p.id,
                     }))}
@@ -716,7 +788,7 @@ export function PaymentRuleForm({ rule, onHide, onSaved }) {
                   <Dropdown
                     inputId="rule-category"
                     value={form.categoryId}
-                    options={(options?.categories?.data ?? []).map((c) => ({
+                    options={ofRuleBusiness(options?.categories?.data).map((c) => ({
                       label: c.name,
                       value: c.id,
                     }))}

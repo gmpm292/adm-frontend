@@ -85,6 +85,65 @@ export const TRANSFER_INVENTORY = gql`
   }
 `;
 
+/**
+ * Hoja de inventario: todos los productos de la empresa con sus inventarios
+ * en la oficina y, con `toOfficeId`, lo que hay de cada uno en la de destino.
+ */
+export const GET_INVENTORY_SHEET = gql`
+  query InventorySheet($officeId: Int!, $toOfficeId: Int) {
+    inventorySheet(officeId: $officeId, toOfficeId: $toOfficeId) {
+      office {
+        id
+        name
+      }
+      destinations {
+        id
+        name
+      }
+      rows {
+        destinationStock
+        product {
+          id
+          name
+          category {
+            id
+            name
+          }
+          unitOfMeasure {
+            id
+            symbol
+          }
+        }
+        inventories {
+          id
+          location
+          currentStock
+        }
+      }
+    }
+  }
+`;
+
+export const LOAD_INVENTORY = gql`
+  mutation LoadInventory($input: LoadInventoryInput!) {
+    loadInventory(loadInventoryInput: $input) {
+      lines
+      units
+      createdInventories
+    }
+  }
+`;
+
+export const SEND_INVENTORY = gql`
+  mutation SendInventory($input: SendInventoryInput!) {
+    sendInventory(sendInventoryInput: $input) {
+      lines
+      units
+      createdInventories
+    }
+  }
+`;
+
 /** Inventarios para elegir al registrar un movimiento o un traslado */
 export const GET_INVENTORY_OPTIONS = gql`
   query MovementInventoryOptions {

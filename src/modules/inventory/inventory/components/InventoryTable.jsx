@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
+import { useNavigate } from "react-router-dom";
 import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
@@ -91,6 +92,7 @@ const columns = [
 export function InventoryTable() {
   const toast = useRef(null);
   const lastParams = useRef(null);
+  const navigate = useNavigate();
   const { canEdit, canDelete, canRestore } = useInventoryRoles();
   const [fetchInventories, { loading, data, error }] = useLazyQuery(
     GET_INVENTORIES,
@@ -314,11 +316,19 @@ export function InventoryTable() {
         initialSorts={[{ field: "product.name", order: 1 }]}
         header={
           canEdit && (
-            <Button
-              label="Nuevo inventario"
-              icon="pi pi-plus"
-              onClick={() => setForm({})}
-            />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                label="Nuevo inventario"
+                icon="pi pi-plus"
+                onClick={() => setForm({})}
+              />
+              <Button
+                label="Cargar o enviar varios"
+                icon="pi pi-table"
+                severity="secondary"
+                onClick={() => navigate("/inventory/sheet")}
+              />
+            </div>
           )
         }
         showDeleted={canRestore}

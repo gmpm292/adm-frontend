@@ -8,6 +8,8 @@ import { InputTextarea } from "primereact/inputtextarea";
 import { Message } from "primereact/message";
 import { FormField } from "../../../../components/ui";
 import { getErrorMessage } from "../../../../utils/errors";
+import { BusinessField } from "../../../company/shared/BusinessField";
+import { useChoosesBusiness } from "../../../company/shared/business";
 import {
   CREATE_PAYROLL_PERIOD,
   UPDATE_PAYROLL_PERIOD,
@@ -34,11 +36,16 @@ const lastWeek = () => {
   return [monday, addDays(monday, 6)];
 };
 
-/** Alta o edición de un período (con `period` edita) */
+/**
+ * Alta o edición de un período (con `period` edita). Es de toda la empresa:
+ * el SUPER la elige al crearlo; los demás lo crean en la suya.
+ */
 export function PayrollPeriodForm({ period, onHide, onSaved }) {
   const isEdit = !!period;
+  const chooseBusiness = useChoosesBusiness(isEdit);
   const [defaultStart, defaultEnd] = lastWeek();
   const [form, setForm] = useState({
+    businessId: null,
     name: period?.name ?? "",
     startDate: period ? startOfDay(new Date(period.startDate)) : defaultStart,
     endDate: period ? startOfDay(new Date(period.endDate)) : defaultEnd,
@@ -62,6 +69,7 @@ export function PayrollPeriodForm({ period, onHide, onSaved }) {
       : "";
 
   const errors = {
+    businessId: chooseBusiness && !form.businessId ? "Elige la empresa" : null,
     startDate: form.startDate ? null : "Elige el primer día",
     endDate: !form.endDate
       ? "Elige el último día"
@@ -97,7 +105,14 @@ export function PayrollPeriodForm({ period, onHide, onSaved }) {
         });
         onSaved(data.updatePayrollPeriod, { created: false });
       } else {
-        const { data } = await createPeriod({ variables: { period: values } });
+        const { data } = await createPeriod({
+          variables: {
+            period: {
+              ...values,
+              ...(chooseBusiness && { businessId: form.businessId }),
+            },
+          },
+        });
         onSaved(data.createPayrollPeriod, { created: true });
       }
     } catch {
@@ -123,6 +138,16 @@ export function PayrollPeriodForm({ period, onHide, onSaved }) {
           />
         )}
         <div className="formgrid grid">
+          {chooseBusiness && (
+            <div className="col-12">
+              <BusinessField
+                id="period-business"
+                value={form.businessId}
+                onChange={(value) => set("businessId", value)}
+                error={shown("businessId")}
+              />
+            </div>
+          )}
           <div className="col-12 md:col-6">
             <FormField
               label="Primer día"
